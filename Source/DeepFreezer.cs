@@ -70,7 +70,10 @@ namespace DeepFreezer
                         }
                         if ((FreezerSize - StoredCrew.Count) > 0)
                         {
+                            if (requireResource(vessel, "Electric Charge", 100, true) == true);
+                            {
                             FreezeKerbal(CrewMember);
+                            }
                         }
 
                     }, new KSPEvent { guiName = "Freeze " + CrewMember.name, guiActive = true }));
@@ -111,6 +114,41 @@ namespace DeepFreezer
                     FreezerSpace = (FreezerSize - StoredCrew.Count);
                 }
             }
+        }
+        // Simple bool for resource checking and usage.  Returns true and optionally uses resource if resAmount of res is available. - Credit TMarkos https://github.com/TMarkos/ as this is lifted verbatim from his Beacon's pack. Mad modify as needed.
+        public bool requireResource(Vessel craft, string res, double resAmount, bool consumeResource)
+        {
+            if (!craft.loaded) return false; // Unloaded resource checking is unreliable.
+            Dictionary<PartResource, double> toDraw = new Dictionary<PartResource, double>();
+            double resRemaining = resAmount;
+            foreach (Part cPart in craft.Parts)
+            {
+                foreach (PartResource cRes in cPart.Resources)
+                {
+                    if (cRes.resourceName != res) continue;
+                    if (cRes.amount == 0) continue;
+                    if (cRes.amount >= resRemaining)
+                    {
+                        toDraw.Add(cRes, resRemaining);
+                        resRemaining = 0;
+                    }
+                    else
+                    {
+                        toDraw.Add(cRes, cRes.amount);
+                        resRemaining -= cRes.amount;
+                    }
+                }
+                if (resRemaining <= 0) break;
+            }
+            if (resRemaining > 0) return false;
+            if (consumeResource)
+            {
+                foreach (KeyValuePair<PartResource, double> drawSource in toDraw)
+                {
+                    drawSource.Key.amount -= drawSource.Value;
+                }
+            }
+            return true;
         }
 
     }
