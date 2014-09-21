@@ -15,7 +15,7 @@ namespace DeepFreezer
         public void Start()
         {
             if (!DeepFreezeEvents.instance.eventAdded)
-                Debug.Log(DeepFreezeEvents.instance.eventAdded);
+            //Debug.Log(DeepFreezeEvents.instance.eventAdded);
             {
                 DeepFreezeEvents.instance.DeepFreezeEventAdd();
                 Debug.Log("Start called");
@@ -27,10 +27,11 @@ namespace DeepFreezer
     public class DeepFreezer : PartModule
     {
         private float lastUpdate = 0.0f;
-        private float lastFixedUpdate = 0.0f;
+
         private float updatetnterval = .5f;
 
-        [KSPField(isPersistant = true, guiActive = true, guiName = "Frozen Crew")]
+
+        [KSPField(isPersistant = true)]
         public string FrozenCrew;
 
         [KSPField(isPersistant = true, guiActive = false, guiName = "Freezer Size")]
@@ -45,25 +46,101 @@ namespace DeepFreezer
         [KSPField(isPersistant = true)]
         public bool IsCrewableWhenFull;
 
+        [KSPField()]
+        public bool IsFreezeActive;
+
+        [KSPField()]
+        public bool IsThawActive;
+
+        [KSPField()]
+        public double StoredCharge;
+
+        [KSPField()]
+        public double ChargeRequired;
+
+        [KSPField()]
+        public double ChargeRate;
+
+
+        public ProtoCrewMember ActiveKerbal;
+        public string ToThawKerbal;
+
         public List<string> StoredCrew;
+
 
         public override void OnUpdate()
         {
             if ((Time.time - lastUpdate) > updatetnterval)
             {
-                base.OnInactive();
+
                 lastUpdate = Time.time;
                 UpdateEvents();
-                FrozenCrew = String.Join(",", StoredCrew.ToArray());
+                //StoredCrew = StoredCrew.Distinct().ToList();
+                //FrozenCrew = String.Join(",", StoredCrew.ToArray());
             }
         }
+
+        public void FixedUpdate()
+        {
+
+            if (IsFreezeActive == true)
+            {
+
+                if (!requireResource(vessel, "ElectricCharge", ChargeRate, false) == true)
+                {
+
+                    ScreenMessages.PostScreenMessage("Insufficient electric charge to freeze kerbal.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                    return;
+                }
+                else
+                {
+                    requireResource(vessel, "ElectricCharge", ChargeRate, true);
+                    StoredCharge = StoredCharge + ChargeRate;
+                    Debug.Log("Drawing Charge");
+                    if (StoredCharge > ChargeRequired)
+                    {
+                        if (requireResource(vessel, "Glykerol", 10, true))
+                        {
+                            FreezeKerbalConfirm(ActiveKerbal);
+                        }
+                        else
+                        {
+                            FreezeKerbalAbort(ActiveKerbal);
+                        }
+                    }
+                }
+
+            }
+            if (IsThawActive == true)
+            {
+                if (!requireResource(vessel, "ElectricCharge", ChargeRate, false))
+                {
+                    ThawKerbalAbort(ToThawKerbal);
+                }
+                else
+                {
+                    requireResource(vessel, "ElectricCharge", ChargeRate, true);
+                    StoredCharge = StoredCharge + ChargeRate;
+                    if (StoredCharge > ChargeRequired)
+                    {
+                        ThawKerbalConfirm(ToThawKerbal);
+                    }
+                }
+            }
+        }
+
 
         public override void OnLoad(ConfigNode node)
         {
             FrozenCrew = node.GetValue("FrozenCrew");
-            //Debug.Log(FrozenCrew);
+            //ChargeRate = Convert.ToDouble(node.GetValue("ChargeRate"));
+            //Debug.Log(ChargeRate);
+            //ChargeRequired = Convert.ToDouble(node.GetValue("ChargeRequired"));
+            //Debug.Log(ChargeRequired);
+            ChargeRequired = 8888;
+            ChargeRate = 50;
+
             Int32.TryParse(node.GetValue("FreezerSize"), out FreezerSize);
-            //Debug.Log(FreezerSize + " " + FreezerSpace);
             IsCrewableWhenFull = Convert.ToBoolean(node.GetValue("IsCrewableWhenFull"));
             LoadFrozenCrew();
         }
@@ -85,7 +162,6 @@ namespace DeepFreezer
                 }
 
             }
-            base.OnInactive();
         }
 
         private void LoadFrozenCrew() //The FrozenCrew variable is a string, we need it split into a list.
@@ -100,40 +176,47 @@ namespace DeepFreezer
         {
             UpdateCounts();
             Events.Clear();
-            if (StoredCrew.Count < FreezerSize)
+            if (!IsThawActive && !IsFreezeActive)
             {
-                part.CrewCapacity = 1;
-                foreach (var CrewMember in part.protoModuleCrew)
+                if (StoredCrew.Count < FreezerSize)
                 {
-                    Events.Add(new BaseEvent(Events, "Freeze " + CrewMember.name, () =>
+                    part.CrewCapacity = 1;
+                    foreach (var CrewMember in part.protoModuleCrew)
                     {
-                        if ((FreezerSize - StoredCrew.Count) <= 0)
+                        Events.Add(new BaseEvent(Events, "Freeze " + CrewMember.name, () =>
                         {
-                            ScreenMessages.PostScreenMessage("No Space Left in the Freezer. Aborting Freezing.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-                        }
-                        if ((FreezerSize - StoredCrew.Count) > 0)
-                        {
-                            if (!requireResource(vessel, "Glykerol", 10, true))
+                            if ((FreezerSize - StoredCrew.Count) > 0 && part.protoModuleCrew.Contains(CrewMember))
                             {
-                                ScreenMessages.PostScreenMessage("Insufficient Glykerol to freeze kerbal.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-                                return;
+                                if (!requireResource(vessel, "Glykerol", 10, false))
+                                {
+                                    ScreenMessages.PostScreenMessage("Insufficient Glykerol to freeze kerbal.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                                    return;
+                                }
+                                else
+                                {
+                                    FreezeKerbal(CrewMember);
+                                    part.Events["Freeze"].guiActive = false;
+                                }
                             }
-                            FreezeKerbal(CrewMember);
 
-                        }
-
-                    }, new KSPEvent { guiName = "Freeze " + CrewMember.name, guiActive = true }));
+                        }, new KSPEvent { guiName = "Freeze " + CrewMember.name, guiActive = true }));
+                    }
                 }
-            }
-            if ((part.protoModuleCrew.Count < part.CrewCapacity) || part.CrewCapacity <= 0)
-                foreach (var frozenkerbal in StoredCrew)
-                {
-                    Events.Add(new BaseEvent(Events, "Thaw" + frozenkerbal, () =>
+                if ((part.protoModuleCrew.Count < part.CrewCapacity) || part.CrewCapacity <= 0)
+                    foreach (var frozenkerbal in StoredCrew)
                     {
-                        ThawKerbal(frozenkerbal);
+                        Events.Add(new BaseEvent(Events, "Thaw" + frozenkerbal, () =>
+                        {
+                            if (StoredCrew.Contains(frozenkerbal))
+                            {
+                                StoredCrew.Remove(frozenkerbal);
+                                ToThawKerbal = frozenkerbal;
+                                IsThawActive = true;
+                            }
 
-                    }, new KSPEvent { guiName = "Thaw " + frozenkerbal, guiActive = true }));
-                }
+                        }, new KSPEvent { guiName = "Thaw " + frozenkerbal, guiActive = true }));
+                    }
+            }
             if (StoredCrew.Count >= FreezerSize && IsCrewableWhenFull == true)
             {
                 part.CrewCapacity = 0;
@@ -142,27 +225,63 @@ namespace DeepFreezer
         }
         public void FreezeKerbal(ProtoCrewMember CrewMember)
         {
+
+            Debug.Log("Freeze kerbal called");
+            part.CrewCapacity = 0;
             part.RemoveCrewmember(CrewMember);
-            StoredCrew.Add(CrewMember.name);
-            CrewMember.rosterStatus = ProtoCrewMember.RosterStatus.Dead;
-            ScreenMessages.PostScreenMessage(CrewMember.name + " frozen", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-            FrozenCrew = String.Join(",", StoredCrew.ToArray());
+            ActiveKerbal = CrewMember;
+            IsFreezeActive = true;
+            ScreenMessages.PostScreenMessage("Starting Freeze", 5.0f, ScreenMessageStyle.UPPER_CENTER);
             //Debug.Log("FrozenCrew =" + FrozenCrew);
             UpdateCounts();
+            Events.Clear();
         }
-        public void ThawKerbal(String frozenkerbal)
+        public void FreezeKerbalAbort(ProtoCrewMember kerbal)
+        {
+
+            ScreenMessages.PostScreenMessage("Freezing Aborted", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+            part.CrewCapacity = 1;
+            part.AddCrewmember(kerbal);
+            IsFreezeActive = false;
+            ActiveKerbal = null;
+
+        }
+        public void ThawKerbalAbort(String ThawKerbal)
+        {
+            ScreenMessages.PostScreenMessage("Thawing Aborted", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+            IsThawActive = false;
+            StoredCrew.Add(ThawKerbal);
+            StoredCharge = 0;
+        }
+        public void FreezeKerbalConfirm(ProtoCrewMember kerbal)
+        {
+            StoredCharge = 0;
+            StoredCrew.Add(kerbal.name);
+            StoredCrew = StoredCrew.Distinct().ToList();
+            kerbal.rosterStatus = ProtoCrewMember.RosterStatus.Dead;
+            UpdateCounts();
+            IsFreezeActive = false;
+            ActiveKerbal = null;
+            ScreenMessages.PostScreenMessage(kerbal.name + " frozen", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+        }
+        public void ThawKerbalConfirm(String frozenkerbal)
         {
             foreach (ProtoCrewMember kerbal in HighLogic.CurrentGame.CrewRoster.Crew) //There's probably a more efficient way to find Protocrewmember from the CrewRoster
             {
                 if (kerbal.name == frozenkerbal)
                 {
+                    StoredCharge = 0;
                     part.CrewCapacity = 1;
                     part.AddCrewmember(kerbal);
                     ScreenMessages.PostScreenMessage(kerbal.name + " thawed out.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                     //Debug.Log(StoredCrew.Remove(kerbal.name));
+                    ToThawKerbal = null;
+                    IsThawActive = false;
+
                     FrozenCrew = String.Join(",", StoredCrew.ToArray());
                     //Debug.Log("FrozenCrew =" + FrozenCrew);
                     UpdateCounts();
+                    Events.Clear();
 
                 }
             }
@@ -207,6 +326,9 @@ namespace DeepFreezer
             FreezerSpace = (FreezerSize - StoredCrew.Count);
             TotalFrozen = StoredCrew.Count;
         }
+
+
+
     }
 
 }

@@ -21,11 +21,13 @@ namespace DeepFreezer
 
         public void DeepFreezeEventAdd()
         {
+            Debug.Log("DeepFreezeEventAdd");
             GameEvents.OnVesselRecoveryRequested.Add(this.OnVesselRecoveryRequested);
-            GameEvents.onVesselRecoveryProcessing.Add(this.onVesselRecoveryProcessing);
+            //GameEvents.onVesselRecoveryProcessing.Add(this.onVesselRecoveryProcessing);
             GameEvents.onVesselRecovered.Add(this.onVesselRecovered);
+            //GameEvents.onVesselWillDestroy.Add(this.onVesselWillDestroy);
+            GameEvents.onVesselTerminated.Add(this.onVesselTerminated);
             eventAdded = true;
-
         }
 
 
@@ -50,58 +52,98 @@ namespace DeepFreezer
                 }
             }
         }
-        public void onVesselRecoveryProcessing(ProtoVessel vessel, MissionRecoveryDialog d, float f)
-        {
-            Debug.Log("OnVesselRecoveryProcessing");
-        }
-        //public void onVesselRecovered(ProtoVessel vessel) Old Version of onVesselRecovered Known to work
-        //{
-        //    List<ProtoPartSnapshot> partList = vessel.protoPartSnapshots;
-        //    foreach (ProtoPartSnapshot a in partList)
-        //    {
-        //        List<ProtoPartModuleSnapshot> modules = a.modules;
-        //        foreach (ProtoPartModuleSnapshot module in modules)
-        //        {
 
-        //            if (module.moduleName == "DeepFreezer")
-        //            {
-        //                ConfigNode node = module.moduleValues;
-        //                string FrozenCrew = node.GetValue("FrozenCrew");
-        //                ThawFrozenCrew(FrozenCrew);
-        //            }
-        //        }
-        //    }
-        //}
-
-        public void onVesselRecovered(ProtoVessel vessel) //RefactoredOnVessel Recovered to use the new FindProtoModuleVariable, should work for more than just this one job now.
-        {
-                        List<string> ProtoModuleVariables = FindProtoModuleVariable(vessel, "DeepFreezer", "FrozenCrew");
-                        foreach (string FrozenCrew in ProtoModuleVariables)
-                        {
-                            ThawFrozenCrew(FrozenCrew);
-                        }
-          
-        }
-        public List<String> FindProtoModuleVariable(ProtoVessel vessel, String m, String s)
+        public void onVesselRecovered(ProtoVessel vessel) // Old Version of onVesselRecovered Known to work
         {
             List<ProtoPartSnapshot> partList = vessel.protoPartSnapshots;
-            List<String> result = null;
             foreach (ProtoPartSnapshot a in partList)
             {
                 List<ProtoPartModuleSnapshot> modules = a.modules;
                 foreach (ProtoPartModuleSnapshot module in modules)
                 {
 
-                    if (module.moduleName == m)
+                    if (module.moduleName == "DeepFreezer")
                     {
                         ConfigNode node = module.moduleValues;
-                        string tempresult = node.GetValue(s);
-                        result.Add(tempresult);
+                        string FrozenCrew = node.GetValue("FrozenCrew");
+                        ThawFrozenCrew(FrozenCrew);
                     }
                 }
             }
-            return result;
         }
+
+        //public void onVesselRecovered(ProtoVessel vessel) //Refactored OnVesselRecovered to use the new FindProtoModuleVariable, should work for more than just this one job now.
+        //{
+        //    Debug.Log("OnVesselRecovered Called");
+        //    List<string> ProtoModuleVariables = FindProtoModuleVariable(vessel, "DeepFreezer", "FrozenCrew");
+        //    foreach (string FrozenCrew in ProtoModuleVariables)
+        //    {
+        //        ThawFrozenCrew(FrozenCrew);
+        //    }
+
+        //}
+
+
+        //public List<String> FindProtoModuleVariable(ProtoVessel vessel, string m, string s)
+        //{
+        //    Debug.Log("FindProtoModuleVariable Called");
+        //    List<ProtoPartSnapshot> partList = vessel.protoPartSnapshots;
+        //    List<String> result = null;
+        //    foreach (ProtoPartSnapshot a in partList)
+        //    {
+        //        Debug.Log("foreach ProtoPartSnapshot Called");
+        //        List<ProtoPartModuleSnapshot> modules = a.modules;
+        //        foreach (ProtoPartModuleSnapshot module in modules)
+        //        {
+        //            Debug.Log("foreach ProtoPartModuleSnapshot Called");
+        //            if (module.moduleName == m)
+        //            {
+        //                Debug.Log("DeepFreezerFound");
+        //                ConfigNode node = module.moduleValues;
+        //                string tempresult = node.GetValue(s);
+        //                Debug.Log(tempresult);
+        //                result.Add(tempresult);
+        //            }
+        //        }
+        //    }
+        //    foreach (string ProFrozenCrew in result)
+        //    {
+        //        Debug.Log(ProFrozenCrew);
+        //    }
+        //    return result;
+
+        //}
+
+        //public void onVesselWillDestroy(Vessel vessel)
+        //{
+        //    List<string> ProtoModuleVariables = FindModuleVariable(vessel, "DeepFreezer", "FrozenCrew");
+        //    foreach (string FrozenCrew in ProtoModuleVariables)
+        //    {
+        //        KillFrozenCrew(FrozenCrew);
+        //    }
+        //}
+        public void onVesselTerminated(ProtoVessel vessel)
+        {
+            List<ProtoPartSnapshot> partList = vessel.protoPartSnapshots;
+            foreach (ProtoPartSnapshot a in partList)
+            {
+                List<ProtoPartModuleSnapshot> modules = a.modules;
+                foreach (ProtoPartModuleSnapshot module in modules)
+                {
+
+                    if (module.moduleName == "DeepFreezer")
+                    {
+                        ConfigNode node = module.moduleValues;
+                        string FrozenCrew = node.GetValue("FrozenCrew");
+                        KillFrozenCrew(FrozenCrew);
+                    }
+                }
+            }
+        }
+
+
+
+
         public void ThawFrozenCrew(String FrozenCrew)
         {
             List<String> StoredCrew = FrozenCrew.Split(',').ToList();
@@ -117,7 +159,22 @@ namespace DeepFreezer
                 }
             }
         }
-
+        public void KillFrozenCrew(string FrozenCrew)
+        {
+            List<String> StoredCrew = FrozenCrew.Split(',').ToList();
+            foreach (string frozenkerbal in StoredCrew)
+            {
+                foreach (ProtoCrewMember kerbal in HighLogic.CurrentGame.CrewRoster.Crew)
+                {
+                    if (kerbal.name == frozenkerbal)
+                        if (HighLogic.CurrentGame.Parameters.Difficulty.MissingCrewsRespawn == true)
+                        {
+                            kerbal.StartRespawnPeriod();
+                            Debug.Log(kerbal.name + "respawn started.");
+                        }
+                }
+            }
+        }
         //    //foreach (ProtoPartModuleSnapshot module in a)
         //    //{
 
