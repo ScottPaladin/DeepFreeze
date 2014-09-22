@@ -14,12 +14,12 @@ namespace DeepFreezer
 
         public void Start()
         {
-            if (!DeepFreezeEvents.instance.eventAdded)
-            //Debug.Log(DeepFreezeEvents.instance.eventAdded);
-            {
+            Debug.Log("Start called");
+            if (!DeepFreezeEvents.instance.eventAdded || DeepFreezeEvents.instance.eventAdded == null )
+            //{
                 DeepFreezeEvents.instance.DeepFreezeEventAdd();
-                Debug.Log("Start called");
-            }
+                Debug.Log("!DeepFreezeEvents.instance.eventAdded");
+           // }
         }
 
 
@@ -31,7 +31,7 @@ namespace DeepFreezer
         private float updatetnterval = .5f;
 
 
-        [KSPField(isPersistant = true)]
+        [KSPField(isPersistant = true, guiActive = true, guiName = "FC")]
         public string FrozenCrew;
 
         [KSPField(isPersistant = true, guiActive = false, guiName = "Freezer Size")]
@@ -76,7 +76,10 @@ namespace DeepFreezer
                 lastUpdate = Time.time;
                 UpdateEvents();
                 //StoredCrew = StoredCrew.Distinct().ToList();
-                //FrozenCrew = String.Join(",", StoredCrew.ToArray());
+                if (StoredCrew.Count > 0)
+                {
+                    FrozenCrew = String.Join(",", StoredCrew.ToArray());
+                }
             }
         }
 
@@ -96,7 +99,7 @@ namespace DeepFreezer
                 {
                     requireResource(vessel, "ElectricCharge", ChargeRate, true);
                     StoredCharge = StoredCharge + ChargeRate;
-                    Debug.Log("Drawing Charge");
+                    //Debug.Log("Drawing Charge");
                     if (StoredCharge > ChargeRequired)
                     {
                         if (requireResource(vessel, "Glykerol", 10, true))
@@ -132,21 +135,24 @@ namespace DeepFreezer
 
         public override void OnLoad(ConfigNode node)
         {
-            FrozenCrew = node.GetValue("FrozenCrew");
+            
             //ChargeRate = Convert.ToDouble(node.GetValue("ChargeRate"));
             //Debug.Log(ChargeRate);
             //ChargeRequired = Convert.ToDouble(node.GetValue("ChargeRequired"));
             //Debug.Log(ChargeRequired);
-            ChargeRequired = 8888;
+            ChargeRequired = 2000;
             ChargeRate = 50;
 
             Int32.TryParse(node.GetValue("FreezerSize"), out FreezerSize);
             IsCrewableWhenFull = Convert.ToBoolean(node.GetValue("IsCrewableWhenFull"));
+            FrozenCrew = node.GetValue("FrozenCrew");
+            Debug.Log(FrozenCrew);
             LoadFrozenCrew();
         }
         public override void OnSave(ConfigNode node)
         {
             node.SetValue("FrozenCrew", FrozenCrew);
+            Debug.Log("OnSave: " + node);
         }
         public override void OnInactive()
         {
