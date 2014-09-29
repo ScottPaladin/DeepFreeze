@@ -31,10 +31,10 @@ namespace DeepFreezer
         private float updatetnterval = .5f;
 
 
-        [KSPField(isPersistant = true, guiActive = true, guiName = "FC")]
+        [KSPField(isPersistant = true, guiActive = false, guiName = "FC")] //This string value is the names of frozen crew, it is turned into a list called StoredCrew during loaded. We keep this string current and it get's saved to the persistant.sfs on save.
         public string FrozenCrew;
 
-        [KSPField(isPersistant = true, guiActive = false, guiName = "Freezer Size")]
+        [KSPField(isPersistant = true, guiActive = false, guiName = "Freezer Size")] //Total Size of Freezer, get's read from part.cfg.
         public int FreezerSize;
 
         [KSPField(isPersistant = true, guiActive = true, guiName = "Total Frozen Kerbals")]
@@ -140,8 +140,8 @@ namespace DeepFreezer
             //Debug.Log(ChargeRate);
             //ChargeRequired = Convert.ToDouble(node.GetValue("ChargeRequired"));
             //Debug.Log(ChargeRequired);
-            ChargeRequired = 2000;
-            ChargeRate = 50;
+            ChargeRequired = 3000;
+            ChargeRate = 20;
 
             Int32.TryParse(node.GetValue("FreezerSize"), out FreezerSize);
             IsCrewableWhenFull = Convert.ToBoolean(node.GetValue("IsCrewableWhenFull"));
@@ -193,7 +193,7 @@ namespace DeepFreezer
                         {
                             if ((FreezerSize - StoredCrew.Count) > 0 && part.protoModuleCrew.Contains(CrewMember))
                             {
-                                if (!requireResource(vessel, "Glykerol", 10, false))
+                                if (!requireResource(vessel, "Glykerol", 5, false))
                                 {
                                     ScreenMessages.PostScreenMessage("Insufficient Glykerol to freeze kerbal.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                                     return;
