@@ -11,12 +11,13 @@ namespace DeepFreezer
 {
     class DeepFreezeEvents
     {
+
         public static DeepFreezeEvents instance = new DeepFreezeEvents();
         public bool eventAdded;
 
         public DeepFreezeEvents()
         {
-            Debug.Log("DeepFreezeEvents");
+            //Debug.Log("DeepFreezeEvents");
             eventAdded = false;
         }
 
@@ -26,6 +27,7 @@ namespace DeepFreezer
             GameEvents.OnVesselRecoveryRequested.Add(this.OnVesselRecoveryRequested);
             GameEvents.onVesselRecovered.Add(this.onVesselRecovered);
             GameEvents.onVesselTerminated.Add(this.onVesselTerminated);
+            GameEvents.onVesselWillDestroy.Add(this.onVesselWillDestroy);
             eventAdded = true;
         }
 
@@ -56,15 +58,15 @@ namespace DeepFreezer
 
         public void onVesselRecovered(ProtoVessel vessel)
         {
-            Debug.Log("onVesselRecovered");
+            //Debug.Log("onVesselRecovered");
             List<ProtoPartSnapshot> partList = vessel.protoPartSnapshots;
             foreach (ProtoPartSnapshot a in partList)
             {
-                Debug.Log(a.partName);
+                //Debug.Log(a.partName);
                 List<ProtoPartModuleSnapshot> modules = a.modules;
                 foreach (ProtoPartModuleSnapshot module in modules)
                 {
-                    Debug.Log(module.moduleName);
+                    //Debug.Log(module.moduleName);
                     if (module.moduleName == "DeepFreezer")
                     {
                         ConfigNode node = module.moduleValues;
@@ -96,6 +98,26 @@ namespace DeepFreezer
             }
         }
 
+        public void onVesselWillDestroy(Vessel vessel)
+        {
+            ProtoVessel pvessel;
+            pvessel = vessel.protoVessel;
+            List<ProtoPartSnapshot> partList = pvessel.protoPartSnapshots;
+            foreach (ProtoPartSnapshot a in partList)
+            {
+                List<ProtoPartModuleSnapshot> modules = a.modules;
+                foreach (ProtoPartModuleSnapshot module in modules)
+                {
+
+                    if (module.moduleName == "DeepFreezer")
+                    {
+                        ConfigNode node = module.moduleValues;
+                        string FrozenCrew = node.GetValue("FrozenCrew");
+                        KillFrozenCrew(FrozenCrew);
+                    }
+                }
+            }
+        }
 
 
 
@@ -122,26 +144,18 @@ namespace DeepFreezer
                 foreach (ProtoCrewMember kerbal in HighLogic.CurrentGame.CrewRoster.Crew)
                 {
                     if (kerbal.name == frozenkerbal)
+                    {
+                        Debug.Log(kerbal.name + " killed");
                         if (HighLogic.CurrentGame.Parameters.Difficulty.MissingCrewsRespawn == true)
                         {
                             kerbal.StartRespawnPeriod();
-                            Debug.Log(kerbal.name + "respawn started.");
+                            Debug.Log(kerbal.name + " respawn started.");
                         }
+                    }
                 }
             }
         }
-        //    //foreach (ProtoPartModuleSnapshot module in a)
-        //    //{
 
-        //    //}
-        //    ProtoPartModuleSnapshot freezer = a.modules.Find(n => n.moduleName == "DeepFreezer");
-        //    if (freezer != null)
-        //    {
-        //        if (freezer.moduleValues.GetValue("FrozenCrew") == null)
-        //        {
-        //            Debug.Log("Freezer foud but FrozenCrew value is null");
-        //        }
-        //    }
 
 
 
