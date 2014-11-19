@@ -55,10 +55,10 @@ namespace DeepFreezer
         [KSPField()]
         public double StoredCharge;
 
-        [KSPField(isPersistant = true, guiActive = true, guiName = "ChargeRequired")]
+        [KSPField(isPersistant = true)]
         public Int32 ChargeRequired; //Set by part.cfg. Total EC value required for a complete freeze or thaw.
 
-        [KSPField(isPersistant = true, guiActive = true, guiName = "ChargeRate")]
+        [KSPField(isPersistant = true)]
         public Int32 ChargeRate; //Set by part.cfg. EC draw per tick.
 
 
