@@ -15,7 +15,7 @@ namespace DeepFreezer
         public void Start()
         {
             //Debug.Log("Start called");
-            if (!DeepFreezeEvents.instance.eventAdded || DeepFreezeEvents.instance.eventAdded == null )
+            if (!DeepFreezeEvents.instance.eventAdded)
             //{
                 DeepFreezeEvents.instance.DeepFreezeEventAdd();
                 Debug.Log("!DeepFreezeEvents.instance.eventAdded");
@@ -37,14 +37,14 @@ namespace DeepFreezer
         [KSPField(isPersistant = true, guiActive = false, guiName = "Freezer Size")] //Total Size of Freezer, get's read from part.cfg.
         public int FreezerSize;
 
-        [KSPField(isPersistant = true, guiActive = true, guiName = "Total Frozen Kerbals")]
+        [KSPField(isPersistant = true, guiActive = true, guiName = "Total Frozen Kerbals")] //WISOTT Total number of frozen kerbals, just a count of the list object.
         public int TotalFrozen;
 
-        [KSPField(isPersistant = true, guiActive = true, guiName = "Freezer Space")]
+        [KSPField(isPersistant = true, guiActive = true, guiName = "Freezer Space")] //Total space available for storage. Set by Part.cfg file.
         public int FreezerSpace;
 
         [KSPField(isPersistant = true)]
-        public bool IsCrewableWhenFull;
+        public bool IsCrewableWhenFull; //Set by part.cfg. Intended to set whether a kerbal can enter the part when the frozen storage is filled up. Especially important for the single kerbal part.
 
         [KSPField()]
         public bool IsFreezeActive;
@@ -55,11 +55,11 @@ namespace DeepFreezer
         [KSPField()]
         public double StoredCharge;
 
-        [KSPField()]
-        public double ChargeRequired;
+        [KSPField(isPersistant = true, guiActive = true, guiName = "ChargeRequired")]
+        public Int32 ChargeRequired; //Set by part.cfg. Total EC value required for a complete freeze or thaw.
 
-        [KSPField()]
-        public double ChargeRate;
+        [KSPField(isPersistant = true, guiActive = true, guiName = "ChargeRate")]
+        public Int32 ChargeRate; //Set by part.cfg. EC draw per tick.
 
 
         public ProtoCrewMember ActiveKerbal;
@@ -97,6 +97,7 @@ namespace DeepFreezer
                 {
 
                     ScreenMessages.PostScreenMessage("Insufficient electric charge to freeze kerbal.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                    FreezeKerbalAbort(ActiveKerbal);
                     return;
                 }
                 else
@@ -112,6 +113,7 @@ namespace DeepFreezer
                         }
                         else
                         {
+                           
                             FreezeKerbalAbort(ActiveKerbal);
                         }
                     }
@@ -122,6 +124,7 @@ namespace DeepFreezer
             {
                 if (!requireResource(vessel, "ElectricCharge", ChargeRate, false))
                 {
+                    ScreenMessages.PostScreenMessage("Insufficient electric charge to thaw kerbal.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                     ThawKerbalAbort(ToThawKerbal);
                 }
                 else
@@ -139,10 +142,10 @@ namespace DeepFreezer
 
         public override void OnLoad(ConfigNode node)
         {
-            ChargeRequired = 3000;
-            ChargeRate = 20;
-
-            Int32.TryParse(node.GetValue("FreezerSize"), out FreezerSize);
+            //ChargeRequired = 3000;
+            //ChargeRate = 20;
+            Int32.TryParse(node.GetValue("ChargeRequired"), out ChargeRequired);
+            Int32.TryParse(node.GetValue("ChargeRate"), out ChargeRate);
             IsCrewableWhenFull = Convert.ToBoolean(node.GetValue("IsCrewableWhenFull"));
             FrozenCrew = node.GetValue("FrozenCrew");
             //Debug.Log(FrozenCrew);
