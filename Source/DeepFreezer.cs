@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
-using DeepFreezer;
 
 
 namespace DeepFreezer
@@ -14,12 +13,12 @@ namespace DeepFreezer
 
         public void Start()
         {
-            //Debug.Log("Start called");
+            Debug.Log("Start called");
             if (!DeepFreezeEvents.instance.eventAdded)
-            //{
+            {
                 DeepFreezeEvents.instance.DeepFreezeEventAdd();
                 Debug.Log("!DeepFreezeEvents.instance.eventAdded");
-           // }
+            }
         }
 
 
@@ -28,7 +27,7 @@ namespace DeepFreezer
     {
         private float lastUpdate = 0.0f;
 
-        private float updatetnterval = .5f;
+        private float updatetnterval = .5f; 
 
 
         [KSPField(isPersistant = true, guiActive = false, guiName = "FC")] //This string value is the names of frozen crew, it is turned into a list called StoredCrew during loaded. We keep this string current and it get's saved to the persistant.sfs on save.
@@ -142,13 +141,14 @@ namespace DeepFreezer
 
         public override void OnLoad(ConfigNode node)
         {
+            Debug.Log("onLoad");
             //ChargeRequired = 3000;
             //ChargeRate = 20;
             Int32.TryParse(node.GetValue("ChargeRequired"), out ChargeRequired);
             Int32.TryParse(node.GetValue("ChargeRate"), out ChargeRate);
             IsCrewableWhenFull = Convert.ToBoolean(node.GetValue("IsCrewableWhenFull"));
             FrozenCrew = node.GetValue("FrozenCrew");
-            //Debug.Log(FrozenCrew);
+            Debug.Log(FrozenCrew);
             LoadFrozenCrew();
         }
 
@@ -183,11 +183,11 @@ namespace DeepFreezer
         public override void OnSave(ConfigNode node)
         {
             node.SetValue("FrozenCrew", FrozenCrew);
-            //Debug.Log("OnSave: " + node);
+            Debug.Log("OnSave: " + node);
         }
         public override void OnInactive()
         {
-            //Debug.Log("OnInactive" + FrozenCrew);
+            Debug.Log("OnInactive" + FrozenCrew);
             part.CrewCapacity = StoredCrew.Count;
             foreach (var crewmember in StoredCrew)
             {
@@ -211,6 +211,7 @@ namespace DeepFreezer
 
         private void UpdateEvents()
         {
+            //Debug.Log("UpdateEvents");
             UpdateCounts();
             Events.Clear();
             if (!IsThawActive && !IsFreezeActive)
@@ -220,6 +221,7 @@ namespace DeepFreezer
                     part.CrewCapacity = 1;
                     foreach (var CrewMember in part.protoModuleCrew)
                     {
+                        //Debug.Log("Add freeze event " + CrewMember.name);
                         Events.Add(new BaseEvent(Events, "Freeze " + CrewMember.name, () =>
                         {
                             if ((FreezerSize - StoredCrew.Count) > 0 && part.protoModuleCrew.Contains(CrewMember))
@@ -242,6 +244,7 @@ namespace DeepFreezer
                 if ((part.protoModuleCrew.Count < part.CrewCapacity) || part.CrewCapacity <= 0)
                     foreach (var frozenkerbal in StoredCrew)
                     {
+                        //Debug.Log("Add thaw event " + frozenkerbal);
                         Events.Add(new BaseEvent(Events, "Thaw" + frozenkerbal, () =>
                         {
                             if (StoredCrew.Contains(frozenkerbal))
@@ -266,13 +269,13 @@ namespace DeepFreezer
         public void FreezeKerbal(ProtoCrewMember CrewMember)
         {
 
-            //Debug.Log("Freeze kerbal called");
+            Debug.Log("Freeze kerbal called");
             part.CrewCapacity = 0;
             part.RemoveCrewmember(CrewMember);
             ActiveKerbal = CrewMember;
             IsFreezeActive = true;
             ScreenMessages.PostScreenMessage("Starting Freeze", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-            //Debug.Log("FrozenCrew =" + FrozenCrew);
+            Debug.Log("FrozenCrew =" + FrozenCrew);
             UpdateCounts();
             Events.Clear();
             hatch_lock.Play();
@@ -324,12 +327,12 @@ namespace DeepFreezer
                     part.CrewCapacity = 1;
                     part.AddCrewmember(kerbal);
                     ScreenMessages.PostScreenMessage(kerbal.name + " thawed out.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-                    //Debug.Log(StoredCrew.Remove(kerbal.name));
+                    Debug.Log(StoredCrew.Remove(kerbal.name));
                     ToThawKerbal = null;
                     IsThawActive = false;
 
                     FrozenCrew = String.Join(",", StoredCrew.ToArray());
-                    //Debug.Log("FrozenCrew =" + FrozenCrew);
+                    Debug.Log("FrozenCrew =" + FrozenCrew);
                     UpdateCounts();
                     Events.Clear();
                     ding_ding.Play();

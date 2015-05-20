@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
-using DeepFreezer;
 
 
 namespace DeepFreezer
@@ -29,6 +27,7 @@ namespace DeepFreezer
             GameEvents.onVesselTerminated.Add(this.onVesselTerminated);
             GameEvents.onVesselWillDestroy.Add(this.onVesselWillDestroy);
             eventAdded = true;
+            Debug.Log("DeepFreezeEventAdd ended");
         }
 
 
@@ -58,7 +57,7 @@ namespace DeepFreezer
 
         public void onVesselRecovered(ProtoVessel vessel)
         {
-            //Debug.Log("onVesselRecovered");
+            Debug.Log("onVesselRecovered");
             List<ProtoPartSnapshot> partList = vessel.protoPartSnapshots;
             foreach (ProtoPartSnapshot a in partList)
             {
@@ -81,6 +80,7 @@ namespace DeepFreezer
 
         public void onVesselTerminated(ProtoVessel vessel)
         {
+            Debug.Log("onVesselTerminated");
             List<ProtoPartSnapshot> partList = vessel.protoPartSnapshots;
             foreach (ProtoPartSnapshot a in partList)
             {
@@ -100,6 +100,7 @@ namespace DeepFreezer
 
         public void onVesselWillDestroy(Vessel vessel)
         {
+            Debug.Log("onVesselWillDestroy");
             ProtoVessel pvessel;
             pvessel = vessel.protoVessel;
             List<ProtoPartSnapshot> partList = pvessel.protoPartSnapshots;
@@ -123,9 +124,11 @@ namespace DeepFreezer
 
         public void ThawFrozenCrew(String FrozenCrew)
         {
+            Debug.Log("ThawFrozenCrew");
             List<String> StoredCrew = FrozenCrew.Split(',').ToList();
             foreach (string frozenkerbal in StoredCrew)
             {
+                Debug.Log("frozenkerbal =" + frozenkerbal);
                 foreach (ProtoCrewMember kerbal in HighLogic.CurrentGame.CrewRoster.Crew) //There's probably a more efficient way to find Protocrewmember from the CrewRoster
                 {
                     if (kerbal.name == frozenkerbal)
@@ -138,6 +141,7 @@ namespace DeepFreezer
         }
         public void KillFrozenCrew(string FrozenCrew)
         {
+            Debug.Log("KillFrozenCrew");
             List<String> StoredCrew = FrozenCrew.Split(',').ToList();
             foreach (string frozenkerbal in StoredCrew)
             {
