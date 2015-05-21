@@ -27,7 +27,9 @@ namespace DeepFreezer
     {
         private float lastUpdate = 0.0f;
 
-        private float updatetnterval = .5f; 
+        private float lastRemove = 0.0f;
+
+        private float updatetnterval = 1.5f; //.5f
 
 
         [KSPField(isPersistant = true, guiActive = false, guiName = "FC")] //This string value is the names of frozen crew, it is turned into a list called StoredCrew during loaded. We keep this string current and it get's saved to the persistant.sfs on save.
@@ -71,9 +73,11 @@ namespace DeepFreezer
         protected AudioSource machine_hum;
         protected AudioSource ding_ding;
 
+        
+        
         public override void OnUpdate()
         {
-            if ((Time.time - lastUpdate) > updatetnterval)
+            if ((Time.time - lastUpdate) > updatetnterval && (Time.time - lastRemove) > updatetnterval)
             {
 
                 lastUpdate = Time.time;
@@ -154,6 +158,12 @@ namespace DeepFreezer
 
         public override void OnStart(PartModule.StartState state)
         {
+            base.OnStart(state);
+            if (state != StartState.None || state != StartState.Editor)
+            {
+                GameEvents.onCrewTransferred.Add(new EventData<GameEvents.HostedFromToAction<ProtoCrewMember, Part>>.OnEvent(this.OnCrewTransferred));
+            }            
+
             hatch_lock = gameObject.AddComponent<AudioSource>();
             hatch_lock.clip = GameDatabase.Instance.GetAudioClip("PaladinLabs/DeepFreeze/Sounds/hatch_lock");
             hatch_lock.volume = .5F;
@@ -178,6 +188,11 @@ namespace DeepFreezer
             ding_ding.panLevel = 0;
             ding_ding.rolloffMode = AudioRolloffMode.Linear;
             ding_ding.Stop();
+        }
+
+        public void OnDestroy()
+        {
+            GameEvents.onCrewTransferred.Remove(new EventData<GameEvents.HostedFromToAction<ProtoCrewMember, Part>>.OnEvent(this.OnCrewTransferred));
         }
 
         public override void OnSave(ConfigNode node)
@@ -212,8 +227,7 @@ namespace DeepFreezer
         private void UpdateEvents()
         {
             //Debug.Log("UpdateEvents");
-            UpdateCounts();
-            Events.Clear();
+            UpdateCounts();            
             if (!IsThawActive && !IsFreezeActive)
             {
                 if (StoredCrew.Count < FreezerSize)
@@ -221,43 +235,14 @@ namespace DeepFreezer
                     part.CrewCapacity = 1;
                     foreach (var CrewMember in part.protoModuleCrew)
                     {
-                        //Debug.Log("Add freeze event " + CrewMember.name);
-                        Events.Add(new BaseEvent(Events, "Freeze " + CrewMember.name, () =>
-                        {
-                            if ((FreezerSize - StoredCrew.Count) > 0 && part.protoModuleCrew.Contains(CrewMember))
-                            {
-                                if (!requireResource(vessel, "Glykerol", 5, false))
-                                {
-                                    ScreenMessages.PostScreenMessage("Insufficient Glykerol to freeze kerbal.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-                                    return;
-                                }
-                                else
-                                {
-                                    FreezeKerbal(CrewMember);
-                                    //part.Events["Freeze " + CrewMember.name].guiActive = false;
-                                }
-                            }
-
-                        }, new KSPEvent { guiName = "Freeze " + CrewMember.name, guiActive = true }));
+                        
+                        addFreezeEvent(CrewMember);
                     }
                 }
                 if ((part.protoModuleCrew.Count < part.CrewCapacity) || part.CrewCapacity <= 0)
                     foreach (var frozenkerbal in StoredCrew)
                     {
-                        //Debug.Log("Add thaw event " + frozenkerbal);
-                        Events.Add(new BaseEvent(Events, "Thaw" + frozenkerbal, () =>
-                        {
-                            if (StoredCrew.Contains(frozenkerbal))
-                            {
-                                StoredCrew.Remove(frozenkerbal);
-                                ToThawKerbal = frozenkerbal;
-                                IsThawActive = true;
-                                hatch_lock.Play();
-                                machine_hum.Play();
-                                machine_hum.loop = true;
-                            }
-
-                        }, new KSPEvent { guiName = "Thaw " + frozenkerbal, guiActive = true }));
+                        addThawEvent(frozenkerbal);   
                     }
             }
             if (StoredCrew.Count >= FreezerSize && IsCrewableWhenFull == true)
@@ -266,6 +251,138 @@ namespace DeepFreezer
             }
 
         }
+
+        private void addFreezeEvent(ProtoCrewMember CrewMember)
+        {
+            //Debug.Log("Try Add freeze event " + CrewMember.name);
+            BaseEvent item = Events.Find(v => v.name == "Freeze " + CrewMember.name);
+            //Debug.Log("Current Events List");
+            //foreach (BaseEvent itemX in Events)
+            //{
+            //    Debug.Log("Event = " + itemX.name);                
+            //}
+            //if (item != null)
+            //Debug.Log("Item Name = " + item.name);
+            if (item == null)
+            {
+                //Debug.Log("Adding freeze event " + CrewMember.name);                
+                Events.Add(new BaseEvent(Events, "Freeze " + CrewMember.name, () =>
+                {
+                    if ((FreezerSize - StoredCrew.Count) > 0 && part.protoModuleCrew.Contains(CrewMember))
+                    {
+                        if (!requireResource(vessel, "Glykerol", 5, false))
+                        {
+                            ScreenMessages.PostScreenMessage("Insufficient Glykerol to freeze kerbal.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                            return;
+                        }
+                        else
+                        {
+                            FreezeKerbal(CrewMember);
+                            //part.Events["Freeze " + CrewMember.name].guiActive = false;
+                        }
+                    }
+
+                }, new KSPEvent { guiName = "Freeze " + CrewMember.name, guiActive = true }));
+            }
+        }
+
+        private void removeFreezeEvent(ProtoCrewMember CrewMember)
+        {
+            try
+            {
+                //Debug.Log("Removing Freeze Event for " + CrewMember.name);
+                BaseEvent item = Events.Find(v => v.name == "Freeze " + CrewMember.name);
+                if (item == null)
+                    Debug.Log("Freeze Event Item not found to delete " + CrewMember.name);
+                else
+                {
+                    Events.Remove(item);
+                    lastRemove = Time.time;
+                    foreach (UIPartActionWindow window in FindObjectsOfType(typeof(UIPartActionWindow)))
+                    {
+                        if (window.part == part)
+                        {
+                            window.displayDirty = true;
+                        }
+                    }
+                    //Debug.Log("Item deleted");
+                }
+                    
+            }
+            catch (Exception ex)
+            {
+                Debug.Log("Exception removing Freeze Event for " + CrewMember.name);
+                Debug.Log(ex.Message);
+            }
+        }
+
+        private void addThawEvent(string frozenkerbal)
+        {
+            //Debug.Log("Try Add thaw event " + frozenkerbal);
+            BaseEvent item = Events.Find(v => v.name == "Thaw " + frozenkerbal);
+            //Debug.Log("Current Events List");
+            //foreach (BaseEvent itemX in Events)
+            //{
+            //    Debug.Log("Event = " + itemX.name);                
+            //}
+            //if (item != null)
+            //Debug.Log("Item Name = " + item.name);
+            if (item == null)
+            {
+                //Debug.Log("Adding thaw event " + frozenkerbal);
+                Events.Add(new BaseEvent(Events, "Thaw " + frozenkerbal, () =>
+                {
+                    if (StoredCrew.Contains(frozenkerbal))
+                    {
+                        StoredCrew.Remove(frozenkerbal);
+                        ToThawKerbal = frozenkerbal;
+                        IsThawActive = true;
+                        hatch_lock.Play();
+                        machine_hum.Play();
+                        machine_hum.loop = true;
+                    }
+
+                }, new KSPEvent { guiName = "Thaw " + frozenkerbal, guiActive = true }));
+            }
+        }
+
+        private void removeThawEvent(string frozenkerbal)
+        {
+            try
+            {
+                //Debug.Log("Removing Thaw Event for " + frozenkerbal);
+                BaseEvent item = Events.Find(v => v.name == "Thaw " + frozenkerbal);
+                if (item == null)
+                    Debug.Log("Thaw Even Item not found to delete " + frozenkerbal);
+                else
+                {
+                    Events.Remove(item);
+                    lastRemove = Time.time;
+                    foreach (UIPartActionWindow window in FindObjectsOfType(typeof(UIPartActionWindow)))
+                    {
+                        if (window.part == part)
+                        {
+                            window.displayDirty = true;
+                        }
+                    }
+                    //Debug.Log("Item deleted");
+                }                
+            }
+            catch (Exception ex)
+            {
+                Debug.Log("Exception removing Thaw Event for " + frozenkerbal);
+                Debug.Log(ex.Message);
+            }
+        }
+
+        void OnCrewTransferred(GameEvents.HostedFromToAction<ProtoCrewMember, Part> fromToAction)
+        {
+            if (fromToAction.from == this.part)
+            {
+                removeFreezeEvent(fromToAction.host);
+            }
+        }
+                
         public void FreezeKerbal(ProtoCrewMember CrewMember)
         {
 
@@ -276,8 +393,7 @@ namespace DeepFreezer
             IsFreezeActive = true;
             ScreenMessages.PostScreenMessage("Starting Freeze", 5.0f, ScreenMessageStyle.UPPER_CENTER);
             Debug.Log("FrozenCrew =" + FrozenCrew);
-            UpdateCounts();
-            Events.Clear();
+            UpdateCounts();            
             hatch_lock.Play();
             machine_hum.Play();
             machine_hum.loop = true;
@@ -288,7 +404,7 @@ namespace DeepFreezer
 
             ScreenMessages.PostScreenMessage("Freezing Aborted", 5.0f, ScreenMessageStyle.UPPER_CENTER);
             part.CrewCapacity = 1;
-            part.AddCrewmember(kerbal);
+            part.AddCrewmember(kerbal);            
             IsFreezeActive = false;
             ActiveKerbal = null;
             machine_hum.Stop();
@@ -312,6 +428,7 @@ namespace DeepFreezer
             UpdateCounts();
             IsFreezeActive = false;
             ActiveKerbal = null;
+            removeFreezeEvent(kerbal);
             ScreenMessages.PostScreenMessage(kerbal.name + " frozen", 5.0f, ScreenMessageStyle.UPPER_CENTER);
             ice_freeze.Play();
 
@@ -333,8 +450,8 @@ namespace DeepFreezer
 
                     FrozenCrew = String.Join(",", StoredCrew.ToArray());
                     Debug.Log("FrozenCrew =" + FrozenCrew);
-                    UpdateCounts();
-                    Events.Clear();
+                    UpdateCounts();                    
+                    removeThawEvent(frozenkerbal);
                     ding_ding.Play();
 
                 }

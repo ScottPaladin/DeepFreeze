@@ -25,7 +25,7 @@ namespace DeepFreezer
             GameEvents.OnVesselRecoveryRequested.Add(this.OnVesselRecoveryRequested);
             GameEvents.onVesselRecovered.Add(this.onVesselRecovered);
             GameEvents.onVesselTerminated.Add(this.onVesselTerminated);
-            GameEvents.onVesselWillDestroy.Add(this.onVesselWillDestroy);
+            GameEvents.onVesselWillDestroy.Add(this.onVesselWillDestroy);            
             eventAdded = true;
             Debug.Log("DeepFreezeEventAdd ended");
         }
