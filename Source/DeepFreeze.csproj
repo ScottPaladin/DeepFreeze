@@ -17,7 +17,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\Output\Plugins\</OutputPath>
+    <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -45,15 +45,38 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DeeFreezeEvents.cs" />
-    <Compile Include="DeepFreezer.cs" />
+    <Compile Include="DeepFreezeEvents.cs" />
+    <Compile Include="DeepFreeze.cs" />
+    <Compile Include="DeepFreezerPart.cs" />
+    <Compile Include="DFSettings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <None Include="utilities.cs" />
+    <Compile Include="FrozenKerbals.cs" />
+    <Compile Include="ToolBarManager.cs" />
+    <Compile Include="utilities.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>
-    </PostBuildEvent>
+    <PostBuildEvent>set /p KSP_DIR=&lt;"$(ProjectDir)ksp_dir.txt"
+
+xcopy "$(TargetPath)" "$(SolutionDir)..\GameData\PaladinLabs\$(ProjectName)\Plugins\" /Y
+
+xcopy "$(ProjectDir)$(OutDir)$(TargetName).pdb" "$(SolutionDir)..\GameData\PaladinLabs\$(ProjectName)\Plugins\" /Y
+
+cd "$(TargetDir)"
+call "C:\Program Files (x86)\Unity\Editor\Data\MonoBleedingEdge\bin\cli.bat"  "C:\Program Files (x86)\Unity\Editor\Data\MonoBleedingEdge\lib\mono\4.0\pdb2mdb.exe" $(TargetFileName)
+xcopy "$(ProjectDir)$(OutDir)$(TargetFileName).mdb" "$(SolutionDir)..\GameData\PaladinLabs\$(ProjectName)\Plugins\" /Y
+
+where /q "C:\7za\:7za.exe"
+if %25ERRORLEVEL%25 == 1 (
+   echo Cannot find 7-zip to package build
+) else (
+   echo Packaging build
+  ) 
+if exist "$(SolutionDir)..\$(ProjectName).zip" del "$(SolutionDir)..\$(ProjectName).zip"
+   
+c:\7za\7za a -tzip -r  "$(SolutionDir)..\$(ProjectName).zip" "$(SolutionDir)..\GameData"
+c:\7za\7za d -r "$(SolutionDir)..\$(ProjectName).zip" "*.ddsified" "*.pdb" "*.mdb"
+xcopy /E /Y "$(SolutionDir)..\GameData" "%25KSP_DIR%25\GameData"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
