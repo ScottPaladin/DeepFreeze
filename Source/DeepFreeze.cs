@@ -26,14 +26,18 @@ namespace DF
     [KSPAddon(KSPAddon.Startup.EveryScene, false)]
     internal class DeepFreezeEvnts : MonoBehaviour
     {
+        
+
         public void Start()
         {
-            Debug.Log("Start called");
+            Debug.Log("DeepFreezeEvnts.Start called");
             if (!DeepFreezeEvents.instance.eventAdded)
             {
                 DeepFreezeEvents.instance.DeepFreezeEventAdd();
                 Debug.Log("!DeepFreezeEvents.instance.eventAdded");
             }
+            else
+                Debug.Log("DeepFreezeEvents.instance.eventAdded");
         }
     }
 
@@ -90,6 +94,15 @@ namespace DF
 
         private readonly List<Component> children = new List<Component>();
 
+        private static bool? _SMInstalled = null;
+        public bool SMInstalled
+        {
+            get
+            {
+                return (bool)_SMInstalled;
+            }
+        }
+
         public DeepFreeze()
         {
             Utilities.Log("DeepFreeze", "Constructor");
@@ -98,6 +111,10 @@ namespace DF
 
             globalConfigFilename = System.IO.Path.Combine(_AssemblyFolder, "Config.cfg").Replace("\\", "/");
             this.Log("globalConfigFilename = " + globalConfigFilename);
+
+            _SMInstalled = ShipManifest.SMInterface.IsSMInstalled;
+            if (SMInstalled) Debug.Log("ShipManifest is Installed");
+            else Debug.Log("ShipManifest is NOT Installed");     
         }
 
         public override void OnAwake()

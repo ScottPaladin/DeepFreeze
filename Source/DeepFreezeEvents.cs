@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 namespace DF
 {
@@ -29,39 +30,39 @@ namespace DF
 
         public DeepFreezeEvents()
         {
-            this.Log_Debug("DeepFreezeEvents");
+            Debug.Log("DeepFreezeEvents Constructor");
             eventAdded = false;
         }
 
         public void DeepFreezeEventAdd()
         {
-            this.Log_Debug("DeepFreezeEventAdd");
+            Debug.Log("DeepFreezeEvents DeepFreezeEventAdd");
             GameEvents.OnVesselRecoveryRequested.Add(this.OnVesselRecoveryRequested);
             GameEvents.onVesselRecovered.Add(this.onVesselRecovered);
             GameEvents.onVesselTerminated.Add(this.onVesselTerminated);
             GameEvents.onVesselWillDestroy.Add(this.onVesselWillDestroy);
             eventAdded = true;
-            this.Log_Debug("DeepFreezeEventAdd ended");
+            Debug.Log("DeepFreezeEvents DeepFreezeEventAdd ended");
         }
 
         public void OnVesselRecoveryRequested(Vessel vessel)
         {
-            this.Log_Debug("OnVesselRecoveryRequested");
+            Debug.Log("DeepFreezeEvents OnVesselRecoveryRequested");
             if (vessel.FindPartModulesImplementing<DeepFreezer>().Count > 0)
             {
                 foreach (DeepFreezer freezer in vessel.FindPartModulesImplementing<DeepFreezer>())
                 {
-                    freezer.part.CrewCapacity = freezer.StoredCrew.Count;
-                    foreach (var crewmember in freezer.StoredCrew)
+                    freezer.part.CrewCapacity = freezer.StoredCrewList.Count;
+                    foreach (var crewmember in freezer.StoredCrewList)
                     {
                         foreach (ProtoCrewMember kerbal in HighLogic.CurrentGame.CrewRoster.Crew)
                         {
-                            if (kerbal.name == crewmember)
+                            if (kerbal.name == crewmember.CrewName)
                             {
                                 kerbal.type = ProtoCrewMember.KerbalType.Crew;
                                 kerbal.rosterStatus = ProtoCrewMember.RosterStatus.Assigned;
                                 freezer.part.AddCrewmember(kerbal);
-                                this.Log_Debug("Crew Added" + kerbal.name);
+                                Debug.Log("DeepFreezeEvents Crew Added" + kerbal.name);
                             }
                         }
                     }
@@ -71,20 +72,20 @@ namespace DF
 
         public void onVesselRecovered(ProtoVessel vessel)
         {
-            this.Log_Debug("onVesselRecovered");
+            Debug.Log("DeepFreezeEvents onVesselRecovered");
             List<ProtoPartSnapshot> partList = vessel.protoPartSnapshots;
             foreach (ProtoPartSnapshot a in partList)
             {
-                //this.Log_Debug(a.partName);
+                //Debug.Log(a.partName);
                 List<ProtoPartModuleSnapshot> modules = a.modules;
                 foreach (ProtoPartModuleSnapshot module in modules)
                 {
-                    //this.Log_Debug(module.moduleName);
+                    //Debug.Log(module.moduleName);
                     if (module.moduleName == "DeepFreezer")
                     {
                         ConfigNode node = module.moduleValues;
                         string FrozenCrew = node.GetValue("FrozenCrew");
-                        this.Log_Debug(FrozenCrew);
+                        Debug.Log("FrozenCrew " + FrozenCrew);
                         ThawFrozenCrew(FrozenCrew);
                     }
                 }
@@ -93,7 +94,7 @@ namespace DF
 
         public void onVesselTerminated(ProtoVessel vessel)
         {
-            this.Log_Debug("onVesselTerminated");
+            Debug.Log("DeepFreezeEvents onVesselTerminated");
             List<ProtoPartSnapshot> partList = vessel.protoPartSnapshots;
             foreach (ProtoPartSnapshot a in partList)
             {
@@ -112,7 +113,7 @@ namespace DF
 
         public void onVesselWillDestroy(Vessel vessel)
         {
-            this.Log_Debug("onVesselWillDestroy");
+            Debug.Log("DeepFreezeEvents onVesselWillDestroy");
             ProtoVessel pvessel;
             pvessel = vessel.protoVessel;
             List<ProtoPartSnapshot> partList = pvessel.protoPartSnapshots;
@@ -133,40 +134,47 @@ namespace DF
 
         public void ThawFrozenCrew(String FrozenCrew)
         {
-            this.Log_Debug("ThawFrozenCrew");
-            List<String> StoredCrew = FrozenCrew.Split(',').ToList();
+            Debug.Log("DeepFreezeEvents ThawFrozenCrew");
+            List<String> StoredCrew = FrozenCrew.Split('~').ToList();
             foreach (string frozenkerbal in StoredCrew)
             {
-                this.Log_Debug("frozenkerbal =" + frozenkerbal);
-                foreach (ProtoCrewMember kerbal in HighLogic.CurrentGame.CrewRoster.Crew) //There's probably a more efficient way to find Protocrewmember from the CrewRoster
+                string[] arr = frozenkerbal.Split(',');
+                string crewName = arr[0];                
+                Debug.Log("DeepFreezeEvents frozenkerbal =" + frozenkerbal + " kerbalname =" + crewName);
+                foreach (ProtoCrewMember kerbal in HighLogic.CurrentGame.CrewRoster.Unowned) //There's probably a more efficient way to find Protocrewmember from the CrewRoster
                 {
-                    if (kerbal.name == frozenkerbal)
+                    if (kerbal.name == crewName)
                     {
                         kerbal.type = ProtoCrewMember.KerbalType.Crew;
+                        kerbal.rosterStatus = ProtoCrewMember.RosterStatus.Assigned;
+                        kerbal.ArchiveFlightLog();
                         kerbal.rosterStatus = ProtoCrewMember.RosterStatus.Available;
                         ScreenMessages.PostScreenMessage(kerbal.name + " was found in and thawed out.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                     }
                 }
-            }
+            }            
         }
 
         public void KillFrozenCrew(string FrozenCrew)
         {
-            this.Log_Debug("KillFrozenCrew");
-            List<String> StoredCrew = FrozenCrew.Split(',').ToList();
+            Debug.Log("DeepFreezeEvents KillFrozenCrew");
+            List<String> StoredCrew = FrozenCrew.Split('~').ToList();
             foreach (string frozenkerbal in StoredCrew)
             {
-                foreach (ProtoCrewMember kerbal in HighLogic.CurrentGame.CrewRoster.Crew)
+                string[] arr = frozenkerbal.Split(',');
+                string crewName = arr[0];
+                Debug.Log("DeepFreezeEvents frozenkerbal =" + frozenkerbal + " kerbalname =" + crewName);
+                foreach (ProtoCrewMember kerbal in HighLogic.CurrentGame.CrewRoster.Unowned)
                 {
-                    if (kerbal.name == frozenkerbal)
+                    if (kerbal.name == crewName)
                     {
-                        this.Log_Debug(kerbal.name + " killed");
+                        Debug.Log("DeepFreezeEvents" + kerbal.name + " killed");
                         kerbal.type = ProtoCrewMember.KerbalType.Crew;
                         kerbal.rosterStatus = ProtoCrewMember.RosterStatus.Dead;
                         if (HighLogic.CurrentGame.Parameters.Difficulty.MissingCrewsRespawn == true)
                         {
                             kerbal.StartRespawnPeriod();
-                            this.Log_Debug(kerbal.name + " respawn started.");
+                            Debug.Log("DeepFreezeEvents" + kerbal.name + " respawn started.");
                         }
                     }
                 }

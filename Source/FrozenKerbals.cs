@@ -74,8 +74,14 @@ namespace DF
             if (ApplicationLauncher.Ready)
             {
                 this.Log_Debug("Adding AppLauncherButton");
-                this.stockToolbarButton = ApplicationLauncher.Instance.AddModApplication(onAppLaunchToggleOn, onAppLaunchToggleOff, DummyVoid,
-                                          DummyVoid, DummyVoid, DummyVoid, ApplicationLauncher.AppScenes.SPACECENTER | ApplicationLauncher.AppScenes.FLIGHT |
+                this.stockToolbarButton = ApplicationLauncher.Instance.AddModApplication(
+                    onAppLaunchToggle, 
+                    onAppLaunchToggle, 
+                    DummyVoid,
+                    DummyVoid, 
+                    DummyVoid, 
+                    DummyVoid, 
+                    ApplicationLauncher.AppScenes.SPACECENTER | ApplicationLauncher.AppScenes.FLIGHT |
                                           ApplicationLauncher.AppScenes.MAPVIEW | ApplicationLauncher.AppScenes.SPH | ApplicationLauncher.AppScenes.VAB |
                                           ApplicationLauncher.AppScenes.TRACKSTATION,
                                           (Texture)GameDatabase.Instance.GetTexture("PaladinLabs/DeepFreeze/Icons/DeepFreezeOff", false));
@@ -86,16 +92,10 @@ namespace DF
         {
         }
 
-        private void onAppLaunchToggleOn()
+        private void onAppLaunchToggle()
         {
-            this.stockToolbarButton.SetTexture((Texture)GameDatabase.Instance.GetTexture("PaladinLabs/DeepFreeze/Icons/DeepFreezeOn", false));
-            GuiVisible = true;
-        }
-
-        private void onAppLaunchToggleOff()
-        {
-            this.stockToolbarButton.SetTexture((Texture)GameDatabase.Instance.GetTexture("PaladinLabs/DeepFreeze/Icons/DeepFreezeOff", false));
-            GuiVisible = false;
+            GuiVisible = !GuiVisible;
+            this.stockToolbarButton.SetTexture((Texture)GameDatabase.Instance.GetTexture(GuiVisible ? "PaladinLabs/DeepFreeze/Icons/DeepFreezeOn" : "PaladinLabs/DeepFreeze/Icons/DeepFreezeOff", false));            
         }
 
         #endregion AppLauncher
@@ -184,6 +184,14 @@ namespace DF
                 DpFrzrActVsl = FlightGlobals.ActiveVessel.FindPartModulesImplementing<DeepFreezer>().First();
             }
 
+            GUIContent label = new GUIContent("X", "Close Window");
+            Rect rect = new Rect(280, 4, 16, 16);
+            if (GUI.Button(rect, label))
+            {
+                onAppLaunchToggle();
+                return;
+            }
+
             GUILayout.BeginVertical();
             if (HighLogic.CurrentGame.CrewRoster.Unowned.Count() == 0)
             {
@@ -200,12 +208,25 @@ namespace DF
                     if (HighLogic.LoadedScene == GameScenes.FLIGHT && DpFrzrActVsl != null)
                     //if in flight and active vessel has a Freezer part check if kerbal is part of this vessel and add a Thaw button to the GUI
                     {
-                        if (DpFrzrActVsl.StoredCrew.FirstOrDefault(a => a == kerbal.name) != null)
+                        if (DpFrzrActVsl.StoredCrewList.FirstOrDefault(a => a.CrewName == kerbal.name) != null)
                         {
-                            if (GUILayout.Button("Thaw", GUILayout.Width(50f)))
+                            if (DpFrzrActVsl.crewXferFROMActive || DpFrzrActVsl.crewXferTOActive || (DeepFreeze.Instance.SMInstalled && DpFrzrActVsl.IsSMXferRunning())
+                                || DpFrzrActVsl.IsFreezeActive || DpFrzrActVsl.IsThawActive)
+                            {
+                                GUI.enabled = false;   
+                            }
+                            if (GUILayout.Button(new GUIContent("Thaw", "Thaw this Kerbal"), GUILayout.Width(50f)))
                             {
                                 DpFrzrActVsl.beginThawKerbal(kerbal.name);
                             }
+                            GUI.enabled = true;
+                        }
+                    }
+                    if (HighLogic.LoadedScene == GameScenes.SPACECENTER)
+                    {
+                        if (GUILayout.Button(new GUIContent("Thaw", "Thaw this Kerbal"), GUILayout.Width(50f)))
+                        {
+                            DeepFreezeEvents.instance.ThawFrozenCrew(kerbal.name);
                         }
                     }
                     GUILayout.EndHorizontal();
@@ -219,13 +240,16 @@ namespace DF
                 {
                     GUILayout.BeginHorizontal();
                     GUILayout.Label(crewMember.name + " - " + crewMember.experienceTrait.Title, statusStyle);
-                    if (!DpFrzrActVsl.crewXferActive || (DpFrzrActVsl.crewXferActive && DpFrzrActVsl.xfercrew != crewMember))
+                    if (DpFrzrActVsl.crewXferFROMActive || DpFrzrActVsl.crewXferTOActive || (DeepFreeze.Instance.SMInstalled && DpFrzrActVsl.IsSMXferRunning()) 
+                        || DpFrzrActVsl.IsFreezeActive || DpFrzrActVsl.IsThawActive)
                     {
-                        if (GUILayout.Button("Freeze", GUILayout.Width(50f)))
-                        {
-                            DpFrzrActVsl.beginFreezeKerbal(crewMember);
-                        }
+                        GUI.enabled = false;    
                     }
+                    if (GUILayout.Button(new GUIContent("Freeze", "Freeze this Kerbal"), GUILayout.Width(50f)))
+                    {
+                        DpFrzrActVsl.beginFreezeKerbal(crewMember);
+                    }
+                    GUI.enabled = true;
                     GUILayout.EndHorizontal();
                 }
             }
