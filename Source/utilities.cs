@@ -104,6 +104,31 @@ namespace DF
             }
         }
 
+        public static string GetNodeValue(ConfigNode confignode, string fieldname, string defaultValue)
+        {
+            if (confignode.HasValue(fieldname))
+            {
+                return confignode.GetValue(fieldname);
+            }
+            else
+            {
+                return defaultValue;
+            }
+        }
+
+        public static T GetNodeValue<T>(ConfigNode confignode, string fieldname, T defaultValue) where T : IComparable, IFormattable, IConvertible
+        {
+            if (confignode.HasValue(fieldname))
+            {
+                string stringValue = confignode.GetValue(fieldname);
+                if (Enum.IsDefined(typeof(T), stringValue))
+                {
+                    return (T)Enum.Parse(typeof(T), stringValue);
+                }
+            }
+            return defaultValue;
+        }
+
         // Logging Functions
         // Name of the Assembly that is running this MonoBehaviour
         internal static String _AssemblyName

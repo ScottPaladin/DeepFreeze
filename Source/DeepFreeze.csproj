@@ -54,10 +54,14 @@
     <Compile Include="DeepFreeze.cs" />
     <Compile Include="DeepFreezerPart.cs" />
     <Compile Include="DFSettings.cs" />
+    <Compile Include="FrozenCrewClasses.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="FrozenKerbals.cs" />
     <Compile Include="ToolBarManager.cs" />
     <Compile Include="utilities.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ksp_dir.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

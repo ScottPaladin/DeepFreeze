@@ -47,6 +47,14 @@ namespace DF
         [KSPField(isPersistant = true, guiActive = true, guiName = "Freezer Space")] //Total space available for storage. Set by Part.cfg file.
         public int FreezerSpace;
 
+        /*
+        [KSPEvent(active = true, guiActive = true, guiName = "Toggle Menu")]
+        public void showmenu()
+        {
+            
+        }
+        */
+
         [KSPField(isPersistant = true)]
         public bool IsCrewableWhenFull; //Set by part.cfg. Intended to set whether a kerbal can enter the part when the frozen storage is filled up. Especially important for the single kerbal part.
 
@@ -72,73 +80,8 @@ namespace DF
         public Int32 ChargeRate; //Set by part.cfg. EC draw per tick.
 
         private ProtoCrewMember ActiveKerbal;
-        private string ToThawKerbal;
-         
-        public class FrznCrewMbr
-        {
-            public string CrewName { get; set; }
-            public int Seat { get; set; }
-
-            public FrznCrewMbr(string crewName, int seat)
-            {
-                
-                this.CrewName = crewName;
-                this.Seat = seat;                
-            }
-
-        }
-        public class FrznCrewList : List<FrznCrewMbr>
-        {
-            
-            public string Serialize()
-            {
-                string tmpstring = "";
-                Utilities.Log_Debug("Freezer", "Serialize # of crew =" + this.Count());
-                foreach (FrznCrewMbr crew in this)
-                {
-                    tmpstring += crew.CrewName + "," + crew.Seat.ToString() + "~";
-                    Utilities.Log_Debug("Freezer", "Serialized string = " + tmpstring);
-                }
-                return tmpstring;
-            }
-
-            public void Deserialize(string str)
-            {
-                Utilities.Log_Debug("Freezer", "DeSerialize on load");
-                this.Clear();
-                List<string> spltcrew = new List<string>();                   
-                spltcrew = str.Split('~').ToList();
-                foreach (string strcrew in spltcrew)
-                {
-                    if (strcrew.Length > 0)
-                    {
-                        string[] arr = strcrew.Split(',');
-                        string crewName = arr[0];
-                        string strseat = arr[1];
-                        int seat = 0;
-                        bool prse = int.TryParse(strseat, out seat);
-
-                        FrznCrewMbr newcrew = new FrznCrewMbr(crewName, seat);                        
-                        this.Add(newcrew);
-                        Utilities.Log_Debug("Freezer", "Added crew =" + crewName + " seat=" + seat);
-                    }                    
-                }
-                this.DmpStCrwLst();
-                Utilities.Log_Debug("Freezer", "DeSerialize completed");
-            }
-
-            public void DmpStCrwLst()
-            {
-                Utilities.Log_Debug("Freezer", "DmpStCrwLst");
-                if (this.Count() == 0)
-                    Utilities.Log_Debug("Freezer", "List empty");
-                foreach (FrznCrewMbr lst in this)
-                {
-                    Utilities.Log_Debug("Freezer", "Name = " + lst.CrewName + " Seat= " + lst.Seat);
-                }
-            }
-
-        }
+        private string ToThawKerbal;        
+        
         public FrznCrewList StoredCrewList = new FrznCrewList();
 
         protected AudioSource hatch_lock;
@@ -156,11 +99,11 @@ namespace DF
                 //This whole next section is pointless, and just debugging messages helping me develop the Mod.
                 if (this.part.internalModel == null)
                 {
-                    Utilities.Log_Debug("Freezer", "Part has no internal model");
+                    Utilities.Log_Debug("DeepFreezer", "Part has no internal model");
                 }
                 else
                 {                    
-                    Utilities.Log_Debug("Freezer", "Part has " + this.part.internalModel.seats.Count + " seats");
+                    Utilities.Log_Debug("DeepFreezer", "Part has " + this.part.internalModel.seats.Count + " seats");
                     foreach (InternalSeat seat in this.part.internalModel.seats)
                     {
                         string logmsg = "SeatXformName=" + seat.seatTransformName + " Taken?= " + seat.taken;
@@ -176,10 +119,10 @@ namespace DF
                         }
                         else
                             logmsg += " Crew=null";                            
-                        Utilities.Log_Debug("Freezer", logmsg);
+                        Utilities.Log_Debug("DeepFreezer", logmsg);
                     }
-                    Utilities.Log_Debug("Freezer", "Available Seat count =" + this.part.internalModel.GetAvailableSeatCount());
-                    //Utilities.Log_Debug("Freezer", "Next Available Seat=" + this.part.internalModel.GetNextAvailableSeat().seatTransformName + " indx =" + this.part.internalModel.GetNextAvailableSeatIndex());
+                    Utilities.Log_Debug("DeepFreezer", "Available Seat count =" + this.part.internalModel.GetAvailableSeatCount());
+                    //Utilities.Log_Debug("DeepFreezer", "Next Available Seat=" + this.part.internalModel.GetNextAvailableSeat().seatTransformName + " indx =" + this.part.internalModel.GetNextAvailableSeatIndex());
 
                     
                 }
@@ -389,7 +332,7 @@ namespace DF
                 ProtoCrewMember crewfered = xfertoPart.protoModuleCrew.FirstOrDefault(a => a.name == xfercrew.name);
                 if (crewfered != null)
                 {
-                    Utilities.Log_Debug("Freezer", "CrewXferFROM Completed");                    
+                    Utilities.Log_Debug("DeepFreezer", "CrewXferFROM Completed");                    
                     removeFreezeEvent(xfercrew);
                     crewXferFROMActive = false;
                 }
@@ -402,7 +345,7 @@ namespace DF
                 ProtoCrewMember crewfered = xfertoPart.protoModuleCrew.FirstOrDefault(a => a.name == xfercrew.name);
                 if (crewfered != null)
                 {
-                    Utilities.Log_Debug("Freezer", "CrewXferTO Completed");                                       
+                    Utilities.Log_Debug("DeepFreezer", "CrewXferTO Completed");                                       
                     crewXferTOActive = false;
                 }
             }
@@ -564,7 +507,7 @@ namespace DF
                              
         public void FreezeKerbal(ProtoCrewMember CrewMember)
         {
-            Utilities.Log_Debug("Freezer", "Freeze kerbal called");            
+            Utilities.Log_Debug("DeepFreezer", "Freeze kerbal called");            
             int seat = CrewMember.seatIdx;
             part.RemoveCrewmember(CrewMember);  // remove the CrewMember from the part, because they are frozen, and this is the only way to trick the game.
             part.internalModel.seats[seat].taken = true; // Set their seat to Taken, because they are really still there. :)
@@ -572,8 +515,8 @@ namespace DF
             ActiveKerbal.seatIdx = seat; // Set their seat
             IsFreezeActive = true; // Set the Freezer actively freezing mode on
             ScreenMessages.PostScreenMessage("Starting Freeze", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-            Utilities.Log_Debug("Freezer", "FrozenCrew =" + FrozenCrew);
-            Utilities.Log_Debug("Freezer", "ActiveKerbal = " + ActiveKerbal.name + " Seat =" + ActiveKerbal.seatIdx);
+            Utilities.Log_Debug("DeepFreezer", "FrozenCrew =" + FrozenCrew);
+            Utilities.Log_Debug("DeepFreezer", "ActiveKerbal = " + ActiveKerbal.name + " Seat =" + ActiveKerbal.seatIdx);
             UpdateCounts();  // Update the Crew counts
             // Start sound effects
             hatch_lock.Play();
@@ -710,10 +653,10 @@ namespace DF
         // this is called when a crew transfer is STARTED. For catching stock Xfers. Because Ship Manifest Xfers will avoid these scenarios.
         private void OnCrewTransferred(GameEvents.HostedFromToAction<ProtoCrewMember, Part> fromToAction)  
         {
-            Utilities.Log_Debug("Freezer","OnCrewTransferred Fired From: " + fromToAction.from.name + " To: " + fromToAction.to.name + " Host: " + fromToAction.host.name);
+            Utilities.Log_Debug("DeepFreezer","OnCrewTransferred Fired From: " + fromToAction.from.name + " To: " + fromToAction.to.name + " Host: " + fromToAction.host.name);
             if (fromToAction.from == this.part)  // if the Xfer is FROM this part
             {
-                Utilities.Log_Debug("Freezer", "crewXferFROMActive");
+                Utilities.Log_Debug("DeepFreezer", "crewXferFROMActive");
                 removeFreezeEvent(fromToAction.host);  // Remove the Freeze Event for the crewMember leaving the part
                 crewXferFROMActive = true;  // Set a flag to know a Xfer has started and we check when it is finished in 
                 xferfromPart = fromToAction.from;
@@ -722,7 +665,7 @@ namespace DF
             }
             if (fromToAction.to == this.part)  // if the Xfer is TO this part
             {
-                Utilities.Log_Debug("Freezer", "crewXferTOActive");
+                Utilities.Log_Debug("DeepFreezer", "crewXferTOActive");
                 crewXferTOActive = true; // Set a flag to know a Xfer has started and we check when it is finished in 
                 xferfromPart = fromToAction.from;
                 xfertoPart = fromToAction.to;
@@ -734,15 +677,15 @@ namespace DF
         // Better to be safe than sorry.
         private void onCrewBoardVessel(GameEvents.FromToAction<Part, Part> action)
         {
-            Utilities.Log_Debug("Freezer", " onCrewBoardVessel " + action.to.vessel.name + " (" + action.to.vessel.id + ") Old " + action.from.vessel.name + " (" + action.from.vessel.id + ")");
-            Utilities.Log_Debug("Freezer", "AYController active vessel " + FlightGlobals.ActiveVessel.id);
-            Utilities.Log_Debug("Freezer", "ToPart = " + action.to.partName);
-            Utilities.Log_Debug("Freezer", "FromPart = " + action.from.partName);
+            Utilities.Log_Debug("DeepFreezer", " onCrewBoardVessel " + action.to.vessel.name + " (" + action.to.vessel.id + ") Old " + action.from.vessel.name + " (" + action.from.vessel.id + ")");
+            Utilities.Log_Debug("DeepFreezer", "AYController active vessel " + FlightGlobals.ActiveVessel.id);
+            Utilities.Log_Debug("DeepFreezer", "ToPart = " + action.to.partName);
+            Utilities.Log_Debug("DeepFreezer", "FromPart = " + action.from.partName);
             if (action.to == this.part)
             {
                 if (this.part.internalModel.GetAvailableSeatCount() == 0)  // If there is no free seats for this Kerbal we kick them back out. this Should NEVER HAPPEN.
                 {
-                    Utilities.Log_Debug("Freezer", "NoAvailableSeat Must Revert");
+                    Utilities.Log_Debug("DeepFreezer", "NoAvailableSeat Must Revert");
                     FlightEVA.fetch.spawnEVA(action.from.vessel.GetVesselCrew()[0], action.to, action.to.airlock);
                 }
             }            

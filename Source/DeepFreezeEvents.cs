@@ -26,7 +26,8 @@ namespace DF
     internal class DeepFreezeEvents
     {
         public static DeepFreezeEvents instance = new DeepFreezeEvents();
-        public bool eventAdded;
+        public bool eventAdded;        
+        private const float costToThawKerbal = 10000f;
 
         public DeepFreezeEvents()
         {
@@ -37,7 +38,7 @@ namespace DF
         public void DeepFreezeEventAdd()
         {
             Debug.Log("DeepFreezeEvents DeepFreezeEventAdd");
-            GameEvents.OnVesselRecoveryRequested.Add(this.OnVesselRecoveryRequested);
+            //GameEvents.OnVesselRecoveryRequested.Add(this.OnVesselRecoveryRequested);
             GameEvents.onVesselRecovered.Add(this.onVesselRecovered);
             GameEvents.onVesselTerminated.Add(this.onVesselTerminated);
             GameEvents.onVesselWillDestroy.Add(this.onVesselWillDestroy);
@@ -48,7 +49,7 @@ namespace DF
         public void OnVesselRecoveryRequested(Vessel vessel)
         {
             Debug.Log("DeepFreezeEvents OnVesselRecoveryRequested");
-            if (vessel.FindPartModulesImplementing<DeepFreezer>().Count > 0)
+            if (vessel.FindPartModulesImplementing<DeepFreezer>().Count > 0 && DeepFreeze.Instance.DFsettings.AutoRecoverFznKerbals)
             {
                 foreach (DeepFreezer freezer in vessel.FindPartModulesImplementing<DeepFreezer>())
                 {
@@ -73,6 +74,7 @@ namespace DF
         public void onVesselRecovered(ProtoVessel vessel)
         {
             Debug.Log("DeepFreezeEvents onVesselRecovered");
+            this.Log_Debug("AutoRecover is ON");
             List<ProtoPartSnapshot> partList = vessel.protoPartSnapshots;
             foreach (ProtoPartSnapshot a in partList)
             {
@@ -85,11 +87,36 @@ namespace DF
                     {
                         ConfigNode node = module.moduleValues;
                         string FrozenCrew = node.GetValue("FrozenCrew");
-                        Debug.Log("FrozenCrew " + FrozenCrew);
-                        ThawFrozenCrew(FrozenCrew);
+                          
+                        if (DeepFreeze.Instance.DFsettings.AutoRecoverFznKerbals)
+                        {
+                            Debug.Log("Calling ThawFrozen Crew to thaw FrozenCrew " + FrozenCrew);
+                            ThawFrozenCrew(FrozenCrew);
+                        }
+                        else
+                        {
+                            Debug.Log("DeepFreeze AutoRecovery of frozen kerbals is set to off. Must be thawed manually.");
+                            // Reset frozen crew status.
+                            List<String> StoredCrew = FrozenCrew.Split('~').ToList();
+                            foreach (string frozenkerbal in StoredCrew)
+                            {
+                                string[] arr = frozenkerbal.Split(',');
+                                string crewName = arr[0];
+                                Debug.Log("DeepFreezeEvents frozenkerbal =" + frozenkerbal + " kerbalname =" + crewName);
+                                ProtoCrewMember kerbal = HighLogic.CurrentGame.CrewRoster.Unowned.FirstOrDefault(b => b.name == crewName);
+                                if (kerbal != null)
+                                {
+                                    kerbal.type = ProtoCrewMember.KerbalType.Unowned;
+                                    kerbal.rosterStatus = ProtoCrewMember.RosterStatus.Missing;
+                                    this.Log_Debug("Kerbal " + kerbal.name + " " + kerbal.type + " " + kerbal.rosterStatus);
+                                    ScreenMessages.PostScreenMessage(kerbal.name + " was stored frozen at KSC.", 5.0f, ScreenMessageStyle.UPPER_CENTER); 
+                                }                                   
+                            }
+                                    
+                        }
                     }
                 }
-            }
+            }                                  
         }
 
         public void onVesselTerminated(ProtoVessel vessel)
@@ -141,19 +168,36 @@ namespace DF
                 string[] arr = frozenkerbal.Split(',');
                 string crewName = arr[0];                
                 Debug.Log("DeepFreezeEvents frozenkerbal =" + frozenkerbal + " kerbalname =" + crewName);
-                foreach (ProtoCrewMember kerbal in HighLogic.CurrentGame.CrewRoster.Unowned) //There's probably a more efficient way to find Protocrewmember from the CrewRoster
+                ProtoCrewMember kerbal = HighLogic.CurrentGame.CrewRoster.Unowned.FirstOrDefault(a => a.name == crewName);
+                if (kerbal != null)
                 {
-                    if (kerbal.name == crewName)
+
+                    if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER)
                     {
-                        kerbal.type = ProtoCrewMember.KerbalType.Crew;
-                        kerbal.rosterStatus = ProtoCrewMember.RosterStatus.Assigned;
-                        kerbal.ArchiveFlightLog();
-                        kerbal.rosterStatus = ProtoCrewMember.RosterStatus.Available;
-                        ScreenMessages.PostScreenMessage(kerbal.name + " was found in and thawed out.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                        if (Funding.CanAfford(costToThawKerbal))
+                        {
+                            Funding.Instance.AddFunds(-costToThawKerbal, TransactionReasons.Vessels);
+                            this.Log_Debug("Took funds to thaw kerbal");
+                        }
+                        else
+                        {
+                            this.Log_Debug("Not enough funds to thaw kerbal");
+                            ScreenMessages.PostScreenMessage("Insufficient funds to thaw " + kerbal.name + " at this time.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                            return;
+                        }
                     }
-                }
+                    kerbal.type = ProtoCrewMember.KerbalType.Crew;
+                    kerbal.rosterStatus = ProtoCrewMember.RosterStatus.Assigned;
+                    this.Log_Debug("Kerbal " + kerbal.name + " " + kerbal.type + " " + kerbal.rosterStatus);
+                    kerbal.ArchiveFlightLog();
+                    kerbal.rosterStatus = ProtoCrewMember.RosterStatus.Available;
+                    this.Log_Debug("Kerbal " + kerbal.name + " " + kerbal.type + " " + kerbal.rosterStatus);
+                    ScreenMessages.PostScreenMessage(kerbal.name + " was found and thawed out.", 5.0f, ScreenMessageStyle.UPPER_CENTER);                                                               
+                }                
             }            
         }
+
+        
 
         public void KillFrozenCrew(string FrozenCrew)
         {

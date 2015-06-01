@@ -22,14 +22,11 @@ namespace DF
         private const string configNodeName = "DFSettings";
 
         public float DFwindowPosX { get; set; }
-
         public float DFwindowPosY { get; set; }
-
         public bool UseAppLauncher { get; set; }
-
         public bool debugging { get; set; }
-
         public bool ECreqdForFreezer { get; set; }
+        public bool AutoRecoverFznKerbals { get; set; }
 
         public DFSettings()
         {
@@ -38,6 +35,7 @@ namespace DF
             UseAppLauncher = true;
             debugging = true;
             ECreqdForFreezer = true;
+            AutoRecoverFznKerbals = true;
         }
 
         //Settings Functions Follow
@@ -53,6 +51,7 @@ namespace DF
                 ECreqdForFreezer = Utilities.GetNodeValue(DFsettingsNode, "ECreqdForFreezer", ECreqdForFreezer);
                 UseAppLauncher = Utilities.GetNodeValue(DFsettingsNode, "UseAppLauncher", UseAppLauncher);
                 debugging = Utilities.GetNodeValue(DFsettingsNode, "debugging", debugging);
+                AutoRecoverFznKerbals = Utilities.GetNodeValue(DFsettingsNode, "AutoRecoverFznKerbals", AutoRecoverFznKerbals);
                 this.Log_Debug("DFSettings load complete");
             }
         }
@@ -75,6 +74,7 @@ namespace DF
             settingsNode.AddValue("ECreqdForFreezer", ECreqdForFreezer);
             settingsNode.AddValue("UseAppLauncher", UseAppLauncher);
             settingsNode.AddValue("debugging", debugging);
+            settingsNode.AddValue("AutoRecoverFznKerbals", AutoRecoverFznKerbals);
             this.Log_Debug("DFSettings save complete");
         }
     }

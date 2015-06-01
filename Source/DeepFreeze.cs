@@ -84,8 +84,7 @@ namespace DF
     public class DeepFreeze : ScenarioModule
     {
         public static DeepFreeze Instance { get; private set; }
-
-        public DFSettings DFsettings { get; private set; }
+        public DFSettings DFsettings { get; private set; }        
 
         private readonly string globalConfigFilename;
 
@@ -107,7 +106,7 @@ namespace DF
         {
             Utilities.Log("DeepFreeze", "Constructor");
             Instance = this;
-            DFsettings = new DFSettings();
+            DFsettings = new DFSettings();            
 
             globalConfigFilename = System.IO.Path.Combine(_AssemblyFolder, "Config.cfg").Replace("\\", "/");
             this.Log("globalConfigFilename = " + globalConfigFilename);
@@ -150,7 +149,7 @@ namespace DF
 
         public override void OnLoad(ConfigNode gameNode)
         {
-            base.OnLoad(gameNode);
+            base.OnLoad(gameNode);            
 
             // Load the global settings
             if (System.IO.File.Exists(globalConfigFilename))
@@ -168,7 +167,7 @@ namespace DF
 
         public override void OnSave(ConfigNode gameNode)
         {
-            base.OnSave(gameNode);
+            base.OnSave(gameNode);            
             foreach (Savable s in children.Where(c => c is Savable))
             {
                 this.Log("DeepFreeze Child Save Call for " + s.ToString());
