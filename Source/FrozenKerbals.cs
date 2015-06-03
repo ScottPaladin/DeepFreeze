@@ -34,11 +34,7 @@ namespace DF
         private const float WINDOW_BASE_HEIGHT = 140;
         public Rect DFwindowPos = new Rect(40, Screen.height / 2 - 100, DFWINDOW_WIDTH, 200);
         private static int windowID = new System.Random().Next();
-        private GUIStyle statusStyle, sectionTitleStyle;
-        private Rect WarnWinPos = new Rect(Screen.width / 2 - 250, Screen.height / 4, 500, 150);
-        private static int WwindowID = new System.Random().Next();
-        private bool ThawOK = false;
-        public static Guid currentvesselid;
+        private GUIStyle statusStyle, sectionTitleStyle;               
 
         //GuiVisibility
         private bool _Visible = false;
@@ -62,13 +58,15 @@ namespace DF
 
         //DeepFreeze Savable settings
         private DFSettings DFsettings;
+        private DFGameSettings DFgameSettings;
         public bool Useapplauncher = false;
         public bool FreezeAll = false;
         public bool ThawAll = false;        
 
        internal void Awake()
         {
-            DFsettings = DeepFreeze.Instance.DFsettings;            
+            DFsettings = DeepFreeze.Instance.DFsettings;
+            DFgameSettings = DeepFreeze.Instance.DFgameSettings;
         }
 
         #region AppLauncher
@@ -146,7 +144,44 @@ namespace DF
                 }
                 else
                     GameEvents.onGUIApplicationLauncherReady.Add(OnGUIAppLauncherReady);
-            }                                
+            }
+
+            // Check the roster list for any unknown dead kerbals (IE: Frozen) that were not in the save file and add them.
+            List<ProtoCrewMember> unknownkerbals = HighLogic.CurrentGame.CrewRoster.Unowned.ToList();
+            if (unknownkerbals != null)
+            {
+                this.Log("DeepFreeze have unknownKerbals " + unknownkerbals.Count());
+                foreach (ProtoCrewMember CrewMember in unknownkerbals)
+                {
+                    if (CrewMember.rosterStatus == ProtoCrewMember.RosterStatus.Dead)
+                    {
+                        this.Log("DeepFreeze we have dead unknown kerbals in roster");
+                        if (!DFgameSettings.KnownFrozenKerbals.ContainsKey(CrewMember.name))
+                        {
+                            this.Log("DeepFreeze and they aren't in the dictionary so add them");
+                            // Update the saved frozen kerbals dictionary
+                            KerbalInfo kerbalInfo = new KerbalInfo(Planetarium.GetUniversalTime());                            
+                            kerbalInfo.vesselID = Guid.Empty;                            
+                            kerbalInfo.type = CrewMember.type;                            
+                            kerbalInfo.status = CrewMember.rosterStatus;                            
+                            //kerbalInfo.seatName = "Unknown";                            
+                            kerbalInfo.seatIdx = 0;                            
+                            kerbalInfo.partID = 0;                            
+                            kerbalInfo.experienceTraitName = CrewMember.experienceTrait.Title;                            
+                            try
+                            {
+                                DFgameSettings.KnownFrozenKerbals.Add(CrewMember.name, kerbalInfo);
+                            }
+                            catch (Exception ex)
+                            {
+                                this.Log("Add failed " + ex);
+                            }
+                            
+                        }
+                    }
+                }
+            }
+            DFgameSettings.DmpKnownFznKerbals();     
         }
 
         internal void Update()
@@ -155,7 +190,7 @@ namespace DF
             if (HighLogic.LoadedScene == GameScenes.FLIGHT)
             {
                 //chk if current active vessel Has a DeepFreezer attached
-                this.Log_Debug("Check for Freezer part on active vessel");
+                //this.Log_Debug("Check for Freezer part on active vessel");
                 if (FlightGlobals.ActiveVessel.FindPartModulesImplementing<DeepFreezer>().Count() == 0)
                 {
                     ActVslHasDpFrezr = false;
@@ -170,6 +205,7 @@ namespace DF
             
         }
 
+        #region GUI
         private void onDraw()
         {
             if (!GuiVisible) return;
@@ -209,7 +245,7 @@ namespace DF
             }
 
             GUILayout.BeginVertical();
-            if (HighLogic.CurrentGame.CrewRoster.Unowned.Count() == 0)
+            if (DFgameSettings.KnownFrozenKerbals.Count == 0)
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Label("There are currently no Frozen Kerbals", statusStyle);
@@ -217,18 +253,18 @@ namespace DF
             }
             else
             {
-                foreach (ProtoCrewMember kerbal in HighLogic.CurrentGame.CrewRoster.Unowned)
-                {
-                    if (kerbal.rosterStatus == ProtoCrewMember.RosterStatus.Missing)
-                    {
-                        GUILayout.BeginHorizontal();
-                        GUILayout.Label(kerbal.name + " - " + kerbal.experienceTrait.Title, statusStyle);
+
+                List<KeyValuePair<string, KerbalInfo>> ThawKeysToDelete = new List<KeyValuePair<string, KerbalInfo>>();
+                foreach (KeyValuePair<string, KerbalInfo> kerbal in DFgameSettings.KnownFrozenKerbals)                
+                {                    
+                        GUILayout.BeginHorizontal();                        
+                        GUILayout.Label(kerbal.Key + " - " + kerbal.Value.experienceTraitName, statusStyle);
                         if (HighLogic.LoadedScene == GameScenes.FLIGHT && ActVslHasDpFrezr)
                         //if in flight and active vessel has a Freezer part check if kerbal is part of this vessel and add a Thaw button to the GUI
                         {
                             foreach (DeepFreezer frzr in DpFrzrActVsl)
-                            {
-                                if (frzr.StoredCrewList.FirstOrDefault(a => a.CrewName == kerbal.name) != null)
+                            {                                
+                                if (frzr.StoredCrewList.FirstOrDefault(a => a.CrewName == kerbal.Key) != null)
                                 {
                                     if (frzr.crewXferFROMActive || frzr.crewXferTOActive || (DeepFreeze.Instance.SMInstalled && frzr.IsSMXferRunning())
                                         || frzr.IsFreezeActive || frzr.IsThawActive)
@@ -236,8 +272,8 @@ namespace DF
                                         GUI.enabled = false;
                                     }
                                     if (GUILayout.Button(new GUIContent("Thaw", "Thaw this Kerbal"), GUILayout.Width(50f)))
-                                    {
-                                        frzr.beginThawKerbal(kerbal.name);
+                                    {                                        
+                                        frzr.beginThawKerbal(kerbal.Key);
                                     }
                                     GUI.enabled = true;
                                 }
@@ -247,20 +283,26 @@ namespace DF
                         {
                             if (GUILayout.Button(new GUIContent("Thaw", "Thaw this Kerbal"), GUILayout.Width(50f)))
                             {
-                                //**** We need to check kerbal isn't in a vessel still out there somewhere....
-
-
-                                WarnWinPos = GUILayout.Window(WwindowID, WarnWinPos, stopAndWarn, "Thawing Kerbals", GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
-                                if (ThawOK)
+                                // We need to check kerbal isn't in a vessel still out there somewhere....
+                                Vessel vessel = FlightGlobals.Vessels.Find(v => v.id == kerbal.Value.vesselID);
+                                if (vessel != null)
                                 {
-                                    this.Log_Debug("OK clicked, going to Thaw Kerbal " + kerbal.name);
-                                    DeepFreezeEvents.instance.ThawFrozenCrew(kerbal.name);
-                                    ThawOK = false;
+                                    this.Log_Debug("Cannot thaw, vessel still exists " + vessel.situation.ToString() + " at " + vessel.mainBody.bodyName);
+                                    ScreenMessages.PostScreenMessage("Cannot thaw " + kerbal.Key + " vessel still exists " + vessel.situation.ToString() + " at " + vessel.mainBody.bodyName, 5.0f, ScreenMessageStyle.UPPER_CENTER); 
                                 }
+                                else
+                                {                                   
+                                    //DeepFreeze.Instance.ThawFrozenCrew(kerbal.Key, kerbal.Value.vesselID); 
+                                    ThawKeysToDelete.Add(new KeyValuePair<string, KerbalInfo>(kerbal.Key, kerbal.Value));                                     
+                                }                                
                             }
                         }
                         GUILayout.EndHorizontal();
-                    }                                           
+                    //}                                           
+                }
+                foreach (KeyValuePair<string, KerbalInfo> entries in ThawKeysToDelete)
+                {
+                    DeepFreeze.Instance.ThawFrozenCrew(entries.Key, entries.Value.vesselID);
                 }
             }
 
@@ -296,34 +338,8 @@ namespace DF
             }
         }
 
-        private void stopAndWarn(int id)
-        {
-            GUIStyle WarnStyle = new GUIStyle(GUI.skin.label);
-            WarnStyle.fontStyle = FontStyle.Bold;
-            WarnStyle.alignment = TextAnchor.UpperLeft;
-            WarnStyle.normal.textColor = Color.white;
-
-            GUILayout.BeginVertical();
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("Thawing Kerbals from the SpaceCenter costs $10000 each kerbal.", WarnStyle);
-            GUILayout.EndHorizontal();
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("You can Thaw them at any other time. Press OK to proceed.", WarnStyle);
-            GUILayout.EndHorizontal();
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("OK"))
-            {
-                this.Log_Debug("Pressed OK");
-                ThawOK = true;
-            }
-            if (GUILayout.Button("Cancel"))
-            {
-                this.Log_Debug("Pressed Cancel");
-                ThawOK = false;
-            }
-            GUILayout.EndHorizontal();
-            GUILayout.EndVertical();
-        }
+        
+        #endregion GUI
 
         #region Savable
 

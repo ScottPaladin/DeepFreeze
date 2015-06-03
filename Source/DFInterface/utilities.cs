@@ -116,18 +116,17 @@ namespace DF
             }
         }
 
-        public static Guid GetNodeValue(ConfigNode confignode, string fieldname)
+        public static Guid GetNodeValue(ConfigNode confignode, string fieldname, Guid defaultValue)
         {
             if (confignode.HasValue(fieldname))
             {
                 confignode.GetValue(fieldname);
-                Log_Debug("getnodguid ", fieldname);
                 return new Guid(fieldname);
             }
             else
             {
-
-                return Guid.Empty;
+                
+                return defaultValue;
             }
         }
 
@@ -162,27 +161,6 @@ namespace DF
         public static void Log(string context, string message)
         {
             Debug.Log(context + "[][" + Time.time.ToString("0.00") + "]: " + message);
-        }
-
-        public static void Log_Debug(this UnityEngine.Object obj, string message)
-        {
-            DFSettings DFsettings = DeepFreeze.Instance.DFsettings;
-            if (DFsettings.debugging)
-                Debug.Log(obj.GetType().FullName + "[" + obj.GetInstanceID().ToString("X") + "][" + Time.time.ToString("0.00") + "]: " + message);
-        }
-
-        public static void Log_Debug(this System.Object obj, string message)
-        {
-            DFSettings DFsettings = DeepFreeze.Instance.DFsettings;
-            if (DFsettings.debugging)
-                Debug.Log(obj.GetType().FullName + "[" + obj.GetHashCode().ToString("X") + "][" + Time.time.ToString("0.00") + "]: " + message);
-        }
-
-        public static void Log_Debug(string context, string message)
-        {
-            DFSettings DFsettings = DeepFreeze.Instance.DFsettings;
-            if (DFsettings.debugging)
-                Debug.Log(context + "[][" + Time.time.ToString("0.00") + "]: " + message);
-        }
+        }        
     }
 }
