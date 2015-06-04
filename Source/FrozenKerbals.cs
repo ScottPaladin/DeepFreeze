@@ -31,10 +31,11 @@ namespace DF
         private IButton button1;
         private ApplicationLauncherButton stockToolbarButton = null; // Stock Toolbar Button
         private const float DFWINDOW_WIDTH = 300;
-        private const float WINDOW_BASE_HEIGHT = 140;
-        public Rect DFwindowPos = new Rect(40, Screen.height / 2 - 100, DFWINDOW_WIDTH, 200);
+        private const float WINDOW_BASE_HEIGHT = 200;
+        public Rect DFwindowPos = new Rect(40, Screen.height / 2 - 100, DFWINDOW_WIDTH, WINDOW_BASE_HEIGHT);
         private static int windowID = new System.Random().Next();
-        private GUIStyle statusStyle, sectionTitleStyle;               
+        private GUIStyle statusStyle, sectionTitleStyle, resizeStyle;
+        private bool mouseDown = false;      
 
         //GuiVisibility
         private bool _Visible = false;
@@ -47,11 +48,11 @@ namespace DF
                 _Visible = value;      //Set the private variable
                 if (_Visible)
                 {
-                    RenderingManager.AddToPostDrawQueue(5, this.onDraw);
+                    RenderingManager.AddToPostDrawQueue(3, this.onDraw);
                 }
                 else
                 {
-                    RenderingManager.RemoveFromPostDrawQueue(5, this.onDraw);
+                    RenderingManager.RemoveFromPostDrawQueue(3, this.onDraw);
                 }
             }
         }
@@ -59,9 +60,7 @@ namespace DF
         //DeepFreeze Savable settings
         private DFSettings DFsettings;
         private DFGameSettings DFgameSettings;
-        public bool Useapplauncher = false;
-        public bool FreezeAll = false;
-        public bool ThawAll = false;        
+        public bool Useapplauncher = false;          
 
        internal void Awake()
         {
@@ -125,6 +124,7 @@ namespace DF
 
         internal void Start()
         {
+            this.Log_Debug("FrozenKerbals startup");
             // create toolbar button
             if (ToolbarManager.ToolbarAvailable && Useapplauncher == false)
             {
@@ -137,7 +137,7 @@ namespace DF
             else
             {
                 // Set up the stock toolbar
-                this.Log_Debug("SCDeepFreeze Adding onGUIAppLauncher callbacks");
+                this.Log_Debug("Adding onGUIAppLauncher callbacks");
                 if (ApplicationLauncher.Ready)
                 {
                     OnGUIAppLauncherReady();
@@ -150,15 +150,14 @@ namespace DF
             List<ProtoCrewMember> unknownkerbals = HighLogic.CurrentGame.CrewRoster.Unowned.ToList();
             if (unknownkerbals != null)
             {
-                this.Log("DeepFreeze have unknownKerbals " + unknownkerbals.Count());
+                this.Log("There are " + unknownkerbals.Count() + " unknownKerbals in the game roster." );
                 foreach (ProtoCrewMember CrewMember in unknownkerbals)
                 {
                     if (CrewMember.rosterStatus == ProtoCrewMember.RosterStatus.Dead)
                     {
-                        this.Log("DeepFreeze we have dead unknown kerbals in roster");
+                        
                         if (!DFgameSettings.KnownFrozenKerbals.ContainsKey(CrewMember.name))
-                        {
-                            this.Log("DeepFreeze and they aren't in the dictionary so add them");
+                        {                            
                             // Update the saved frozen kerbals dictionary
                             KerbalInfo kerbalInfo = new KerbalInfo(Planetarium.GetUniversalTime());                            
                             kerbalInfo.vesselID = Guid.Empty;                            
@@ -166,22 +165,24 @@ namespace DF
                             kerbalInfo.status = CrewMember.rosterStatus;                            
                             //kerbalInfo.seatName = "Unknown";                            
                             kerbalInfo.seatIdx = 0;                            
-                            kerbalInfo.partID = 0;                            
+                            kerbalInfo.partID = (uint)0;                            
                             kerbalInfo.experienceTraitName = CrewMember.experienceTrait.Title;                            
                             try
                             {
+                                this.Log("Adding dead unknown kerbal " + CrewMember.name + " AKA FROZEN kerbal to DeepFreeze List");
                                 DFgameSettings.KnownFrozenKerbals.Add(CrewMember.name, kerbalInfo);
                             }
                             catch (Exception ex)
                             {
-                                this.Log("Add failed " + ex);
+                                this.Log("Add of dead unknown kerbal " + CrewMember.name + " failed " + ex);
                             }
                             
                         }
                     }
                 }
             }
-            DFgameSettings.DmpKnownFznKerbals();     
+            DFgameSettings.DmpKnownFznKerbals();
+            this.Log_Debug("FrozenKerbals END startup");
         }
 
         internal void Update()
@@ -189,8 +190,7 @@ namespace DF
                         
             if (HighLogic.LoadedScene == GameScenes.FLIGHT)
             {
-                //chk if current active vessel Has a DeepFreezer attached
-                //this.Log_Debug("Check for Freezer part on active vessel");
+                //chk if current active vessel Has one or more DeepFreezer modules attached                
                 if (FlightGlobals.ActiveVessel.FindPartModulesImplementing<DeepFreezer>().Count() == 0)
                 {
                     ActVslHasDpFrezr = false;
@@ -216,13 +216,14 @@ namespace DF
                 GUI.skin = HighLogic.Skin;
                 if (!Utilities.WindowVisibile(DFwindowPos))
                     Utilities.MakeWindowVisible(DFwindowPos);
-                DFwindowPos = GUILayout.Window(windowID, DFwindowPos, windowDF, "DeepFreeze Kerbals",
-                    GUILayout.Width(DFWINDOW_WIDTH), GUILayout.Height(WINDOW_BASE_HEIGHT));
+                DFwindowPos = GUILayout.Window(windowID, DFwindowPos, windowDF, "DeepFreeze Kerbals", GUILayout.ExpandWidth(true),
+                        GUILayout.ExpandHeight(true), GUILayout.MinWidth(100), GUILayout.MinHeight(100));
             }
         }
 
         private void windowDF(int id)
         {
+            
             //Init styles
             sectionTitleStyle = new GUIStyle(GUI.skin.label);
             sectionTitleStyle.alignment = TextAnchor.MiddleCenter;
@@ -235,10 +236,14 @@ namespace DF
             statusStyle.stretchWidth = true;
             statusStyle.normal.textColor = Color.blue;
 
+            resizeStyle = new GUIStyle(GUI.skin.button);
+            resizeStyle.alignment = TextAnchor.MiddleCenter;
+            resizeStyle.padding = new RectOffset(1, 1, 1, 1);
 
-            GUIContent label = new GUIContent("X", "Close Window");
-            Rect rect = new Rect(280, 4, 16, 16);
-            if (GUI.Button(rect, label))
+
+            GUIContent closeContent = new GUIContent("X", "Close Window");
+            Rect closeRect = new Rect(DFwindowPos.width - 17, 4, 16, 16);
+            if (GUI.Button(closeRect, closeContent, resizeStyle))
             {
                 onAppLaunchToggle();
                 return;
@@ -332,13 +337,47 @@ namespace DF
 
             GUILayout.EndVertical();
 
-            if (!Input.GetMouseButtonDown(1))
+            
+            GUIContent resizeContent = new GUIContent("R", "Resize Window");
+            Rect resizeRect = new Rect(DFwindowPos.width - 17, DFwindowPos.height - 17, 16, 16);
+            GUI.Label(resizeRect, resizeContent, resizeStyle);
+            HandleResizeEvents(resizeRect);                       
+
+            GUI.DragWindow();
+            
+        }
+
+        private void HandleResizeEvents(Rect resizeRect)
+        {
+            var theEvent = Event.current;
+            if (theEvent != null)
             {
-                GUI.DragWindow();
+                if (!mouseDown)
+                {
+                    if (theEvent.type == EventType.MouseDown && theEvent.button == 0 && resizeRect.Contains(theEvent.mousePosition))
+                    {
+                        mouseDown = true;
+                        theEvent.Use();
+                    }
+                }
+                else if (theEvent.type != EventType.Layout)
+                {
+                    if (Input.GetMouseButton(0))
+                    {
+                        // Flip the mouse Y so that 0 is at the top
+                        float mouseY = Screen.height - Input.mousePosition.y;
+
+                        DFwindowPos.width = Mathf.Clamp(Input.mousePosition.x - DFwindowPos.x + (resizeRect.width / 2), 50, Screen.width - DFwindowPos.x);
+                        DFwindowPos.height = Mathf.Clamp(mouseY - DFwindowPos.y + (resizeRect.height / 2), 50, Screen.height - DFwindowPos.y);
+                    }
+                    else
+                    {
+                        mouseDown = false;
+                    }
+                }
             }
         }
 
-        
         #endregion GUI
 
         #region Savable
@@ -346,7 +385,7 @@ namespace DF
         //Class Load and Save of global settings
         public void Load(ConfigNode globalNode)
         {
-            this.Log_Debug("FrozenKerbal Load");
+            this.Log_Debug("FrozenKerbals Load");
             DFwindowPos.x = DFsettings.DFwindowPosX;
             DFwindowPos.y = DFsettings.DFwindowPosY;
             Useapplauncher = DFsettings.UseAppLauncher;
@@ -355,10 +394,10 @@ namespace DF
 
         public void Save(ConfigNode globalNode)
         {
-            this.Log_Debug("FrozenKerbal Save");
+            this.Log_Debug("FrozenKerbals Save");
             DFsettings.DFwindowPosX = DFwindowPos.x;
             DFsettings.DFwindowPosY = DFwindowPos.y;
-            this.Log_Debug("FrozenKerbal Save end");
+            this.Log_Debug("FrozenKerbals Save end");
         }
 
         #endregion Savable

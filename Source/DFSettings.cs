@@ -27,6 +27,7 @@ namespace DF
         public bool debugging { get; set; }
         public bool ECreqdForFreezer { get; set; }
         public bool AutoRecoverFznKerbals { get; set; }
+        public float KSCcostToThawKerbal { get; set; }
 
         public DFSettings()
         {
@@ -36,6 +37,7 @@ namespace DF
             debugging = true;
             ECreqdForFreezer = true;
             AutoRecoverFznKerbals = true;
+            KSCcostToThawKerbal = 10000f;
         }
 
         //Settings Functions Follow
@@ -52,6 +54,7 @@ namespace DF
                 UseAppLauncher = Utilities.GetNodeValue(DFsettingsNode, "UseAppLauncher", UseAppLauncher);
                 debugging = Utilities.GetNodeValue(DFsettingsNode, "debugging", debugging);
                 AutoRecoverFznKerbals = Utilities.GetNodeValue(DFsettingsNode, "AutoRecoverFznKerbals", AutoRecoverFznKerbals);
+                KSCcostToThawKerbal = Utilities.GetNodeValue(DFsettingsNode, "KSCcostToThawKerbal", KSCcostToThawKerbal);
                 this.Log_Debug("DFSettings load complete");
             }
         }
@@ -75,6 +78,7 @@ namespace DF
             settingsNode.AddValue("UseAppLauncher", UseAppLauncher);
             settingsNode.AddValue("debugging", debugging);
             settingsNode.AddValue("AutoRecoverFznKerbals", AutoRecoverFznKerbals);
+            settingsNode.AddValue("KSCcostToThawKerbal", KSCcostToThawKerbal);
             this.Log_Debug("DFSettings save complete");
         }
     }

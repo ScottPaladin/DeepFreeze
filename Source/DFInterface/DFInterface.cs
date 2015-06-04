@@ -2,6 +2,7 @@
 using System.Reflection;
 using System.Linq;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace DF
 {
@@ -38,13 +39,13 @@ namespace DF
         public static IDFInterface GetFrozenKerbals()
         {
             IDFInterface _IDFobj = null;
-            Type SMAddonType = AssemblyLoader.loadedAssemblies.SelectMany(a => a.assembly.GetExportedTypes()).SingleOrDefault(t => t.FullName == "ShipManifest.CrewTransfer");
+            Type SMAddonType = AssemblyLoader.loadedAssemblies.SelectMany(a => a.assembly.GetExportedTypes()).SingleOrDefault(t => t.FullName == "DF.DeepFreeze");
             if (SMAddonType != null)
             {
-                object crewTransferObj = SMAddonType.GetProperty("Instance", BindingFlags.Public | BindingFlags.Static).GetValue(null, null);
-                _IDFobj = (IDFInterface)crewTransferObj;
+                object DeepFreezeFznKerbalsObj = SMAddonType.GetProperty("Instance", BindingFlags.Public | BindingFlags.Static).GetValue(null, null);
+                _IDFobj = (IDFInterface)DeepFreezeFznKerbalsObj;
             }
             return _IDFobj;
-        }
+        }            
     }
 }

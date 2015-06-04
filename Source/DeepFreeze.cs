@@ -63,7 +63,7 @@ namespace DF
         }
     }
 
-    public class DeepFreeze : ScenarioModule
+    public class DeepFreeze : ScenarioModule, IDFInterface
     {
         public static DeepFreeze Instance { get; private set; }
         public DFSettings DFsettings { get; private set; }
@@ -85,8 +85,14 @@ namespace DF
             }
         }
 
-        private const float costToThawKerbal = 10000f;
-
+        public Dictionary<string, KerbalInfo> FrozenKerbals
+        {
+            get
+            {
+                return this.DFgameSettings.KnownFrozenKerbals;
+            }
+        }  
+ 
         public DeepFreeze()
         {
             Utilities.Log("DeepFreeze", "Constructor");
@@ -178,19 +184,31 @@ namespace DF
                 Destroy(child);
             }
             children.Clear();
+            DeepFreezeEventRem();
         }
 
         #region Events
 
         public void DeepFreezeEventAdd()
         {
-            Debug.Log("DeepFreezeEvents DeepFreezeEventAdd");
+            this.Log("DeepFreezeEvents DeepFreezeEventAdd");
             //GameEvents.OnVesselRecoveryRequested.Add(this.OnVesselRecoveryRequested);
             GameEvents.onVesselRecovered.Add(this.onVesselRecovered);
             GameEvents.onVesselTerminated.Add(this.onVesselTerminated);
-            GameEvents.onVesselWillDestroy.Add(this.onVesselWillDestroy);            
-            Debug.Log("DeepFreezeEvents DeepFreezeEventAdd ended");
+            GameEvents.onVesselWillDestroy.Add(this.onVesselWillDestroy);
+            this.Log("DeepFreezeEvents DeepFreezeEventAdd ended");
         }
+
+        public void DeepFreezeEventRem()
+        {
+            this.Log("DeepFreezeEvents DeepFreezeEventRem");
+            //GameEvents.OnVesselRecoveryRequested.Remove(this.OnVesselRecoveryRequested);
+            GameEvents.onVesselRecovered.Remove(this.onVesselRecovered);
+            GameEvents.onVesselTerminated.Remove(this.onVesselTerminated);
+            GameEvents.onVesselWillDestroy.Remove(this.onVesselWillDestroy);
+            this.Log("DeepFreezeEvents DeepFreezeEventRem ended");
+        }
+
         /*
         public void OnVesselRecoveryRequested(Vessel vessel)
         {
@@ -219,22 +237,21 @@ namespace DF
         */
         public void onVesselRecovered(ProtoVessel vessel)
         {
-            Debug.Log("DeepFreezeEvents onVesselRecovered " + vessel.vesselID);
-            this.Log_Debug("AutoRecover is ON");
+            this.Log("DeepFreezeEvents onVesselRecovered " + vessel.vesselID);            
             foreach (KeyValuePair<string, KerbalInfo> kerbal in DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals)                
             {
                 if (kerbal.Value.vesselID == vessel.vesselID)
                 {
                     if (DeepFreeze.Instance.DFsettings.AutoRecoverFznKerbals)
                     {
-                        Debug.Log("Calling ThawFrozen Crew to thaw FrozenCrew " + kerbal.Key);
+                        this.Log_Debug("AutoRecover is ON");
+                        this.Log("Calling ThawFrozen Crew to thaw FrozenCrew " + kerbal.Key);
                         ThawFrozenCrew(kerbal.Key, vessel.vesselID);
                     }
                     else
                     {
-                        Debug.Log("DeepFreeze AutoRecovery of frozen kerbals is set to off. Must be thawed manually.");
-
-                        Debug.Log("DeepFreezeEvents frozenkerbal =" + kerbal.Key);
+                        this.Log("DeepFreeze AutoRecovery of frozen kerbals is set to off. Must be thawed manually.");
+                        this.Log("DeepFreezeEvents frozenkerbal remains frozen =" + kerbal.Key);
                         ProtoCrewMember realkerbal = HighLogic.CurrentGame.CrewRoster.Unowned.FirstOrDefault(b => b.name == kerbal.Key);
                         if (realkerbal != null)
                         {
@@ -250,7 +267,7 @@ namespace DF
 
         public void onVesselTerminated(ProtoVessel vessel)
         {
-            Debug.Log("DeepFreezeEvents onVesselTerminated " + vessel.vesselID);
+            this.Log("DeepFreezeEvents onVesselTerminated " + vessel.vesselID);
             foreach (KeyValuePair<string, KerbalInfo> kerbal in DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals)
             {
                 if (kerbal.Value.vesselID == vessel.vesselID)
@@ -262,11 +279,11 @@ namespace DF
 
         public void onVesselWillDestroy(Vessel vessel)
         {
-            Debug.Log("DeepFreezeEvents onVesselWillDestroy");
+            this.Log("DeepFreezeEvents onVesselWillDestroy " + vessel.id);
             foreach (KeyValuePair<string, KerbalInfo> kerbal in DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals)
             {
                 if (kerbal.Value.vesselID == vessel.id)
-                {
+                {                    
                     KillFrozenCrew(kerbal.Key);
                 }
             }
@@ -274,8 +291,7 @@ namespace DF
 
         public void ThawFrozenCrew(String FrozenCrew, Guid vesselID)
         {
-            Debug.Log("DeepFreezeEvents ThawFrozenCrew");                                                 
-            Debug.Log("DeepFreezeEvents frozenkerbal =" + FrozenCrew);
+            this.Log("DeepFreezeEvents ThawFrozenCrew = " + FrozenCrew + "," + vesselID);                                                            
             ProtoCrewMember kerbal = HighLogic.CurrentGame.CrewRoster.Unowned.FirstOrDefault(a => a.name == FrozenCrew);
             if (kerbal != null)
             {
@@ -284,14 +300,14 @@ namespace DF
                 {
                         if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER)
                         {
-                            if (Funding.CanAfford(costToThawKerbal))
+                            if (Funding.CanAfford(DFsettings.KSCcostToThawKerbal))
                             {
-                                Funding.Instance.AddFunds(-costToThawKerbal, TransactionReasons.Vessels);
-                                this.Log_Debug("Took funds to thaw kerbal");
+                                Funding.Instance.AddFunds(-DFsettings.KSCcostToThawKerbal, TransactionReasons.Vessels);
+                                this.Log("Took funds to thaw kerbal");
                             }
                             else
                             {
-                                this.Log_Debug("Not enough funds to thaw kerbal");
+                                this.Log("Not enough funds to thaw kerbal");
                                 ScreenMessages.PostScreenMessage("Insufficient funds to thaw " + kerbal.name + " at this time", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                                 return;
                             }
@@ -303,11 +319,11 @@ namespace DF
                         kerbal.rosterStatus = ProtoCrewMember.RosterStatus.Available;
                         this.Log_Debug("Kerbal " + kerbal.name + " " + kerbal.type + " " + kerbal.rosterStatus);
                         ScreenMessages.PostScreenMessage(kerbal.name + " was found and thawed out", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-                        DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.Remove(kerbal.name);
+                        DFgameSettings.KnownFrozenKerbals.Remove(kerbal.name);                        
                 }
                 else
                 {
-                    this.Log_Debug("Cannot thaw, vessel still exists " + vessel.situation.ToString() + " at " + vessel.mainBody.bodyName);
+                    this.Log("Cannot thaw, vessel still exists " + vessel.situation.ToString() + " at " + vessel.mainBody.bodyName);
                     ScreenMessages.PostScreenMessage("Cannot thaw " + kerbal.name + " vessel still exists " + vessel.situation.ToString() + " at " + vessel.mainBody.bodyName, 5.0f, ScreenMessageStyle.UPPER_CENTER); 
                 }                                                                                                    
             }            
@@ -315,23 +331,22 @@ namespace DF
                
         public void KillFrozenCrew(string FrozenCrew)
         {
-            Debug.Log("DeepFreezeEvents KillFrozenCrew");            
-            Debug.Log("DeepFreezeEvents frozenkerbal =" + FrozenCrew);
+            this.Log("DeepFreezeEvents KillFrozenCrew " + FrozenCrew);                       
             DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.Remove(FrozenCrew);
             ProtoCrewMember kerbal = HighLogic.CurrentGame.CrewRoster.Unowned.FirstOrDefault(a => a.name == FrozenCrew);
             if (kerbal != null)
             {
-                Debug.Log("DeepFreezeEvents" + kerbal.name + " killed");
+                this.Log("DeepFreezeEvents " + kerbal.name + " killed");
                 kerbal.type = ProtoCrewMember.KerbalType.Crew;
                 kerbal.rosterStatus = ProtoCrewMember.RosterStatus.Dead;
                 if (HighLogic.CurrentGame.Parameters.Difficulty.MissingCrewsRespawn == true)
                 {
                     kerbal.StartRespawnPeriod();
-                    Debug.Log("DeepFreezeEvents" + kerbal.name + " respawn started.");
+                    this.Log("DeepFreezeEvents " + kerbal.name + " respawn started.");
                 }
             }
             else
-                Debug.Log("DeepFreezeEvents" + kerbal.name + " couldn't find them to kill them.");                
+                this.Log("DeepFreezeEvents " + kerbal.name + " couldn't find them to kill them.");                
         }
 
         #endregion Events

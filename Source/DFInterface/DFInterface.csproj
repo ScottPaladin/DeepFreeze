@@ -45,13 +45,23 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DFInterface.cs" />
-    <Compile Include="KerbalInfo.cs">
-      <SubType>Code</SubType>
-    </Compile>
+    <Compile Include="KerbalInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="utilities.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>set /p KSP_DIR=&lt;"$(ProjectDir)..\Source\ksp_dir.txt"
+
+xcopy "$(TargetPath)" "$(SolutionDir)..\GameData\PaladinLabs\$(ProjectName)\Plugins\" /Y
+
+xcopy "$(ProjectDir)$(OutDir)$(TargetName).pdb" "$(SolutionDir)..\GameData\PaladinLabs\$(ProjectName)\Plugins\" /Y
+
+cd "$(TargetDir)"
+call "C:\Program Files (x86)\Unity\Editor\Data\MonoBleedingEdge\bin\cli.bat"  "C:\Program Files (x86)\Unity\Editor\Data\MonoBleedingEdge\lib\mono\4.0\pdb2mdb.exe" $(TargetFileName)
+xcopy "$(ProjectDir)$(OutDir)$(TargetFileName).mdb" "$(SolutionDir)..\GameData\PaladinLabs\$(ProjectName)\Plugins\" /Y
+
+</PostBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

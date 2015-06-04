@@ -35,6 +35,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\Assembly-CSharp.dll</HintPath>
     </Reference>
+    <Reference Include="DFInterface">
+      <HintPath>..\DFInterface\bin\Debug\DFInterface.dll</HintPath>
+    </Reference>
     <Reference Include="SMInterface">
       <HintPath>..\..\ShipManifest-master\SMInterface\bin\Debug\SMInterface.dll</HintPath>
     </Reference>
@@ -59,7 +62,6 @@
     <Compile Include="FrozenKerbals.cs" />
     <Compile Include="ToolBarManager.cs" />
     <Compile Include="utilities.cs" />
-    <Compile Include="KerbalInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ksp_dir.txt" />
