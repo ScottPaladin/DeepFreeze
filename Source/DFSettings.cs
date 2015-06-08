@@ -5,11 +5,11 @@
  * Kerbal Space Program is Copyright (C) 2013 Squad. See http://kerbalspaceprogram.com/. This
  * project is in no way associated with nor endorsed by Squad.
  *
- *  This file is part of Jamie Leighton's Fork of DeepFreeze. Original Author of DeepFreeze is 'scottpaladin' on the KSP Forums.
+ *  This file is part of JPLRepo's DeepFreeze (continued...) - a Fork of DeepFreeze. Original Author of DeepFreeze is 'scottpaladin' on the KSP Forums.
  *  This File was not part of the original Deepfreeze but was written by Jamie Leighton.
  *  (C) Copyright 2015, Jamie Leighton
  *
- * Which is licensed under the Attribution-NonCommercial-ShareAlike 3.0 (CC BY-NC-SA 4.0)
+ * Continues to be licensed under the Attribution-NonCommercial-ShareAlike 3.0 (CC BY-NC-SA 4.0)
  * creative commons license. See <https://creativecommons.org/licenses/by-nc-sa/4.0/>
  * for full details.
  *

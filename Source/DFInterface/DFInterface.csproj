@@ -52,13 +52,15 @@
   <PropertyGroup>
     <PostBuildEvent>set /p KSP_DIR=&lt;"$(ProjectDir)..\Source\ksp_dir.txt"
 
-xcopy "$(TargetPath)" "$(SolutionDir)..\GameData\PaladinLabs\$(ProjectName)\Plugins\" /Y
+xcopy "$(TargetPath)" "$(SolutionDir)..\GameData\REPOSoftTech\$(SolutionName)\Plugins\" /Y
+
+xcopy "$(TargetPath)" "$(SolutionDir)..\GameData\REPOSoftTech\$(ProjectName)\Plugins\" /Y
 
 xcopy "$(ProjectDir)$(OutDir)$(TargetName).pdb" "$(SolutionDir)..\GameData\PaladinLabs\$(ProjectName)\Plugins\" /Y
 
 cd "$(TargetDir)"
 call "C:\Program Files (x86)\Unity\Editor\Data\MonoBleedingEdge\bin\cli.bat"  "C:\Program Files (x86)\Unity\Editor\Data\MonoBleedingEdge\lib\mono\4.0\pdb2mdb.exe" $(TargetFileName)
-xcopy "$(ProjectDir)$(OutDir)$(TargetFileName).mdb" "$(SolutionDir)..\GameData\PaladinLabs\$(ProjectName)\Plugins\" /Y
+xcopy "$(ProjectDir)$(OutDir)$(TargetFileName).mdb" "$(SolutionDir)..\GameData\REPOSoftTech\$(ProjectName)\Plugins\" /Y
 
 </PostBuildEvent>
   </PropertyGroup>

@@ -5,12 +5,11 @@
  * Kerbal Space Program is Copyright (C) 2013 Squad. See http://kerbalspaceprogram.com/. This
  * project is in no way associated with nor endorsed by Squad.
  *
- *  This file is part of Jamie Leighton's Fork of DeepFreeze. Original Author of DeepFreeze is 'scottpaladin' on the KSP Forums.
- *  The original DeepFreeze was licensed under the Attribution-NonCommercial-ShareAlike 3.0 (CC BY-NC-SA 4.0)
- *  This File was part of the original Deepfreeze but has been heavily modified and re-written by Jamie Leighton.
+ *  This file is part of JPLRepo's DeepFreeze (continued...) - a Fork of DeepFreeze. Original Author of DeepFreeze is 'scottpaladin' on the KSP Forums.
+ *  This File was not part of the original Deepfreeze but was written by Jamie Leighton.
  *  (C) Copyright 2015, Jamie Leighton
  *
- * Which is licensed under the Attribution-NonCommercial-ShareAlike 3.0 (CC BY-NC-SA 4.0)
+ * Continues to be licensed under the Attribution-NonCommercial-ShareAlike 3.0 (CC BY-NC-SA 4.0)
  * creative commons license. See <https://creativecommons.org/licenses/by-nc-sa/4.0/>
  * for full details.
  *
@@ -49,7 +48,7 @@ namespace DF
         [KSPEvent(active = true, guiActive = true, name = "showMenu", guiName = "Toggle Menu")]
         public void showMenu()
         {
-            FrozenKerbals obj = DeepFreeze.Instance.GetComponent("FrozenKerbals") as FrozenKerbals;
+            DeepFreezeGUI obj = DeepFreeze.Instance.GetComponent("DeepFreezeGUI") as DeepFreezeGUI;
             if (obj != null)
                 obj.GuiVisible = !obj.GuiVisible;
             else
@@ -86,6 +85,7 @@ namespace DF
         public FrznCrewList StoredCrewList = new FrznCrewList();  // This is the frozen StoredCrewList for the part
         public Guid CrntVslID;
         private uint CrntPartID;
+        private string CrntVslName;
         private DFGameSettings DFgameSettings;
         private bool setGameSettings = false;
         private bool partHasInternals = false;
@@ -107,6 +107,7 @@ namespace DF
                 if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ready && FlightGlobals.ActiveVessel != null)
                 {
                     CrntVslID = this.vessel.id;
+                    CrntVslName = this.vessel.vesselName;
 
                     // This should only happen once we need to load the StoredCrewList of frozen kerbals for this part from the DeepFreeze master list
                     if (!setGameSettings)
@@ -114,9 +115,11 @@ namespace DF
                          DFgameSettings = DeepFreeze.Instance.DFgameSettings;
                         StoredCrewList.Clear();
                         CrntVslID = this.vessel.id;
+                        CrntVslName = this.vessel.vesselName;
                         CrntPartID = this.part.flightID;
                         Utilities.Log_Debug("DeepFreezer", "This CrntVslID = " + CrntVslID);
                         Utilities.Log_Debug("DeepFreezer", "This CrntPartID = " + CrntPartID);
+                        Utilities.Log_Debug("DeepFreezer", "This CrntVslName = " + CrntVslName);
                         // Iterate through the dictionary of all known frozen kerbals
 
                         foreach (KeyValuePair<string, KerbalInfo> kerbal in DFgameSettings.KnownFrozenKerbals)
@@ -126,7 +129,7 @@ namespace DF
                             {
                                 //add them to our storedcrewlist for this part.
                                 Utilities.Log_Debug("DeepFreezer", "Adding frozen kerbal to this part storedcrewlist " + kerbal.Key);
-                                FrznCrewMbr fzncrew = new FrznCrewMbr(kerbal.Key, kerbal.Value.seatIdx, CrntVslID);
+                                FrznCrewMbr fzncrew = new FrznCrewMbr(kerbal.Key, kerbal.Value.seatIdx, CrntVslID, CrntVslName);
                                 StoredCrewList.Add(fzncrew);
                             }    
                             else
@@ -148,7 +151,7 @@ namespace DF
                 {
                     partHasInternals = true;
                 }                
-
+                /*
                 //This whole next section is pointless, and just debugging messages helping me develop the Mod.
                 if (this.part.internalModel == null)
                 {
@@ -179,7 +182,8 @@ namespace DF
                     Debug.Log("DeepFreezer Available Seat count =" + this.part.internalModel.GetAvailableSeatCount());                    
                 }
                 DFgameSettings.DmpKnownFznKerbals();
-                // End of the pointless debugging section is here.                                
+                // End of the pointless debugging section is here.    
+                 * */
             }                        
         }
 
@@ -644,7 +648,7 @@ namespace DF
             StoredCharge = 0;  // Discharge all EC stored    
 
             // Add frozen kerbal details to the frozen kerbal list in this part.                       
-            FrznCrewMbr tmpcrew = new FrznCrewMbr(CrewMember.name, ToFrzeKerbalSeat, this.vessel.id);             
+            FrznCrewMbr tmpcrew = new FrznCrewMbr(CrewMember.name, ToFrzeKerbalSeat, this.vessel.id, this.vessel.name);             
             StoredCrewList.Add(tmpcrew);
             
             // Set our newly frozen Popsicle, er Kerbal, to Unowned type (usually a Crew) and Dead status.
@@ -654,6 +658,7 @@ namespace DF
             // Update the saved frozen kerbals dictionary
             KerbalInfo kerbalInfo = new KerbalInfo(Planetarium.GetUniversalTime());
             kerbalInfo.vesselID = CrntVslID;
+            kerbalInfo.vesselName = CrntVslName;
             kerbalInfo.type = CrewMember.type;
             kerbalInfo.status = CrewMember.rosterStatus;
             kerbalInfo.seatName = ToFrzeKerbalXformNme;            
@@ -806,21 +811,31 @@ namespace DF
 
         public bool IsSMXferRunning()  // Checks if Ship Manifest is running a CrewXfer or Not.
         {
-            ShipManifest.ICrewTransfer SMObject = null;                       
-            SMObject = ShipManifest.SMInterface.GetCrewTransfer();            
-            if (SMObject.CrewXferActive == true && (SMObject.FromPart == this.part || SMObject.ToPart == this.part))
+            ShipManifest.ICrewTransfer SMObject = null;
+            try
             {
-                Utilities.Log_Debug("DeepFreeze", "SMXfer running and it is from or to this part");
-                return true;
-            }
-            else
-            {
-                if (SMObject.CrewXferActive == true)
+                SMObject = ShipManifest.SMInterface.GetCrewTransfer();
+                if (SMObject.CrewXferActive == true && (SMObject.FromPart == this.part || SMObject.ToPart == this.part))
                 {
-                    Utilities.Log_Debug("DeepFreeze", "SMXfer running but is it not from or to this part");
+                    Utilities.Log_Debug("DeepFreeze", "SMXfer running and it is from or to this part");
+                    return true;
                 }
-                return false; 
-            }                             
+                else
+                {
+                    if (SMObject.CrewXferActive == true)
+                    {
+                        Utilities.Log_Debug("DeepFreeze", "SMXfer running but is it not from or to this part");
+                    }
+                    return false;
+                }   
+            }
+            catch (Exception ex)
+            {
+                Utilities.Log("DeepFreezer", " Error attempting to check Ship Manifest if there is a crew transfer active");
+                Utilities.Log("DeepFreezer ", ex.Message);
+                return false;
+            }
+                                      
         }
 
         // this is called when a crew transfer is STARTED. For catching stock Xfers. Because Ship Manifest Xfers will avoid these scenarios.
