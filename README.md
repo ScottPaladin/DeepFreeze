@@ -62,6 +62,10 @@ Freeze on the launchpad before you launch your vessel. TACLS will not retrospect
  when you thaw kerbals that were frozen on the launchpad.
 Freeze your kerbals and then exit the current savegame to the main menu and then reload the save game 
 (because it checks for missing kerbals on startup).
+Use Alternate FIX DLLS zip file in this repository. NB: License for TAC LS included in ZIP file.
+You MUST first install TAC LS normally. Then install these two DLLs into 
+\GameData\ThunderAerospace\TacLifeSupport directory (overwrite existing files)
+
 Switching to/from IVA mode when freezer part only contains frozen kerbals - Camera sometimes goes a bit silly.
 But you can simply zoom back out or switch view again and it corrects itself (probably as IVA mode is still WIP).
 EC usage to keep kerbals alive does not operate when vessel they are aboard is not the active vessel.
