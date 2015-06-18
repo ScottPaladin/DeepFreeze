@@ -195,10 +195,13 @@ namespace DF
                     if (crewXferTOActive)
                     {
                         Debug.Log("Crew XferTO Active, checking if complete");                                                
-                        if (crewXferSMActive && IsSMXferRunning())
+                        if (DFInstalledMods.SMInstalled)
                         {
-                            Utilities.Log_Debug("DeepFreezer", "CrewXfer SMxfer and it's still running, so wait"); 
-                        }
+                            if (crewXferSMActive && IsSMXferRunning())
+                            {
+                                Utilities.Log_Debug("DeepFreezer", "CrewXfer SMxfer and it's still running, so wait");
+                            }
+                        }                        
                         else
                         {
                             Utilities.Log_Debug("DeepFreezer", "CrewXfer active & SMXfer is not active, so checking");
@@ -219,8 +222,8 @@ namespace DF
                                         Utilities.Log_Debug("DeepFreezer", "CrewXfer xferisfromEVA = false kick them out to from part");
                                         this.part.RemoveCrewmember(xfercrew);
                                         xferfromPart.AddCrewmember(xfercrew);
-                                        if (xfercrew.seat != null)
-                                            xfercrew.seat.SpawnCrew();
+                                        //if (xfercrew.seat != null)
+                                        //    xfercrew.seat.SpawnCrew();
                                     }
                                     //GameEvents.onVesselChange.Fire(vessel);
                                     ScreenMessages.PostScreenMessage("Freezer is Full, cannot enter at this time", 5.0f, ScreenMessageStyle.UPPER_CENTER);
@@ -518,7 +521,8 @@ namespace DF
             Debug.Log("UpdateEvents");          
             
             // If we aren't Thawing or Freezing a kerbal right now, and no crewXfer i active we check all the events.                        
-            if (!IsThawActive && !IsFreezeActive && !crewXferFROMActive && !crewXferTOActive && !IsSMXferRunning())
+            //if (!IsThawActive && !IsFreezeActive && !crewXferFROMActive && !crewXferTOActive && !IsSMXferRunning())
+            if (!IsThawActive && !IsFreezeActive && !crewXferFROMActive && !crewXferTOActive)
             {
                 var eventsToDelete = new List<BaseEvent>();               
                 foreach (BaseEvent itemX in Events) // Iterate through all Events
@@ -937,8 +941,10 @@ namespace DF
                 machine_hum.Stop(); //stop sound effects
                 StoredCharge = 0;   // Discharge all EC stored                  
                 // Set our newly thawed Popsicle, er Kerbal, to Crew type again (from Unowned) and Assigned status (from Dead status).
+                this.Log_Debug("set type to crew and assigned");   
                 kerbal.type = ProtoCrewMember.KerbalType.Crew;
                 kerbal.rosterStatus = ProtoCrewMember.RosterStatus.Assigned;
+                this.Log_Debug("find the stored crew member");  
                 FrznCrewMbr tmpcrew = StoredCrewList.Find(a => a.CrewName == frozenkerbal);  // Find the thawed kerbal in the frozen kerbal list.
                 if (tmpcrew != null)
                 {
@@ -946,8 +952,15 @@ namespace DF
                     //this.part.CrewCapacity++;
                     if (partHasInternals)
                     {
-                        this.Log_Debug("Part has internals");     
-                        this.Log_Debug("Checking their seat taken=" + this.part.internalModel.seats[tmpcrew.SeatIdx].taken + ", Crew=" + this.part.internalModel.seats[tmpcrew.SeatIdx].crew.name + ",KerbalRef=" + this.part.internalModel.seats[tmpcrew.SeatIdx].kerbalRef.crewMemberName);     
+                        this.Log_Debug("Part has internals");
+                        string temprptstr;
+                        if (this.part.internalModel.seats[tmpcrew.SeatIdx].kerbalRef.crewMemberName != null)
+                            temprptstr = "null";
+                        else
+                            temprptstr = this.part.internalModel.seats[tmpcrew.SeatIdx].kerbalRef.crewMemberName;
+                        this.Log_Debug("Checking their seat taken=" + this.part.internalModel.seats[tmpcrew.SeatIdx].taken + 
+                            ", Crew=" + this.part.internalModel.seats[tmpcrew.SeatIdx].crew.name + 
+                            ",KerbalRef=" + temprptstr);     
                         if (this.part.internalModel.seats[tmpcrew.SeatIdx].crew == null)
                         {
                             this.Log_Debug("re-add them at seatidx=" + tmpcrew.SeatIdx);  
@@ -1202,6 +1215,7 @@ namespace DF
                     if (chkpartseats.kerbalRef == null) kerblrefstring = "kerbalref not found";
                     else kerblrefstring = chkpartseats.kerbalRef.crewMemberName;
                     Utilities.Log_Debug("DeepFreezer", "seatXformName=" + chkpartseats.seatTransformName + ",SeatIndex=" + i + ",KerbalRef=" + kerblrefstring);
+                    i++;
                 }
             }            
         }
