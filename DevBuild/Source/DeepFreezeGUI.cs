@@ -32,19 +32,19 @@ namespace DF
         private bool gamePaused = false;
         private IButton button1;
         private ApplicationLauncherButton stockToolbarButton = null; // Stock Toolbar Button
-        private const float DFWINDOW_WIDTH = 320;
+        private const float DFWINDOW_WIDTH = 400;
         private const float CFWINDOW_WIDTH = 320;
-        private const float WINDOW_BASE_HEIGHT = 150;
+        private const float WINDOW_BASE_HEIGHT = 350;
         public Rect DFwindowPos = new Rect(40, Screen.height / 2 - 100, DFWINDOW_WIDTH, WINDOW_BASE_HEIGHT);
-        public Rect CFwindowPos = new Rect(450, Screen.height / 2 - 100, CFWINDOW_WIDTH, WINDOW_BASE_HEIGHT + 100);
+        public Rect CFwindowPos = new Rect(450, Screen.height / 2 - 100, CFWINDOW_WIDTH, 250);
         private static int windowID = 199999;
         private static int CFwindowID = 200000;
-        private GUIStyle statusStyle, frozenStyle, sectionTitleStyle, resizeStyle;
-        private Vector2 GUIscrollViewVector = Vector2.zero;
+        private GUIStyle statusStyle, frozenStyle, sectionTitleStyle, resizeStyle, StatusOKStyle, StatusWarnStyle, StatusRedStyle;
+        private Vector2 GUIscrollViewVector, GUIscrollViewVector2 = Vector2.zero;
         private bool mouseDown = false;              
-        private float txtWdthName = Mathf.Round(DFWINDOW_WIDTH / 3f);
-        private float txtWdthProf = Mathf.Round(DFWINDOW_WIDTH / 3f);
-        private float txtWdthVslN = Mathf.Round(DFWINDOW_WIDTH / 2.5f);
+        private float txtWdthName = Mathf.Round((DFWINDOW_WIDTH - 28f) / 3.5f);
+        private float txtWdthProf = Mathf.Round((DFWINDOW_WIDTH - 28f) / 4.8f);
+        private float txtWdthVslN = Mathf.Round((DFWINDOW_WIDTH - 28f) / 3.5f);
            
         private bool showConfigGUI = false;
         private bool LoadConfig = true;
@@ -325,7 +325,7 @@ namespace DF
                     if (!Utilities.WindowVisibile(DFwindowPos))
                         Utilities.MakeWindowVisible(DFwindowPos);                    
                     DFwindowPos = GUILayout.Window(windowID, DFwindowPos, windowDF, "DeepFreeze Kerbals", GUILayout.ExpandWidth(true),
-                            GUILayout.ExpandHeight(true), GUILayout.MinWidth(200), GUILayout.MinHeight(100));
+                            GUILayout.ExpandHeight(true), GUILayout.MinWidth(200), GUILayout.MinHeight(250));
                     if (showConfigGUI)
                     {
                         if (LoadConfig)
@@ -337,18 +337,9 @@ namespace DF
                             InputScostThawKerbal = KSCcostToThawKerbal.ToString();
                             InputSecReqdToFreezeThaw = ECReqdToFreezeThaw.ToString();
                             InputSglykerolReqdToFreeze = GlykerolReqdToFreeze.ToString();
-                            InputVRegTempReqd = RegTempReqd;
-                            if (TempinKelvin)
-                            {
-                                InputSRegTempFreeze = RegTempFreeze.ToString();
-                                InputSRegTempMonitor = RegtempMonitor.ToString();
-                            }
-                            else
-                            {
-                                InputSRegTempFreeze = Utilities.KelvintoCelsius((float)RegTempFreeze).ToString();
-                                InputSRegTempMonitor = Utilities.KelvintoCelsius((float)RegtempMonitor).ToString();
-                            }
-                            
+                            InputVRegTempReqd = RegTempReqd;                            
+                            InputSRegTempFreeze = RegTempFreeze.ToString();
+                            InputSRegTempMonitor = RegtempMonitor.ToString();                                                        
                             InputVTempinKelvin = TempinKelvin;
                             LoadConfig = false;                            
                         }
@@ -382,6 +373,21 @@ namespace DF
             frozenStyle.stretchWidth = true;
             frozenStyle.normal.textColor = Color.cyan;
 
+            StatusOKStyle = new GUIStyle(GUI.skin.label);
+            StatusOKStyle.alignment = TextAnchor.MiddleLeft;
+            StatusOKStyle.stretchWidth = true;
+            StatusOKStyle.normal.textColor = Color.green;
+
+            StatusWarnStyle = new GUIStyle(GUI.skin.label);
+            StatusWarnStyle.alignment = TextAnchor.MiddleLeft;
+            StatusWarnStyle.stretchWidth = true;
+            StatusWarnStyle.normal.textColor = Color.yellow;
+
+            StatusRedStyle = new GUIStyle(GUI.skin.label);
+            StatusRedStyle.alignment = TextAnchor.MiddleLeft;
+            StatusRedStyle.stretchWidth = true;
+            StatusRedStyle.normal.textColor = Color.red;
+
             resizeStyle = new GUIStyle(GUI.skin.button);
             resizeStyle.alignment = TextAnchor.MiddleCenter;
             resizeStyle.padding = new RectOffset(1, 1, 1, 1);
@@ -395,12 +401,68 @@ namespace DF
                 return;
             }
 
-            GUILayout.BeginVertical();
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("Kerbal Name", sectionTitleStyle, GUILayout.Width(txtWdthName));
-            GUILayout.Label("Profession", sectionTitleStyle, GUILayout.Width(txtWdthProf));
-            GUILayout.Label("Vessel Name", sectionTitleStyle, GUILayout.Width(txtWdthVslN));
-            GUILayout.EndHorizontal();
+            if ((DFsettings.ECreqdForFreezer || DFsettings.RegTempReqd) && (HighLogic.LoadedScene == GameScenes.FLIGHT && ActVslHasDpFrezr))
+            {
+                GUIscrollViewVector2 = GUILayout.BeginScrollView(GUIscrollViewVector2, false, false, GUILayout.MaxHeight(80f));
+                GUILayout.BeginVertical();
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Part", sectionTitleStyle, GUILayout.Width(txtWdthName));
+                if (DFsettings.RegTempReqd)
+                {
+                    GUILayout.Label("Temp.", sectionTitleStyle, GUILayout.Width(txtWdthProf));
+                }
+                if (DFsettings.ECreqdForFreezer)
+                {
+                    GUILayout.Label("Elec.Charge", sectionTitleStyle, GUILayout.Width(txtWdthVslN));
+                }
+                GUILayout.EndHorizontal();
+                foreach (DeepFreezer frzr in DpFrzrActVsl)
+                {
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Label(frzr.name, statusStyle, GUILayout.Width(txtWdthName));
+                    if (DFsettings.RegTempReqd)
+                    {
+                        string TempVar;
+                        if (DFsettings.TempinKelvin)
+                        {
+                            TempVar = frzr.CabinTemp.ToString("####0") + "K";
+                        }
+                        else
+                        {
+                            TempVar = Utilities.KelvintoCelsius((float)frzr.CabinTemp).ToString("####0") + "C";
+                        }
+                        switch (frzr.FrzrTmp)
+                        {
+                            case FrzrTmpStatus.OK:
+                                GUILayout.Label(TempVar, StatusOKStyle, GUILayout.Width(txtWdthProf));
+                                break;
+                            case FrzrTmpStatus.WARN:
+                                GUILayout.Label(TempVar, StatusWarnStyle, GUILayout.Width(txtWdthProf));
+                                break;
+                            case FrzrTmpStatus.RED:
+                                GUILayout.Label(TempVar, StatusRedStyle, GUILayout.Width(txtWdthProf));
+                                break;
+                        }       
+                    }                   
+                    if (DFsettings.ECreqdForFreezer)
+                    {
+                        if (frzr.FreezerOutofEC)
+                        {
+                            GUILayout.Label("EC = OUT", StatusRedStyle, GUILayout.Width(txtWdthVslN));
+                        }
+                        else
+                        {
+                            GUILayout.Label("EC = OK", StatusOKStyle, GUILayout.Width(txtWdthVslN));
+                        }       
+                    }                                                    
+                    GUILayout.EndHorizontal();
+                }
+                GUILayout.EndVertical();
+                GUILayout.EndScrollView();
+            }
+            bool Headers = false;
+            GUIscrollViewVector = GUILayout.BeginScrollView(GUIscrollViewVector, false, false);
+            GUILayout.BeginVertical();            
             if (DFgameSettings.KnownFrozenKerbals.Count == 0)
             {
                 GUILayout.BeginHorizontal();
@@ -409,7 +471,12 @@ namespace DF
             }
             else
             {
-                
+                Headers = true;
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Kerbal Name", sectionTitleStyle, GUILayout.Width(txtWdthName));
+                GUILayout.Label("Profession", sectionTitleStyle, GUILayout.Width(txtWdthProf));
+                GUILayout.Label("Vessel Name", sectionTitleStyle, GUILayout.Width(txtWdthVslN));
+                GUILayout.EndHorizontal();
                 List<KeyValuePair<string, KerbalInfo>> ThawKeysToDelete = new List<KeyValuePair<string, KerbalInfo>>();
                 foreach (KeyValuePair<string, KerbalInfo> kerbal in DFgameSettings.KnownFrozenKerbals)                
                 {                        
@@ -467,6 +534,15 @@ namespace DF
             if (HighLogic.LoadedScene == GameScenes.FLIGHT && ActVslHasDpFrezr)
             {
                 
+                if (!Headers)
+                {
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Label("Kerbal Name", sectionTitleStyle, GUILayout.Width(txtWdthName));
+                    GUILayout.Label("Profession", sectionTitleStyle, GUILayout.Width(txtWdthProf));
+                    GUILayout.Label("Vessel Name", sectionTitleStyle, GUILayout.Width(txtWdthVslN));
+                    GUILayout.EndHorizontal();
+                    Headers = true;
+                }
                 foreach (DeepFreezer frzr in DpFrzrActVsl)
                 {
                     foreach (ProtoCrewMember crewMember in frzr.part.protoModuleCrew.FindAll(a => a.type == ProtoCrewMember.KerbalType.Crew))
@@ -488,7 +564,9 @@ namespace DF
                         GUILayout.EndHorizontal();
                     }
                 }                              
-            }           
+            }
+            GUILayout.EndScrollView();
+            GUILayout.EndVertical();
 
             if (HighLogic.LoadedScene == GameScenes.SPACECENTER)
             {
@@ -504,7 +582,7 @@ namespace DF
             {
                 GUILayout.Space(14);
             }            
-            GUILayout.EndVertical();
+            
 
             
             GUIContent resizeContent = new GUIContent("R", "Resize Window");
@@ -580,6 +658,9 @@ namespace DF
             {
                 InputVglykerolReqdToFreeze = GlykerolReqdToFreeze;
             }
+            GUILayout.BeginHorizontal();
+            GUILayout.Box(new GUIContent("Temps are in (K)elvin. (K) = (C)elcius + 273.15. (K) = ((F)arenheit + 459.67) × 5/9", "Get your calculator out"), statusStyle, GUILayout.Width(280));
+            GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
             GUILayout.Box(new GUIContent("Regulated Temperatures Required", "If on, Regulated Temps apply to freeze and keep Kerbals Frozen"), statusStyle, GUILayout.Width(280));
@@ -588,51 +669,23 @@ namespace DF
 
             if (!InputVRegTempReqd) GUI.enabled = false;
             GUILayout.BeginHorizontal();
-            GUILayout.Box(new GUIContent("Minimum Part Temp. for Freezer to Freeze", "Minimum part temperature for Freezer to be able to Freeze"), statusStyle, GUILayout.Width(250));
+            GUILayout.Box(new GUIContent("Minimum Part Temp. for Freezer to Freeze (K)", "Minimum part temperature for Freezer to be able to Freeze"), statusStyle, GUILayout.Width(250));
             InputSRegTempFreeze = Regex.Replace(GUILayout.TextField(InputSRegTempFreeze, 3, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
             GUILayout.EndHorizontal();
-            if (InputVTempinKelvin)
+            if (!double.TryParse(InputSRegTempFreeze, out InputVRegTempFreeze))
             {
-                if (!double.TryParse(InputSRegTempFreeze, out InputVRegTempFreeze))
-                {
-                    InputVRegTempFreeze = RegTempFreeze;
-                }
+                InputVRegTempFreeze = RegTempFreeze;
             }
-            else
-            {
-                if (double.TryParse(InputSRegTempFreeze, out InputVRegTempFreeze))
-                {
-                    InputVRegTempFreeze = Utilities.CelsiustoKelvin((float)InputVRegTempFreeze);
-                }
-                else
-                {
-                    InputVRegTempFreeze = RegTempFreeze;
-                }
-            }
-            
-
+                       
             GUILayout.BeginHorizontal();
-            GUILayout.Box(new GUIContent("maximum Part Temp. to Keep Kerbals Frozen", "Maximum part temperature for Freezer to keep Kerbals frozen"), statusStyle, GUILayout.Width(250));
+            GUILayout.Box(new GUIContent("maximum Part Temp. to Keep Kerbals Frozen (K)", "Maximum part temperature for Freezer to keep Kerbals frozen"), statusStyle, GUILayout.Width(250));
             InputSRegTempMonitor = Regex.Replace(GUILayout.TextField(InputSRegTempMonitor, 3, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
             GUILayout.EndHorizontal();
-            if (InputVTempinKelvin)
+            if (!double.TryParse(InputSRegTempMonitor, out InputVRegTempMonitor))
             {
-                if (!double.TryParse(InputSRegTempMonitor, out InputVRegTempMonitor))
-                {
-                    InputVRegTempMonitor = RegtempMonitor;
-                }
+                InputVRegTempMonitor = RegtempMonitor;
             }
-            else
-            {
-                if (double.TryParse(InputSRegTempMonitor, out InputVRegTempMonitor))
-                {
-                    InputVRegTempMonitor = Utilities.CelsiustoKelvin((float)InputVRegTempMonitor);
-                }
-                else
-                {
-                    InputVRegTempMonitor = RegtempMonitor;
-                }
-            }
+            
             GUI.enabled = true;
 
             GUILayout.BeginHorizontal();
@@ -699,9 +752,9 @@ namespace DF
 
                         DFwindowPos.width = Mathf.Clamp(Input.mousePosition.x - DFwindowPos.x + (resizeRect.width / 2), 50, Screen.width - DFwindowPos.x);
                         DFwindowPos.height = Mathf.Clamp(mouseY - DFwindowPos.y + (resizeRect.height / 2), 50, Screen.height - DFwindowPos.y);
-                        txtWdthName = Mathf.Round(DFwindowPos.width / 3f);
-                        txtWdthProf = Mathf.Round(DFwindowPos.width / 3.5f);
-                        txtWdthVslN = Mathf.Round(DFwindowPos.width / 2.8f);
+                        txtWdthName = Mathf.Round((DFwindowPos.width - 28f) / 3.5f);
+                        txtWdthProf = Mathf.Round((DFwindowPos.width - 28f) / 4.8f);
+                        txtWdthVslN = Mathf.Round((DFwindowPos.width -28f) / 3.5f);
                         
                         
                     }

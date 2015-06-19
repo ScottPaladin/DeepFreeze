@@ -22,15 +22,25 @@ using UnityEngine;
 
 namespace DF
 {
+    
+    public enum FrzrTmpStatus        
+    {
+        OK = 0,
+        WARN = 1,
+        RED = 2,
+    }
+
     public class DeepFreezer : PartModule
     {
         private float lastUpdate = 0.0f;          // time since we last updated the part menu
         private float lastRemove = 0.0f;          // time since we last removed a part menu event
         private float updatetnterval = .5f;       // time between part menu updates
-        private float deathCounter = 0f;          // time delay counter until the chance of a frozen kerbal dying due to lack of EC
-        private float deathRoll = 20f;            // time delay until the chance of a frozen kerbal dying due to lack of EC
-        private float tmpdeathCounter = 0f;       // time delay counter until the chance of a frozen kerbal dying due to part being too hot
-        private float tmpdeathRoll = 240f;        // time delay until the chance of a frozen kerbal dying due to part being too hot
+        private double deathCounter = 0f;          // time delay counter until the chance of a frozen kerbal dying due to lack of EC
+        private float  deathRoll = 240f;            // time delay until the chance of a frozen kerbal dying due to lack of EC
+        private double tmpdeathCounter = 0f;       // time delay counter until the chance of a frozen kerbal dying due to part being too hot
+        private float tmpdeathRoll = 120f;        // time delay until the chance of a frozen kerbal dying due to part being too hot
+        private bool ECWarningIssued = false;
+        private bool TmpWarningIssued = false;
 
         public bool crewXferTOActive = false;     // true if a Stock crewXfer to this part is active
         public bool crewXferFROMActive = false;   // true if a Stock crewXfer from this part is active
@@ -44,7 +54,9 @@ namespace DF
         public bool crewXferSMStock = false;      // set to true if a Stock CrewXfer is active and SM is installed and managing the xfer.
         private bool refreshPortraits = false;    // set to true if we are running a timer to refresh the Portrait cameras
         private double refreshPortraitsTimer = 0f;  // the timer for refreshing the portrait cameras
-        private const double refreshPortraitsWaitTime = 5f; // how long to wait before refreshing the portrait cameras
+        private const double refreshPortraitsWaitTime = 40f; // how long to wait in frames before refreshing the portrait cameras
+        public bool FreezerOutofEC = false;                  // true if the freezer has run out of EC
+        public FrzrTmpStatus FrzrTmp = FrzrTmpStatus.OK;                        // ok, warning and red alert flags for temperature monitoring of the freezer
 
         public ScreenMessage ThawMsg, FreezeMsg , OnGoingECMsg, TempChkMsg;
 
@@ -128,19 +140,20 @@ namespace DF
             if (Time.timeSinceLevelLoad < 2.0f || !HighLogic.LoadedSceneIsFlight) // Check not loading level or not in flight
             {
                 return;
-            }            
+            }
+            if (refreshPortraits)  // Check if we are delaying a portrait camera refresh and if so process the delay
+            {
+                refreshPortraitsTimer += 1;
+                if (refreshPortraitsTimer > refreshPortraitsWaitTime)  // Delay time up, refresh the cameras
+                {
+                    respawnVesselCrew();
+                    refreshPortraitsTimer = 0;
+                    refreshPortraits = false;
+                }
+            }
             if ((Time.time - lastUpdate) > updatetnterval && (Time.time - lastRemove) > updatetnterval) // We only update every updattnterval time interval.
             {
-                if (refreshPortraits)  // Check if we are delaying a portrait camera refresh and if so process the delay
-                {
-                    refreshPortraitsTimer += (Time.time - lastUpdate);
-                    if (refreshPortraitsTimer > refreshPortraitsWaitTime)  // Delay time up, refresh the cameras
-                    {
-                        respawnVesselCrew();
-                        refreshPortraitsTimer = 0;
-                        refreshPortraits = false;
-                    }
-                }
+                
                 lastUpdate = Time.time;
                 if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ready && FlightGlobals.ActiveVessel != null)
                 {
@@ -236,11 +249,11 @@ namespace DF
                                         Utilities.Log_Debug("DeepFreezer", "CrewXfer xferisfromEVA = false kick them out to from part");
                                         this.part.RemoveCrewmember(xfercrew);
                                         xferfromPart.AddCrewmember(xfercrew);
-                                        refreshPortraits = true;
+                                        //refreshPortraits = true;
                                         //if (xfercrew.seat != null)
                                         //    xfercrew.seat.SpawnCrew();
                                     }
-                                    GameEvents.onVesselChange.Fire(vessel);
+                                    //GameEvents.onVesselChange.Fire(vessel);
                                     ScreenMessages.PostScreenMessage("Freezer is Full, cannot enter at this time", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                                     Utilities.Log_Debug("DeepFreezer", "crewXferSMActive but PART is FULL ended");
                                 }
@@ -382,41 +395,47 @@ namespace DF
             if ((Time.time - timeSinceLastECtaken) > updatetnterval && TotalFrozen > 0) //We have frozen Kerbals, consume EC
             {
                 float crnttime = Time.time;
+                double currenttime = Planetarium.GetUniversalTime();
                 float timeperiod = crnttime - timeSinceLastECtaken;
                 double ECreqd = ((FrznChargeRequired / 60.0f) * timeperiod * TotalFrozen);
                 Utilities.Log_Debug("DeepFreezer", "Running the freezer parms crnttime =" + crnttime + " timeperiod =" + timeperiod + " ecreqd =" + ECreqd);
-                if (requireResource(vessel, "ElectricCharge", ChargeRate, false))
+                if (requireResource(vessel, "ElectricCharge", ECreqd, false))
                 {
                     ScreenMessages.RemoveMessage(OnGoingECMsg);
                     //Have resource
                     requireResource(vessel, "ElectricCharge", ECreqd, true);
                     Utilities.Log_Debug("DeepFreezer", "Consumed Freezer EC " + ECreqd + " units");
                     timeSinceLastECtaken = crnttime;
+                    deathCounter = currenttime;
+                    FreezerOutofEC = false;
+                    ECWarningIssued = false;
                 }
                 else
                 {
                     Debug.Log("DeepFreezer Ran out of EC to run the freezer");
-                    ScreenMessages.PostScreenMessage("Insufficient electric charge to monitor frozen kerbals. They are going to die!!", 10.0f, ScreenMessageStyle.UPPER_CENTER);
-                    ScreenMessages.RemoveMessage(OnGoingECMsg);
-                    OnGoingECMsg = ScreenMessages.PostScreenMessage(" Freezer Out of EC : Systems critical in " + (deathRoll - deathCounter).ToString("######0") + " secs");
-                    deathCounter += timeSinceLastECtaken;
-                    Utilities.Log_Debug("DeepFreezer", "deathCounter = " + deathCounter);
-                    if (deathCounter > deathRoll)
+                    if (!ECWarningIssued)
                     {
-                        Utilities.Log_Debug("DeepFreezer", "deathRoll reached, roll the dice...");
-                        deathCounter = 0f;
-                        int dice = rnd.Next(1, 3);  // Change this dice to increase or decrease the odds of a Kerbal Dying
-                        if (dice == 2) // Change this test to increase or decrease the odds of a Kerbal Dying, currently 1 in 3 chance
+                        ScreenMessages.PostScreenMessage("Insufficient electric charge to monitor frozen kerbals. They are going to die!!", 10.0f, ScreenMessageStyle.UPPER_CENTER);
+                        ECWarningIssued = true;
+                    }                    
+                    ScreenMessages.RemoveMessage(OnGoingECMsg);
+                    OnGoingECMsg = ScreenMessages.PostScreenMessage(" Freezer Out of EC : Systems critical in " + (deathRoll - (currenttime - deathCounter)).ToString("######0") + " secs");
+                    FreezerOutofEC = true;
+                    Utilities.Log_Debug("DeepFreezer", "deathCounter = " + deathCounter);
+                    if (currenttime - deathCounter > deathRoll)
+                    {
+                        Utilities.Log_Debug("DeepFreezer", "deathRoll reached, Kerbals all die...");
+                        deathCounter = currenttime;
+                        //all kerbals dies                          
+                        var kerbalsToDelete = new List<FrznCrewMbr>();
+                        foreach (FrznCrewMbr deathKerbal in StoredCrewList)
                         {
-                            //a kerbal dies
-                            Utilities.Log_Debug("DeepFreezer", "A Kerbal dies");
-                            int dice2 = rnd.Next(1, StoredCrewList.Count); // Randomly select a Kerbal to kill.
-                            FrznCrewMbr deathKerbal = StoredCrewList[dice2];
                             DeepFreeze.Instance.KillFrozenCrew(deathKerbal.CrewName);
                             ScreenMessages.PostScreenMessage(deathKerbal.CrewName + " died due to lack of Electrical Charge to run cryogenics", 10.0f, ScreenMessageStyle.UPPER_CENTER);
                             Debug.Log("DeepFreezer - kerbal " + deathKerbal.CrewName + " died due to lack of Electrical charge to run cryogenics");
-                            StoredCrewList.Remove(deathKerbal);
+                            kerbalsToDelete.Add(deathKerbal);
                         }
+                        kerbalsToDelete.ForEach(id => StoredCrewList.Remove(id));
                     }
                 }
             }
@@ -434,50 +453,58 @@ namespace DF
             if ((Time.time - timeSinceLastTmpChk) > updatetnterval && TotalFrozen > 0) //We have frozen Kerbals, consume EC
             {
                 float crnttime = Time.time;
+                double currenttime = Planetarium.GetUniversalTime();
+                float timeperiod = crnttime - timeSinceLastTmpChk;
                 if (this.part.temperature < DFsettings.RegTempMonitor)
                 {
                     Utilities.Log_Debug("DeepFreezer", "Temperature check is good parttemp=" + this.part.temperature + ",MaxTemp=" + DFsettings.RegTempMonitor);
                     ScreenMessages.RemoveMessage(TempChkMsg);
+                    FrzrTmp = FrzrTmpStatus.OK;
+                    tmpdeathCounter = currenttime;
                     // do warning if within 40 and 20 kelvin
                     double tempdiff = DFsettings.RegTempMonitor - this.part.temperature;
                     if (tempdiff <= 40)
                     {
-                        ScreenMessages.PostScreenMessage("Check Temperatures, Freezer getting hot", 10.0f, ScreenMessageStyle.UPPER_CENTER);
+                        FrzrTmp = FrzrTmpStatus.WARN;
+                        ScreenMessages.PostScreenMessage("Check Temperatures, Freezer getting hot", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                     }
                     else
                     {
                         if (tempdiff < 20)
                         {
-                            ScreenMessages.PostScreenMessage("Warning!! Check Temperatures NOW, Freezer getting very hot", 10.0f, ScreenMessageStyle.UPPER_CENTER);
+                            FrzrTmp = FrzrTmpStatus.RED;
+                            ScreenMessages.PostScreenMessage("Warning!! Check Temperatures NOW, Freezer getting very hot", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                         }
                     }
                     timeSinceLastTmpChk = crnttime;
+                    TmpWarningIssued = false;
                 }
                 else
                 {
                     // OVER TEMP I'm Melting!!!! CODE GOES HERE
                     Debug.Log("DeepFreezer Part Temp TOO HOT, Kerbals are going to melt");
-                    ScreenMessages.PostScreenMessage("Temperature too hot for kerbals to remain frozen. They are going to die!!", 10.0f, ScreenMessageStyle.UPPER_CENTER);
-                    tmpdeathCounter += timeSinceLastTmpChk;
+                    if (!TmpWarningIssued)
+                    {
+                        ScreenMessages.PostScreenMessage("Temperature too hot for kerbals to remain frozen. They are going to die!!", 10.0f, ScreenMessageStyle.UPPER_CENTER);
+                        TmpWarningIssued = true;
+                    }                    
+                    FrzrTmp = FrzrTmpStatus.RED;
                     Utilities.Log_Debug("DeepFreezer", "tmpdeathCounter = " + tmpdeathCounter);
                     ScreenMessages.RemoveMessage(TempChkMsg);
-                    TempChkMsg = ScreenMessages.PostScreenMessage(" Freezer Over Temp : Systems critical in " + (tmpdeathRoll - tmpdeathCounter).ToString("######0") + " secs");
-                    if (tmpdeathCounter > tmpdeathRoll)
+                    TempChkMsg = ScreenMessages.PostScreenMessage(" Freezer Over Temp : Systems critical in " + (tmpdeathRoll - (currenttime - tmpdeathCounter)).ToString("######0") + " secs");
+                    if (currenttime - tmpdeathCounter > tmpdeathRoll)                    
                     {
                         Utilities.Log_Debug("DeepFreezer", "tmpdeathRoll reached, roll the dice...");
-                        tmpdeathCounter = 0f;
-                        int dice = rnd.Next(1, 3);  // Change this dice to increase or decrease the odds of a Kerbal Dying
-                        if (dice == 2) // Change this test to increase or decrease the odds of a Kerbal Dying, currently 1 in 3 chance
-                        {
-                            //a kerbal dies
-                            Utilities.Log_Debug("DeepFreezer", "A Kerbal dies");
-                            int dice2 = rnd.Next(1, StoredCrewList.Count); // Randomly select a Kerbal to kill.
-                            FrznCrewMbr deathKerbal = StoredCrewList[dice2];
-                            DeepFreeze.Instance.KillFrozenCrew(deathKerbal.CrewName);
-                            ScreenMessages.PostScreenMessage(deathKerbal.CrewName + " died due to overheating, cannot keep frozen", 10.0f, ScreenMessageStyle.UPPER_CENTER);
-                            Debug.Log("DeepFreezer - kerbal " + deathKerbal.CrewName + " died due to overheating, cannot keep frozen");
-                            StoredCrewList.Remove(deathKerbal);
-                        }
+                        tmpdeathCounter = currenttime;
+                        TmpWarningIssued = false;
+                        //a kerbal dies                        
+                        int dice = rnd.Next(1, StoredCrewList.Count); // Randomly select a Kerbal to kill.
+                        Utilities.Log_Debug("DeepFreezer", "A Kerbal dies dice=" + dice);
+                        FrznCrewMbr deathKerbal = StoredCrewList[dice-1];
+                        DeepFreeze.Instance.KillFrozenCrew(deathKerbal.CrewName);
+                        ScreenMessages.PostScreenMessage(deathKerbal.CrewName + " died due to overheating, cannot keep frozen", 10.0f, ScreenMessageStyle.UPPER_CENTER);
+                        Debug.Log("DeepFreezer - kerbal " + deathKerbal.CrewName + " died due to overheating, cannot keep frozen");
+                        StoredCrewList.Remove(deathKerbal);
                     }
                 }
             }
@@ -885,7 +912,7 @@ namespace DF
             ice_freeze.Play();
             refreshPortraits = true;
             refreshPortraitsTimer = 0f;
-            GameEvents.onVesselChange.Fire(vessel);
+            //GameEvents.onVesselChange.Fire(vessel);
             this.Log_Debug("FreezeCompleted");
         }
 
@@ -1064,7 +1091,7 @@ namespace DF
                 ding_ding.Play();
                 refreshPortraits = true;
                 refreshPortraitsTimer = 0f;
-                GameEvents.onVesselChange.Fire(vessel);
+                //GameEvents.onVesselChange.Fire(vessel);
             }
             this.Log_Debug("ThawKerbalConfirm End");
         }
@@ -1238,6 +1265,7 @@ namespace DF
         private void respawnVesselCrew()
         {
             this.vessel.SpawnCrew();
+            GameEvents.onVesselChange.Fire(vessel);
         }
 
         private void UpdateCounts()
