@@ -52,3 +52,7 @@ To use this feature you must change the config file settings as the default for 
 Full integration and support of Ship Manifest mod by Papa_Joe.
 Module Manager config file included for support of CLS mod supported by Papa_Joe.
 
+Mod Contributors:
+===========
+JPLRepo - Coding, implementation of models and distribution.
+MerlinsMaster - Internal Models and Textures.
