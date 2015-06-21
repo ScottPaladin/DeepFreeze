@@ -54,5 +54,5 @@ Module Manager config file included for support of CLS mod supported by Papa_Joe
 
 Mod Contributors:
 ===========
-JPLRepo - Coding, implementation of models and distribution.
+JPLRepo - Coding, implementation of models and distribution.  
 MerlinsMaster - Internal Models and Textures.
