@@ -38,6 +38,9 @@
     <Reference Include="DFInterface">
       <HintPath>..\DFInterface\bin\Debug\DFInterface.dll</HintPath>
     </Reference>
+    <Reference Include="RemoteTech">
+      <HintPath>.\RemoteTech.dll</HintPath>
+    </Reference>
     <Reference Include="SMInterface, Version=4.3.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>.\SMInterface.dll</HintPath>
@@ -57,6 +60,7 @@
     <Compile Include="DeepFreeze.cs" />
     <Compile Include="DeepFreezerPart.cs" />
     <Compile Include="DFGameSettings.cs" />
+    <Compile Include="DFInstalledMods.cs" />
     <Compile Include="DFSettings.cs" />
     <Compile Include="FrozenCrewClasses.cs" />
     <Compile Include="InstallChecker.cs" />
