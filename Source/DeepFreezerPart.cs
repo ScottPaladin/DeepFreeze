@@ -22,53 +22,20 @@ using UnityEngine;
 
 namespace DF
 {
-    
-    public enum FrzrTmpStatus        
-    {
-        OK = 0,
-        WARN = 1,
-        RED = 2,
-    }
-
     public class DeepFreezer : PartModule
     {
-        private float lastUpdate = 0.0f;                  // time since we last updated the part menu
-        private float lastRemove = 0.0f;                  // time since we last removed a part menu event
-        private float updatetnterval = .5f;               // time between part menu updates
-        private double deathCounter = 0f;                 // time delay counter until the chance of a frozen kerbal dying due to lack of EC
-        private float  deathRoll = 240f;                  // time delay until the chance of a frozen kerbal dying due to lack of EC
-        private double tmpdeathCounter = 0f;              // time delay counter until the chance of a frozen kerbal dying due to part being too hot
-        private float tmpdeathRoll = 120f;                // time delay until the chance of a frozen kerbal dying due to part being too hot
-        private bool ECWarningIssued = false;             // set to true if EC warning has been issued
-        private bool TmpWarningIssued = false;            // set to true if a Temp warning has been issued
-
-        public bool crewXferTOActive = false;             // true if a Stock crewXfer to this part is active
-        public bool crewXferFROMActive = false;           // true if a Stock crewXfer from this part is active
-        private ProtoCrewMember xfercrew;                 // set to the crew kerbal during a crewXfer
-        private Part xferfromPart;                        // set to the from part during a crewXfer
-        private Part xfertoPart;                          // set to the to part during a crewXfer
-        private InternalSeat xferfromSeat;                // set to the from seat during a crewXfer
-        private InternalSeat xfertoSeat;                  // set to the to seat during a crewXfer
-        private bool xferisfromEVA = false;               // set to true if CrewXferTOActive and it is FROM an EVA kerbal entering the part.
-        public bool crewXferSMActive = false;             // set to true if CrewXfer is active and SM is installed and managing the xfer.
-        public bool crewXferSMStock = false;              // set to true if a Stock CrewXfer is active and SM is installed and managing the xfer.
-        private bool refreshPortraits = false;            // set to true if we are running a timer to refresh the Portrait cameras
-        private double refreshPortraitsTimer = 0f;        // the timer for refreshing the portrait cameras
-        private const double refreshPortraitsWaitTime = 40f; // how long to wait in frames before refreshing the portrait cameras
-        public bool FreezerOutofEC = false;               // true if the freezer has run out of EC
-        public FrzrTmpStatus FrzrTmp = FrzrTmpStatus.OK;  // ok, warning and red alert flags for temperature monitoring of the freezer
-        private const double heatamtMonitoringFrznKerbals = 10f;  //amount of heat generated when monitoring a frozen kerbal
-        private const double heatamtThawFreezeKerbal = 50f;       //amount of heat generated when freezing or thawing a kerbal
-        
-        private static string[] CryoPodWindowNames = { "cryopodWindow2", "cryopodWindow2 1", "cryopodWindow2 2", "cryopodWindow2 3", "cryopodWindow2 4", "cryopodWindow2 5" 
-                                                 , "cryopodWindow2 6", "cryopodWindow2 7", "cryopodWindow2 8", "cryopodWindow2 9"};
-
-       
-        public ScreenMessage ThawMsg, FreezeMsg , OnGoingECMsg, TempChkMsg;  // used for the bottom right screen messages
-
+        private float lastUpdate = 0.0f;          // time since we last updated the part menu
+        private float lastRemove = 0.0f;          // time since we last removed a part menu event
+        private float updatetnterval = .5f;       // time between part menu updates
+        private float deathCounter = 0f;          // time delay counter until the chance of a frozen kerbal dying due to lack of EC
+        private float deathRoll = 20f;            // time delay until the chance of a frozen kerbal dying due to lack of EC
+        public bool crewXferTOActive = false;     // true if a crewXfer to this part is active
+        public bool crewXferFROMActive = false;   // true if a crewXfer from this part is active        
+        public ProtoCrewMember xfercrew;          // set to the crew kerbal during a crewXfer
+        private Part xferfromPart;                // set to the from part during a crewXfer
+        private Part xfertoPart;                  // set to the to part during a crewXfer                       
         private System.Random rnd = new System.Random(); // Random seed for Killing Kerbals when we run out of EC to keep the Freezer running.
-        private bool RTlastKerbalFreezeWarn = false;     //  set to true if you are using RemoteTech and you attempt to freeze your last kerbal in active vessel
-
+               
         [KSPField(isPersistant = true, guiActive = false, guiName = "Freezer Size")] //Total Size of Freezer, get's read from part.cfg.
         public int FreezerSize;
 
@@ -77,12 +44,6 @@ namespace DF
 
         [KSPField(isPersistant = true, guiActive = true, guiName = "Freezer Space")] //Total space available for storage. Set by Part.cfg file.
         public int FreezerSpace;
-
-        [KSPField(isPersistant = true)] //Is set to true if the part is full (taking into account frozen kerbals in the part).
-        public bool PartFull;
-
-        [KSPField(isPersistant = true, guiName = "Cabin Temperature", guiUnits = "K", guiFormat = "F1", guiActive = true)]
-        public float CabinTemp = 0f;
 
         [KSPEvent(active = true, guiActive = true, name = "showMenu", guiName = "Toggle Menu")]
         public void showMenu()
@@ -93,18 +54,12 @@ namespace DF
             else
                 Debug.Log("DeepFreezer ToggleMenu error");
         }
-
+                        
         [KSPField(isPersistant = true)]
-        public float timeSinceLastECtaken; //This is the game time since EC was taken, for the ongoing EC usage while kerbal's are frozen
-
-        [KSPField(isPersistant = true)]
-        public float timeSinceLastTmpChk; //This is the game time since Temperature was checked, for the ongoing storage of frozen kerbal's
+        public float timeSinceLastECtaken; //This is the game time since EC as taken, for the ongoing EC usage while kerbal's are frozen
 
         [KSPField(isPersistant = true)]
         public Int32 FrznChargeRequired; //Set by part.cfg. Total EC value required to maintain a frozen kerbal per minute.
-
-        [KSPField(isPersistant = true)]
-        public Int32 GlykerolRequired; //Set by part.cfg. Total Glykerol value required to freeze a kerbal.
 
         [KSPField()]                     // set to active while freezing a kerbal
         public bool IsFreezeActive;
@@ -122,22 +77,19 @@ namespace DF
         public Int32 ChargeRate; //Set by part.cfg. EC draw per tick.
 
         private ProtoCrewMember ActiveFrzKerbal;  // These vars store info about the kerbal while we are freezing or thawing
-        private string ToFrzeKerbal = "";
-        private int ToFrzeKerbalSeat = 0;
-        private string ToFrzeKerbalXformNme = "Unknown";
-        private string ToThawKerbal = "";
-
+        private string ToFrzeKerbal;
+        private int ToFrzeKerbalSeat;
+        private string ToFrzeKerbalXformNme;
+        private string ToThawKerbal;        
+        
         public FrznCrewList StoredCrewList = new FrznCrewList();  // This is the frozen StoredCrewList for the part
         public Guid CrntVslID;
         private uint CrntPartID;
         private string CrntVslName;
         private DFGameSettings DFgameSettings;
-        private DFSettings DFsettings;
         private bool setGameSettings = false;
         private bool partHasInternals = false;
-        private bool onvslchgInternal = false;
 
-        //Audio Sounds
         protected AudioSource hatch_lock;
         protected AudioSource ice_freeze;
         protected AudioSource machine_hum;
@@ -145,24 +97,12 @@ namespace DF
 
         public override void OnUpdate()
         {
-            if (Time.timeSinceLevelLoad < 2.0f || !HighLogic.LoadedSceneIsFlight) // Check not loading level or not in flight
+            if (Time.timeSinceLevelLoad < 2.0f) // Check not loading level
             {
                 return;
             }
-            if (refreshPortraits)  // Check if we are delaying a portrait camera refresh and if so process the delay
-            {
-                refreshPortraitsTimer += 1;
-                if (refreshPortraitsTimer > refreshPortraitsWaitTime)  // Delay time up, refresh the cameras
-                {
-                    respawnVesselCrew();
-                    refreshPortraitsTimer = 0;
-                    refreshPortraits = false;
-                }
-            }
-            
             if ((Time.time - lastUpdate) > updatetnterval && (Time.time - lastRemove) > updatetnterval) // We only update every updattnterval time interval.
             {
-                
                 lastUpdate = Time.time;
                 if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ready && FlightGlobals.ActiveVessel != null)
                 {
@@ -172,169 +112,88 @@ namespace DF
                     // This should only happen once we need to load the StoredCrewList of frozen kerbals for this part from the DeepFreeze master list
                     if (!setGameSettings)
                     {
-                        onceoffSetup();
-                    }
+                         DFgameSettings = DeepFreeze.Instance.DFgameSettings;
+                        StoredCrewList.Clear();
+                        CrntVslID = this.vessel.id;
+                        CrntVslName = this.vessel.vesselName;
+                        CrntPartID = this.part.flightID;
+                        Utilities.Log_Debug("DeepFreezer", "This CrntVslID = " + CrntVslID);
+                        Utilities.Log_Debug("DeepFreezer", "This CrntPartID = " + CrntPartID);
+                        Utilities.Log_Debug("DeepFreezer", "This CrntVslName = " + CrntVslName);
+                        // Iterate through the dictionary of all known frozen kerbals
 
-                    if (DFsettings.ECReqdToFreezeThaw != ChargeRequired)
-                    {
-                        Utilities.Log_Debug("DeepFreezer", "Master config ECReqdToFreezeThaw=" + DFsettings.ECReqdToFreezeThaw + " overriding Part ChargeRequired=" + ChargeRequired + " parm");
-                        ChargeRequired = DFsettings.ECReqdToFreezeThaw;
-                    }
-                    if (DFsettings.GlykerolReqdToFreeze != GlykerolRequired)
-                    {
-                        Utilities.Log_Debug("DeepFreezer", "Master config GlykerolReqdToFreeze=" + DFsettings.GlykerolReqdToFreeze + " overriding Part GlykerolRequired=" + GlykerolRequired + " parm");
-                        GlykerolRequired = DFsettings.GlykerolReqdToFreeze;
-                    }
-
-                    Utilities.Log_Debug("DeepFreezer", "Set Temp");
-                    if (DFsettings.TempinKelvin)
-                    {
-                        this.Fields["CabinTemp"].guiUnits = "K";
-                        CabinTemp = (float)this.part.temperature;
-                    }
-                    else
-                    {
-                        this.Fields["CabinTemp"].guiUnits = "C";
-                        CabinTemp = Utilities.KelvintoCelsius((float)this.part.temperature);
-                    }
-                    Utilities.Log_Debug("DeepFreezer", "Set Temp done");
-
-                    // Set a flag if this part has internals or not. If it doesn't we don't try to save/restore specific seats for the frozen kerbals
-                    if (this.part.internalModel == null)
-                    {
-                        partHasInternals = false;
-                    }
-                    {
-                        partHasInternals = true;
-                    }
-
-                    // Check Crew Xfers in action
-
-                    if (crewXferFROMActive)
-                    {
-                        Debug.Log("Crew XferFROM Active, checking if complete");
+                        foreach (KeyValuePair<string, KerbalInfo> kerbal in DFgameSettings.KnownFrozenKerbals)
                         {
-                            ProtoCrewMember crew = this.part.protoModuleCrew.FirstOrDefault(a => a.name == xfercrew.name);
-                            if (crew == null)
+                            // if the known kerbal is in this part in this vessel
+                            if (kerbal.Value.vesselID == CrntVslID && kerbal.Value.partID == CrntPartID)
                             {
-                                crewXferFROMActive = false;
-                                crewXferSMActive = false;
-                                crewXferSMStock = false;                                
-                                //respawnVesselCrew();
-                                refreshPortraits = true;
-                                refreshPortraitsTimer = 0f;                                                      
-                                Utilities.Log_Debug("DeepFreezer", "CrewXferFROM Stock Completed");
-                            }
-                        }
-                    }
-
-                    if (crewXferTOActive)
-                    {
-                        Debug.Log("Crew XferTO Active, checking if complete");
-                        if (DFInstalledMods.SMInstalled)
-                        {
-                            if (crewXferSMActive && IsSMXferRunning())
-                            {
-                                Utilities.Log_Debug("DeepFreezer", "CrewXfer SMxfer and it's still running, so wait");
-                            }
+                                //add them to our storedcrewlist for this part.
+                                Utilities.Log_Debug("DeepFreezer", "Adding frozen kerbal to this part storedcrewlist " + kerbal.Key);
+                                FrznCrewMbr fzncrew = new FrznCrewMbr(kerbal.Key, kerbal.Value.seatIdx, CrntVslID, CrntVslName);
+                                StoredCrewList.Add(fzncrew);
+                            }    
                             else
                             {
-                                xferisfromEVA = false;
-                                crewXferTOActive = false;
-                                crewXferSMActive = false;
-                                crewXferSMStock = false;
-                                Utilities.Log_Debug("DeepFreezer", "CrewXferTO Completed");
-
-                            }
+                                Utilities.Log_Debug("DeepFreezer", kerbal.Key + "," + kerbal.Value.vesselID + "," + kerbal.Value.partID + " not this vessel");
+                            }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
                         }
-                        else
-                        {
-                            Utilities.Log_Debug("DeepFreezer", "CrewXfer active & SMXfer is not active, so checking");
-                            ProtoCrewMember crew = this.part.protoModuleCrew.FirstOrDefault(a => a.name == xfercrew.name);
-                            if (crew != null)
-                            {
-                                if (PartFull)
-                                {
-                                    if (xferisfromEVA)
-                                    {
-                                        Utilities.Log_Debug("DeepFreezer", "CrewXfer xferisfromEVA = true kick them out to EVA");
-
-                                        FlightEVA.fetch.spawnEVA(xfercrew, xfertoPart, xfertoPart.airlock);
-                                        CameraManager.Instance.SetCameraFlight();
-                                    }
-                                    else
-                                    {
-                                        Utilities.Log_Debug("DeepFreezer", "CrewXfer xferisfromEVA = false kick them out to from part");
-                                        this.part.RemoveCrewmember(xfercrew);
-                                        xferfromPart.AddCrewmember(xfercrew);
-                                        refreshPortraits = true;
-                                        refreshPortraitsTimer = 0f;                                        
-                                    }
-                                    //GameEvents.onVesselChange.Fire(vessel);
-                                    ScreenMessages.PostScreenMessage("Freezer is Full, cannot enter at this time", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-                                    Utilities.Log_Debug("DeepFreezer", "crewXferSMActive but PART is FULL ended");
-                                }
-
-                                xferisfromEVA = false;
-                                crewXferTOActive = false;
-                                crewXferSMActive = false;
-                                crewXferSMStock = false;                                                                
-                                Utilities.Log_Debug("DeepFreezer", "CrewXferTO Stock Completed");
-                            }
-                        }
-                    }                    
-                    UpdateEvents(); // Update the Freeze/Thaw Events that are attached to this Part.
+                        setGameSettings = true;
+                        UpdateCounts();                                        
+                    }  
                 }
-                UpdateCounts();
-            }
-            
-        }
+                UpdateEvents(); // Update the Freeze/Thaw Events that are attached to this Part.
 
-        private void onceoffSetup()
-        {
-            Utilities.Log_Debug("DeepFreezer", "OnUpdate SetGameSettings");
-            DFgameSettings = DeepFreeze.Instance.DFgameSettings;
-            DFsettings = DeepFreeze.Instance.DFsettings;
-            StoredCrewList.Clear();
-            CrntVslID = this.vessel.id;
-            CrntVslName = this.vessel.vesselName;
-            CrntPartID = this.part.flightID;
-            Utilities.Log_Debug("DeepFreezer", "This CrntVslID = " + CrntVslID);
-            Utilities.Log_Debug("DeepFreezer", "This CrntPartID = " + CrntPartID);
-            Utilities.Log_Debug("DeepFreezer", "This CrntVslName = " + CrntVslName);
-
-            //resetCryoWindows();
-
-            // Iterate through the dictionary of all known frozen kerbals
-            foreach (KeyValuePair<string, KerbalInfo> kerbal in DFgameSettings.KnownFrozenKerbals)
-            {
-                // if the known kerbal is in this part in this vessel
-                if (kerbal.Value.vesselID == CrntVslID && kerbal.Value.partID == CrntPartID)
+                // Set a flag if this part has internals or not. If it doesn't we don't try to save/restore specific seats for the frozen kerbals
+                if (this.part.internalModel == null)
                 {
-                    //add them to our storedcrewlist for this part.
-                    Utilities.Log_Debug("DeepFreezer", "Adding frozen kerbal to this part storedcrewlist " + kerbal.Key);
-                    //if (kerbal.Value.seatIdx == null) kerbal.Value.seatIdx = 0;
-                    FrznCrewMbr fzncrew = new FrznCrewMbr(kerbal.Key, kerbal.Value.seatIdx, CrntVslID, CrntVslName);
-                    StoredCrewList.Add(fzncrew);
-                    //setCryoWindowOn(CryoPodWindowNames[kerbal.Value.seatIdx]);                    
+                    partHasInternals = false;
+                }
+                {
+                    partHasInternals = true;
+                }                
+                /*
+                //This whole next section is pointless, and just debugging messages helping me develop the Mod.
+                if (this.part.internalModel == null)
+                {
+                    Debug.Log("DeepFreezer Part has no internal model");
                 }
                 else
                 {
-                    Utilities.Log_Debug("DeepFreezer", kerbal.Key + "," + kerbal.Value.vesselID + "," + kerbal.Value.partID + " not this vessel/part");
+                    Debug.Log("DeepFreezer Part has " + this.part.internalModel.seats.Count + " seats");
+                    int index=0;
+                    foreach (InternalSeat seat in this.part.internalModel.seats)
+                    {
+                        string logmsg = "SeatXformName=" + seat.seatTransformName + " Taken?= " + seat.taken;
+                        if (seat.kerbalRef != null)
+                        {
+                            logmsg += " KerbalRefName=" + seat.kerbalRef.name;
+                        }
+                        else
+                            logmsg += " KerbalRefName=null";
+                        if (seat.crew != null)
+                        {
+                            logmsg += " CrewName=" + seat.crew.name + " type=" + seat.crew.type + " roststs=" + seat.crew.rosterStatus + " indx=" + index;
+                        }
+                        else
+                            logmsg += " Crew=null";                            
+                        Debug.Log("DeepFreezer " + logmsg);
+                        index++;
+                    }
+                    Debug.Log("DeepFreezer Available Seat count =" + this.part.internalModel.GetAvailableSeatCount());                    
                 }
-            }
-            setGameSettings = true;
+                DFgameSettings.DmpKnownFznKerbals();
+                // End of the pointless debugging section is here.    
+                 * */
+            }                        
         }
 
-        private void FixedUpdate()
+        public void FixedUpdate()
         {
-            Utilities.Log_Debug("DeepFreezer", "FixedUpdate start");
             if (Time.timeSinceLevelLoad < 2.0f) // Check not loading level
             {
                 return;
             }
-
-            if (IsFreezeActive == true) // Process active freezing process
+            if (IsFreezeActive == true)
             {
                 Utilities.Log_Debug("DeepFreezer", "FreezeActive ToFrzeKerbal = " + ToFrzeKerbal + " Seat =" + ToFrzeKerbalSeat);
                 if (!requireResource(vessel, "ElectricCharge", ChargeRate, false) == true)
@@ -347,18 +206,11 @@ namespace DF
                 {
                     requireResource(vessel, "ElectricCharge", ChargeRate, true);
                     StoredCharge = StoredCharge + ChargeRate;
-                    ScreenMessages.RemoveMessage(FreezeMsg);
-                    FreezeMsg = ScreenMessages.PostScreenMessage(" Freezing - Charge: " + StoredCharge.ToString("######0"));
-                    if (DFsettings.RegTempReqd)
-                    {
-                        this.part.AddThermalFlux(heatamtThawFreezeKerbal);
-                    }
                     Utilities.Log_Debug("DeepFreezer", "Drawing Charge StoredCharge =" + StoredCharge.ToString("0000.00") + " ChargeRequired =" + ChargeRequired);
                     if (StoredCharge > ChargeRequired)
                     {
-                        if (requireResource(vessel, "Glykerol", GlykerolRequired, true))
+                        if (requireResource(vessel, "Glykerol", 5, true))
                         {
-                            ScreenMessages.RemoveMessage(FreezeMsg);
                             FreezeKerbalConfirm(ActiveFrzKerbal);
                         }
                         else
@@ -368,10 +220,8 @@ namespace DF
                     }
                 }
             }
-
-            if (IsThawActive == true) // Process active thawing process
+            if (IsThawActive == true)
             {
-                Utilities.Log_Debug("DeepFreezer", "ThawActive Kerbal = " + ToThawKerbal);
                 if (!requireResource(vessel, "ElectricCharge", ChargeRate, false))
                 {
                     ScreenMessages.PostScreenMessage("Insufficient electric charge to thaw kerbal", 5.0f, ScreenMessageStyle.UPPER_CENTER);
@@ -381,265 +231,202 @@ namespace DF
                 {
                     requireResource(vessel, "ElectricCharge", ChargeRate, true);
                     StoredCharge = StoredCharge + ChargeRate;
-                    ScreenMessages.RemoveMessage(ThawMsg);
-                    ThawMsg = ScreenMessages.PostScreenMessage(" Thawing - Charge: " + StoredCharge.ToString("######0"));
-                    if (DFsettings.RegTempReqd)
-                    {
-                        this.part.AddThermalFlux(heatamtThawFreezeKerbal);
-                    }
                     if (StoredCharge > ChargeRequired)
                     {
-                        ScreenMessages.RemoveMessage(ThawMsg);
                         ThawKerbalConfirm(ToThawKerbal);
                     }
                 }
             }
-            
-            // The following section is the on-going EC check and temperature checks for the freezer, only in flight and activevessel
-            if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ready && FlightGlobals.ActiveVessel != null && setGameSettings)
+
+            if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ready && FlightGlobals.ActiveVessel != null)
             {
-                if (DFsettings.ECreqdForFreezer && timewarpIsValid)
+                // The follow section of code consumes EC when we have ECreqdForFreezer set to true in the part config.
+                // This consumes electric charge when we have frozen kerbals on board.
+                // But due to bugs in KSP ith EC and SolarPanels at high timewarp if timewarp is > 4x we turn it off.
+                // If we run out of EC we roll the dice. There is a 1 in 3 chance a Kerbal will DIE!!!!
+                if (DeepFreeze.Instance.DFsettings.ECreqdForFreezer && timewarpIsValid)
                 {
-                    ChkOngoingEC(); // Check the on-going EC usage
-                }
-
-                if (DFsettings.RegTempReqd && timewarpIsValid)
-                {
-                    ChkOngoingTemp(); // Check the on-going Temperature
-                }
-            }
-            Utilities.Log_Debug("DeepFreezer", "FixedUpdate end");
-        }
-
-        private void ChkOngoingEC()
-        {
-            // The follow section of code consumes EC when we have ECreqdForFreezer set to true in the part config.
-            // This consumes electric charge when we have frozen kerbals on board.
-            // But due to bugs in KSP ith EC and SolarPanels at high timewarp if timewarp is > 4x we turn it off.
-            // If we run out of EC we roll the dice. There is a 1 in 3 chance a Kerbal will DIE!!!!
-
-            Utilities.Log_Debug("ChkOngoingEC start");
-            if ((Time.time - timeSinceLastECtaken) > updatetnterval && TotalFrozen > 0) //We have frozen Kerbals, consume EC
-            {
-                float crnttime = Time.time;
-                double currenttime = Planetarium.GetUniversalTime();
-                float timeperiod = crnttime - timeSinceLastECtaken;
-                double ECreqd = ((FrznChargeRequired / 60.0f) * timeperiod * TotalFrozen);
-                Utilities.Log_Debug("DeepFreezer", "Running the freezer parms crnttime =" + crnttime + " timeperiod =" + timeperiod + " ecreqd =" + ECreqd);
-                if (requireResource(vessel, "ElectricCharge", ECreqd, false))
-                {
-                    ScreenMessages.RemoveMessage(OnGoingECMsg);
-                    //Have resource
-                    requireResource(vessel, "ElectricCharge", ECreqd, true);
-                    Utilities.Log_Debug("DeepFreezer", "Consumed Freezer EC " + ECreqd + " units");
-                    timeSinceLastECtaken = crnttime;
-                    deathCounter = currenttime;
-                    FreezerOutofEC = false;
-                    ECWarningIssued = false;
-                }
-                else
-                {
-                    Debug.Log("DeepFreezer Ran out of EC to run the freezer");
-                    if (!ECWarningIssued)
+                    if ((Time.time - timeSinceLastECtaken) > updatetnterval && TotalFrozen > 0) //We have frozen Kerbals, consume EC
                     {
-                        ScreenMessages.PostScreenMessage("Insufficient electric charge to monitor frozen kerbals. They are going to die!!", 10.0f, ScreenMessageStyle.UPPER_CENTER);
-                        ECWarningIssued = true;
-                    }                    
-                    ScreenMessages.RemoveMessage(OnGoingECMsg);
-                    OnGoingECMsg = ScreenMessages.PostScreenMessage(" Freezer Out of EC : Systems critical in " + (deathRoll - (currenttime - deathCounter)).ToString("######0") + " secs");
-                    FreezerOutofEC = true;
-                    Utilities.Log_Debug("DeepFreezer", "deathCounter = " + deathCounter);
-                    if (currenttime - deathCounter > deathRoll)
-                    {
-                        Utilities.Log_Debug("DeepFreezer", "deathRoll reached, Kerbals all die...");
-                        deathCounter = currenttime;
-                        //all kerbals dies                          
-                        var kerbalsToDelete = new List<FrznCrewMbr>();
-                        foreach (FrznCrewMbr deathKerbal in StoredCrewList)
-                        {
-                            DeepFreeze.Instance.KillFrozenCrew(deathKerbal.CrewName);
-                            ScreenMessages.PostScreenMessage(deathKerbal.CrewName + " died due to lack of Electrical Charge to run cryogenics", 10.0f, ScreenMessageStyle.UPPER_CENTER);
-                            Debug.Log("DeepFreezer - kerbal " + deathKerbal.CrewName + " died due to lack of Electrical charge to run cryogenics");
-                            kerbalsToDelete.Add(deathKerbal);
+                        float crnttime = Time.time;
+                        float timeperiod = crnttime - timeSinceLastECtaken;
+                        double ECreqd = ((FrznChargeRequired / 60.0f) * timeperiod * TotalFrozen);
+                        Utilities.Log_Debug("DeepFreezer", "Running the freezer parms crnttime =" + crnttime + " timeperiod =" + timeperiod + " ecreqd =" + ECreqd);
+                        if (requireResource(vessel, "ElectricCharge", ChargeRate, false))
+                        {                       
+                            //Have resource
+                            requireResource(vessel, "ElectricCharge", ECreqd, true);
+                            Utilities.Log_Debug("DeepFreezer", "Consumed Freezer EC " + ECreqd + " units");
+                            timeSinceLastECtaken = crnttime;
                         }
-                        kerbalsToDelete.ForEach(id => StoredCrewList.Remove(id));
+                        else
+                        {                            
+                            Debug.Log("DeepFreezer Ran out of EC to run the freezer");
+                            ScreenMessages.PostScreenMessage("Insufficient electric charge to monitor frozen kerbals. They are going to die!!", 10.0f, ScreenMessageStyle.UPPER_CENTER);
+                            deathCounter += timeSinceLastECtaken;
+                            Utilities.Log_Debug("DeepFreezer", "deathCounter = " + deathCounter);
+                            if (deathCounter > deathRoll)
+                            {
+                                Utilities.Log_Debug("DeepFreezer", "deathRoll reached, roll the dice...");
+                                deathCounter = 0f;
+                                int dice = rnd.Next(1, 3);  // Change this dice to increase or decrease the odds of a Kerbal Dying
+                                if (dice == 2) // Change this test to increase or decrease the odds of a Kerbal Dying, currently 1 in 3 chance
+                                {
+                                    //a kerbal dies
+                                    Utilities.Log_Debug("DeepFreezer", "A Kerbal dies");
+                                    int dice2 = rnd.Next(1, StoredCrewList.Count); // Randomly select a Kerbal to kill.
+                                    FrznCrewMbr deathKerbal = StoredCrewList[dice2];
+                                    DeepFreeze.Instance.KillFrozenCrew(deathKerbal.CrewName);                                    
+                                    ScreenMessages.PostScreenMessage(deathKerbal.CrewName + " died due to lack of Electrical Charge to run cryogenics", 10.0f, ScreenMessageStyle.UPPER_CENTER);                                        
+                                    Debug.Log("DeepFreezer - kerbal " + deathKerbal.CrewName + " died due to lack of Electrical charge to run cryogenics");
+                                    StoredCrewList.Remove(deathKerbal);                                    
+                                }
+                            }                                                       
+                        }                        
                     }
                 }
             }
-            Utilities.Log_Debug("ChkOngoingEC end");
-        }
-
-        private void ChkOngoingTemp()
-        {
-            // The follow section of code checks Temperatures when we have RegTempReqd set to true in the master config file.
-            // This check is done when we have frozen kerbals on board.
-            // But due to bugs in KSP with EC and SolarPanels at high timewarp if timewarp is > 4x we turn it off.
-            // If the temperature is too high we roll the dice. There is a 1 in 3 chance a Kerbal will DIE!!!!
-
-            Utilities.Log_Debug("ChkOngoingTemp start");
-            if ((Time.time - timeSinceLastTmpChk) > updatetnterval && TotalFrozen > 0) //We have frozen Kerbals, consume EC
-            {
-                float crnttime = Time.time;
-                double currenttime = Planetarium.GetUniversalTime();
-                float timeperiod = crnttime - timeSinceLastTmpChk;
-                //Add Heat for equipment monitoring frozen kerbals
-                double heatamt = StoredCrewList.Count * heatamtMonitoringFrznKerbals;
-                if (heatamt > 0) this.part.AddThermalFlux(heatamt);
-                Utilities.Log_Debug("Added " + heatamt + " Kw of heat for monitoring frozen kerbals");
-                if (this.part.temperature < DFsettings.RegTempMonitor)
-                {
-                    Utilities.Log_Debug("DeepFreezer", "Temperature check is good parttemp=" + this.part.temperature + ",MaxTemp=" + DFsettings.RegTempMonitor);
-                    ScreenMessages.RemoveMessage(TempChkMsg);
-                    FrzrTmp = FrzrTmpStatus.OK;
-                    tmpdeathCounter = currenttime;
-                    // do warning if within 40 and 20 kelvin
-                    double tempdiff = DFsettings.RegTempMonitor - this.part.temperature;
-                    if (tempdiff <= 40)
-                    {
-                        FrzrTmp = FrzrTmpStatus.WARN;
-                        ScreenMessages.PostScreenMessage("Check Temperatures, Freezer getting hot", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-                    }
-                    else
-                    {
-                        if (tempdiff < 20)
-                        {
-                            FrzrTmp = FrzrTmpStatus.RED;
-                            ScreenMessages.PostScreenMessage("Warning!! Check Temperatures NOW, Freezer getting very hot", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-                        }
-                    }
-                    timeSinceLastTmpChk = crnttime;
-                    TmpWarningIssued = false;
-                }
-                else
-                {
-                    // OVER TEMP I'm Melting!!!! CODE GOES HERE
-                    Debug.Log("DeepFreezer Part Temp TOO HOT, Kerbals are going to melt");
-                    if (!TmpWarningIssued)
-                    {
-                        ScreenMessages.PostScreenMessage("Temperature too hot for kerbals to remain frozen. They are going to die!!", 10.0f, ScreenMessageStyle.UPPER_CENTER);
-                        TmpWarningIssued = true;
-                    }                    
-                    FrzrTmp = FrzrTmpStatus.RED;
-                    Utilities.Log_Debug("DeepFreezer", "tmpdeathCounter = " + tmpdeathCounter);
-                    ScreenMessages.RemoveMessage(TempChkMsg);
-                    TempChkMsg = ScreenMessages.PostScreenMessage(" Freezer Over Temp : Systems critical in " + (tmpdeathRoll - (currenttime - tmpdeathCounter)).ToString("######0") + " secs");
-                    if (currenttime - tmpdeathCounter > tmpdeathRoll)                    
-                    {
-                        Utilities.Log_Debug("DeepFreezer", "tmpdeathRoll reached, roll the dice...");
-                        tmpdeathCounter = currenttime;
-                        TmpWarningIssued = false;
-                        //a kerbal dies                        
-                        int dice = rnd.Next(1, StoredCrewList.Count); // Randomly select a Kerbal to kill.
-                        Utilities.Log_Debug("DeepFreezer", "A Kerbal dies dice=" + dice);
-                        FrznCrewMbr deathKerbal = StoredCrewList[dice-1];
-                        DeepFreeze.Instance.KillFrozenCrew(deathKerbal.CrewName);
-                        ScreenMessages.PostScreenMessage(deathKerbal.CrewName + " died due to overheating, cannot keep frozen", 10.0f, ScreenMessageStyle.UPPER_CENTER);
-                        Debug.Log("DeepFreezer - kerbal " + deathKerbal.CrewName + " died due to overheating, cannot keep frozen");
-                        StoredCrewList.Remove(deathKerbal);
-                    }
-                }
-            }
-            Utilities.Log_Debug("ChkOngoingTemp end");
         }
 
         public override void OnLoad(ConfigNode node)
         {
             Debug.Log("DeepFreezer onLoad");
-            Debug.Log("FreezerSize=" + FreezerSize + ",ChargeRequired=" + ChargeRequired + ",GlykerolRequired=" + GlykerolRequired + ",ChargeRate=" + ChargeRate + ",FrznChargeRequired=" + FrznChargeRequired);
-            Debug.Log("DeepFreezer end onLoad");
+            Int32.TryParse(node.GetValue("ChargeRequired"), out ChargeRequired);
+            Int32.TryParse(node.GetValue("ChargeRate"), out ChargeRate);            
+            Debug.Log("DeepFreezer end onLoad");                        
         }
 
         public override void OnStart(PartModule.StartState state)
         {
             Debug.Log("DeepFreezer OnStart");
-            base.OnStart(state);           
-                        
-            if ((state != StartState.None || state != StartState.Editor))
+            base.OnStart(state);
+            if (state != StartState.None || state != StartState.Editor)
             {
                 GameEvents.onCrewTransferred.Add(this.OnCrewTransferred);
-                GameEvents.onVesselChange.Add(this.OnVesselChange);
-                GameEvents.onCrewBoardVessel.Add(this.OnCrewBoardVessel);    
-                if (DFInstalledMods.SMInstalled) // Check if Ship Manifest (SM) is installed? Disable STOCK Xfer window.
-                {
-                    FlightEVA.fetch.DisableInterface();  
-                }                                                    
+                GameEvents.onCrewBoardVessel.Add(this.onCrewBoardVessel);
             }
-            
+
             hatch_lock = gameObject.AddComponent<AudioSource>();
-            hatch_lock.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/hatch_lock");
+            hatch_lock.clip = GameDatabase.Instance.GetAudioClip("PaladinLabs/DeepFreeze/Sounds/hatch_lock");
             hatch_lock.volume = .5F;
             hatch_lock.panLevel = 0;
             hatch_lock.rolloffMode = AudioRolloffMode.Linear;
             hatch_lock.Stop();
             ice_freeze = gameObject.AddComponent<AudioSource>();
-            ice_freeze.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/ice_freeze");
+            ice_freeze.clip = GameDatabase.Instance.GetAudioClip("PaladinLabs/DeepFreeze/Sounds/ice_freeze");
             ice_freeze.volume = 1;
             ice_freeze.panLevel = 0;
             ice_freeze.rolloffMode = AudioRolloffMode.Linear;
             ice_freeze.Stop();
             machine_hum = gameObject.AddComponent<AudioSource>();
-            machine_hum.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/machine_hum");
+            machine_hum.clip = GameDatabase.Instance.GetAudioClip("PaladinLabs/DeepFreeze/Sounds/machine_hum");
             machine_hum.volume = .1F;
             machine_hum.panLevel = 0;
             machine_hum.rolloffMode = AudioRolloffMode.Linear;
             machine_hum.Stop();
             ding_ding = gameObject.AddComponent<AudioSource>();
-            ding_ding.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/ding_ding");
+            ding_ding.clip = GameDatabase.Instance.GetAudioClip("PaladinLabs/DeepFreeze/Sounds/ding_ding");
             ding_ding.volume = .25F;
             ding_ding.panLevel = 0;
             ding_ding.rolloffMode = AudioRolloffMode.Linear;
             ding_ding.Stop();
-            Debug.Log("DeepFreezer  END OnStart");
+            Debug.Log("DeepFreezer  END OnStart");  
         }
         
-
         public override void OnSave(ConfigNode node)
         {
             Debug.Log("OnSave: " + node);
+
         }
 
-        private void OnDestroy()
+        public void OnDestroy()
         {
             Debug.Log("DeepFreezer OnDestroy");
             GameEvents.onCrewTransferred.Remove(this.OnCrewTransferred);
-            GameEvents.onVesselChange.Remove(this.OnVesselChange);
-            GameEvents.onCrewBoardVessel.Remove(this.OnCrewBoardVessel);
-            if (DFInstalledMods.SMInstalled) // Check if Ship Manifest (SM) is installed? Disable STOCK Xfer window.
-            {
-                FlightEVA.fetch.EnableInterface();
-            }   
+            GameEvents.onCrewBoardVessel.Remove(this.onCrewBoardVessel);
             Debug.Log("DeepFreezer END OnDestroy");
         }
-
+        
+        /*
+        public override void OnInactive()
+        {
+            Debug.Log("OnInactive " + FrozenCrew);
+            if (IsCrewableWhenFull)
+            {
+                part.CrewCapacity = StoredCrew.Count +1;
+            }
+            else
+            {
+                part.CrewCapacity = StoredCrew.Count;
+            }
+            
+            //part.CrewCapacity = StoredCrew.Count;
+            foreach (var crewmember in StoredCrew)
+            {
+                foreach (ProtoCrewMember kerbal in HighLogic.CurrentGame.CrewRoster.Crew)
+                {
+                    if (kerbal.name == crewmember)
+                        part.AddCrewmember(kerbal);
+                }
+                foreach (ProtoCrewMember kerbal in HighLogic.CurrentGame.CrewRoster.Unowned)
+                {
+                    if (kerbal.name == crewmember)
+                        part.AddCrewmember(kerbal);
+                }
+            }
+        }
+        */
+        
         #region Events
 
         private void UpdateEvents()
         {
+            //Debug.Log("UpdateEvents");
+            UpdateCounts();
+
+            // If a CrewXferFROM this part is Active we need to check when it is finished and then remove the FreezeEvent fo the crew that just left.
+            if (crewXferFROMActive)
+            {
+                //Debug.Log("Crew Xfer Active, chcking if complete");
+                ProtoCrewMember crewfered = xfertoPart.protoModuleCrew.FirstOrDefault(a => a.name == xfercrew.name);
+                if (crewfered != null)
+                {
+                    Utilities.Log_Debug("DeepFreezer", "CrewXferFROM Completed");                    
+                    removeFreezeEvent(xfercrew);
+                    crewXferFROMActive = false;
+                }
+            }
+
+            // If a CrewXferTO this part is Active we need to check when it is finished             
+            // These variables are set in OnCrewTransferred.
+            if (crewXferTOActive)
+            {
+                ProtoCrewMember crewfered = xfertoPart.protoModuleCrew.FirstOrDefault(a => a.name == xfercrew.name);
+                if (crewfered != null)
+                {
+                    Utilities.Log_Debug("DeepFreezer", "CrewXferTO Completed");                                       
+                    crewXferTOActive = false;
+                }
+            }
+
             // If we aren't Thawing or Freezing a kerbal right now, and no crewXfer i active we check all the events.
             if (!IsThawActive && !IsFreezeActive && !crewXferFROMActive && !crewXferTOActive)
             {
-                Debug.Log("UpdateEvents");
-                var eventsToDelete = new List<BaseEvent>();
                 foreach (BaseEvent itemX in Events) // Iterate through all Events
-                {
-                    Debug.Log("Checking Events item " + itemX.name);
+                {                    
                     string[] subStrings = itemX.name.Split(' ');
-                    if (subStrings.Length == 3)
+                    if (subStrings[0] == "Freeze") // If it's a Freeze Event
                     {
-                        if (subStrings[0] == "Freeze") // If it's a Freeze Event
-                        {
-                            string crewname = "";
-                            crewname = subStrings[1] + " " + subStrings[2];
-                            if (part.protoModuleCrew.FirstOrDefault(a => a.name == crewname) == null) // Search the part for the crewmember.
-                            // We didn't find the crewmember so remove the Freeze Event.
-                            {
-                                eventsToDelete.Add(itemX);
-                            }
-                        }
+                        string crewname = "";
+                        crewname = subStrings[1] + " " + subStrings[2];   
+                        if (part.protoModuleCrew.FirstOrDefault(a => a.name == crewname) == null) // Search the part for the crewmember.
+                        // We didn't find the crewmember so remove the Freeze Event.
+                        {                            
+                            ProtoCrewMember fndcrew = HighLogic.CurrentGame.CrewRoster.Crew.FirstOrDefault(a => a.name == crewname);
+                            removeFreezeEvent(fndcrew);
+                        }                                                  
                     }
-                }
-                eventsToDelete.ForEach(id => Events.Remove(id));
-
+                }                                
                 if (StoredCrewList.Count < FreezerSize) // If the Freezer isn't full
                 {
                     foreach (var CrewMember in part.protoModuleCrew) // We Add Freeze Events for all active crew in the part
@@ -647,42 +434,34 @@ namespace DF
                         addFreezeEvent(CrewMember);
                     }
                 }
-                if ((part.protoModuleCrew.Count < part.CrewCapacity) || part.CrewCapacity <= 0)  // If part is not full or zero (should always be true, think this is redundant line)
-                {
+                if ((part.protoModuleCrew.Count < part.CrewCapacity) || part.CrewCapacity <= 0)  // If part is not full or zero (should always be true, think this is redundant line)              
+                { 
                     foreach (var frozenkerbal in StoredCrewList) // We add a Thaw Event for every frozenkerbal.
                     {
                         addThawEvent(frozenkerbal.CrewName);
                     }
                 }
-            }
+            }            
         }
-
+              
         private void addFreezeEvent(ProtoCrewMember CrewMember)
-        {
-            try
-            {
-                BaseEvent item = Events.Find(v => v.name == "Freeze " + CrewMember.name);  // Search to see if there isn't already a Freeze Event for this CrewMember
-                if (item == null && CrewMember.type == ProtoCrewMember.KerbalType.Crew) // Did we find one? and CrewMember is type=Crew? if so, add new Event.
-                //***** Could change this to Tourists as well but needs more changes.
+        {            
+            BaseEvent item = Events.Find(v => v.name == "Freeze " + CrewMember.name);  // Search to see if there isn't already a Freeze Event for this CrewMember                                
+            if (item == null && CrewMember.type == ProtoCrewMember.KerbalType.Crew) // Did we find one? and CrewMember is type=Crew? if so, add new Event.
+            //***** Could change this to Tourists as well but needs more changes.
+            {                
+                Events.Add(new BaseEvent(Events, "Freeze " + CrewMember.name, () =>
                 {
-                    Events.Add(new BaseEvent(Events, "Freeze " + CrewMember.name, () =>
-                    {
-                        beginFreezeKerbal(CrewMember);
-                    }, new KSPEvent { guiName = "Freeze " + CrewMember.name, guiActive = true }));
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.Log("Exception adding Freeze Event for " + CrewMember);
-                Debug.Log("Err: " + ex);
+                    beginFreezeKerbal(CrewMember);
+                }, new KSPEvent { guiName = "Freeze " + CrewMember.name, guiActive = true }));
             }
         }
 
-        private void removeFreezeEvent(string CrewMember)
+        private void removeFreezeEvent(ProtoCrewMember CrewMember)
         {
             try
-            {
-                BaseEvent item = Events.Find(v => v.name == "Freeze " + CrewMember); // Find the Freeze event for the CrewMember
+            {                
+                BaseEvent item = Events.Find(v => v.name == "Freeze " + CrewMember.name); // Find the Freeze event for the CrewMember                                
                 if (item != null)
                 {
                     Events.Remove(item); // Remove it
@@ -694,45 +473,37 @@ namespace DF
                         {
                             window.displayDirty = true;
                         }
-                    }
+                    }                    
                 }
             }
             catch (Exception ex)
             {
-                Debug.Log("Exception removing Freeze Event for " + CrewMember);
+                Debug.Log("Exception removing Freeze Event for " + CrewMember.name);
                 Debug.Log("Err: " + ex);
             }
         }
 
         private void addThawEvent(string frozenkerbal)
-        {
-            try
-            {
-                BaseEvent item = Events.Find(v => v.name == "Thaw " + frozenkerbal); // Check a Thaw even doesn't already exist for this kerbal
-                if (item == null) // No Item exists so add a new Thaw Event.
+        {            
+            BaseEvent item = Events.Find(v => v.name == "Thaw " + frozenkerbal); // Check a Thaw even doesn't already exist for this kerbal                     
+            if (item == null) // No Item exists so add a new Thaw Event.
+            {                
+                Events.Add(new BaseEvent(Events, "Thaw " + frozenkerbal, () =>
                 {
-                    Events.Add(new BaseEvent(Events, "Thaw " + frozenkerbal, () =>
+                    FrznCrewMbr tmpKerbal = StoredCrewList.Find(a => a.CrewName == frozenkerbal);
+                    
+                    if (tmpKerbal != null)
                     {
-                        FrznCrewMbr tmpKerbal = StoredCrewList.Find(a => a.CrewName == frozenkerbal);
-
-                        if (tmpKerbal != null)
-                        {
-                            beginThawKerbal(frozenkerbal);
-                        }
-                    }, new KSPEvent { guiName = "Thaw " + frozenkerbal, guiActive = true }));
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.Log("Exception adding Thaw Event for " + frozenkerbal);
-                Debug.Log("Err: " + ex);
+                        beginThawKerbal(frozenkerbal);
+                    }
+                }, new KSPEvent { guiName = "Thaw " + frozenkerbal, guiActive = true }));
             }
         }
-
+        
         private void removeThawEvent(string frozenkerbal)
         {
             try
-            {
+            {                
                 BaseEvent item = Events.Find(v => v.name == "Thaw " + frozenkerbal);
                 if (item != null)
                 {
@@ -745,7 +516,7 @@ namespace DF
                         {
                             window.displayDirty = true;
                         }
-                    }
+                    }                    
                 }
             }
             catch (Exception ex)
@@ -761,110 +532,85 @@ namespace DF
 
         public void beginFreezeKerbal(ProtoCrewMember CrewMember)
         {
-            try
+            if (FreezerSpace > 0 && this.part.protoModuleCrew.Contains(CrewMember)) // Freezer has space? and Part contains the CrewMember?
             {
-                if (this.FreezerSpace > 0 && this.part.protoModuleCrew.Contains(CrewMember)) // Freezer has space? and Part contains the CrewMember?
+                if (!requireResource(vessel, "Glykerol", 5, false)) // check we have Glykerol on board. 5 units per freeze event. This should be a part config item not hard coded.
                 {
-                    if (!requireResource(vessel, "Glykerol", GlykerolRequired, false)) // check we have Glykerol on board. 5 units per freeze event. This should be a part config item not hard coded.
+                    ScreenMessages.PostScreenMessage("Insufficient Glykerol to freeze kerbal", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                    return;
+                }
+                else // We have enough Glykerol
+                {
+                    if (DeepFreeze.Instance.SMInstalled) // Check if Ship Manifest (SM) is installed? 
                     {
-                        ScreenMessages.PostScreenMessage("Insufficient Glykerol to freeze kerbal", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-                        return;
-                    }
-                    else // We have enough Glykerol
-                    {
-                        if (DFsettings.RegTempReqd) // Temperature check is required
-                        {
-                            if ((float)this.part.temperature > DFsettings.RegTempFreeze)
-                            {
-                                ScreenMessages.PostScreenMessage("Cannot Freeze while Temperature > " + DFsettings.RegTempFreeze.ToString("######0") + this.Fields["CabinTemp"].guiUnits, 5.0f, ScreenMessageStyle.UPPER_CENTER);
-                                return;
-                            }
-                        }
-                        if (DFInstalledMods.SMInstalled) // Check if Ship Manifest (SM) is installed?
-                        {
-                            if (IsSMXferRunning())  // SM is installed and is a Xfer running? If so we can't run a Freeze while a SMXfer is running.
-                            {
-                                ScreenMessages.PostScreenMessage("Cannot Freeze while Crew Xfer in progress", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-                                return;
-                            }
-                        }
-                        if (crewXferFROMActive || crewXferTOActive)  // We can't run a freeze process if a crewXfer is active, this is catching Stock Xfers.
+                        if (IsSMXferRunning())  // SM is installed and is a Xfer running? If so we can't run a Freeze while a SMXfer is running.
                         {
                             ScreenMessages.PostScreenMessage("Cannot Freeze while Crew Xfer in progress", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                             return;
                         }
-                        if (IsThawActive || IsFreezeActive)
-                        {
-                            ScreenMessages.PostScreenMessage("Cannot run Freeze process on more than one Kerbal at a time", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-                            return;
-                        }
-                        if (DFInstalledMods.IsRTInstalled)
-                        {
-                            if (this.part.vessel.GetCrewCount() == 1 && RTlastKerbalFreezeWarn == false)
-                            {
-                                ScreenMessages.PostScreenMessage("RemoteTech Detected. Press Freeze Again if you want to Freeze your Last Active Kerbal", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-                                ScreenMessages.PostScreenMessage("An Active connection or Active Kerbal is Required On-Board to Initiate Thaw Process", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-                                RTlastKerbalFreezeWarn = true;
-                                return;
-                            }
-                            RTlastKerbalFreezeWarn = false;
-                        }
-                        FreezeKerbal(CrewMember); // Begin the Freezing Process
                     }
-                }
-                else
-                {
-                    if (FreezerSpace == 0)
-                        ScreenMessages.PostScreenMessage("Cannot freeze kerbal. Freezer is full", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                    if (crewXferFROMActive || crewXferTOActive)  // We can't run a freeze process if a crewXfer is active, this is catching Stock Xfers.
+                    {
+                        ScreenMessages.PostScreenMessage("Cannot Freeze while Crew Xfer in progress", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                        return;
+                    }
+                    if (IsThawActive || IsFreezeActive)
+                    {
+                        ScreenMessages.PostScreenMessage("Cannot run Freeze process on more than one Kerbal at a time", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                        return;
+                    }
+                    FreezeKerbal(CrewMember); // Begin the Freezing Process                    
                 }
             }
-            catch (Exception ex)
+            else
             {
-                Debug.Log("Exception attempting to start Freeze for " + CrewMember);
-                Debug.Log("Err: " + ex);
-                ScreenMessages.PostScreenMessage("Cannot freeze kerbal at this time", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                if (FreezerSpace == 0)
+                    ScreenMessages.PostScreenMessage("Cannot freeze kerbal. Freezer is full", 5.0f, ScreenMessageStyle.UPPER_CENTER);
             }
         }
 
-        private void FreezeKerbal(ProtoCrewMember CrewMember)
+        public void FreezeKerbal(ProtoCrewMember CrewMember)
         {
             this.Log_Debug("Freeze kerbal called");
             ActiveFrzKerbal = CrewMember; // set the Active Freeze Kerbal
-            ToFrzeKerbal = CrewMember.name;  // set the Active Freeze Kerbal name
-            this.Log_Debug("FreezeKerbal " + CrewMember.name + ",Seatindx=" + CrewMember.seatIdx + ",Seatname=" + CrewMember.seat.seatTransformName);            
-            try
+            ToFrzeKerbal = CrewMember.name;  // set the Active Freeze Kerbal name      
+            int seatindex = 0;           
+            
+            if (partHasInternals)
             {
-                ToFrzeKerbalSeat = CrewMember.seatIdx;                
+                try
+                {
+                    seatindex = this.part.protoModuleCrew.FindIndex(a => a.name == CrewMember.name);
+                    ToFrzeKerbalSeat = seatindex; // Set their seat 
+                }
+                catch (Exception ex)
+                {
+                    this.Log("Unable to find internal seat index for " + CrewMember.name);
+                    this.Log("Err: " + ex);
+                    ToFrzeKerbalSeat = seatindex; // Set their seat 
+                }                
+                try
+                {
+                    ProtoCrewMember protocrewmbr = this.part.protoModuleCrew.Find(b => b.name == CrewMember.name);
+                    ToFrzeKerbalXformNme = protocrewmbr.seat.seatTransformName;  // Set their set Xform Name
+                }
+                catch (Exception ex)
+                {
+                    this.Log("Unable to find internal seat for " + CrewMember.name);
+                    this.Log("Err: " + ex);
+                    ToFrzeKerbalXformNme = "Unknown"; // Set their set Xform Name
+
+                }
             }
-            catch (Exception ex)
+            else
             {
-                Debug.Log("Unable to find internal seat index for " + CrewMember.name);
-                Debug.Log("Err: " + ex);
-                ToFrzeKerbalSeat = 0; // Set their seat
-            }
-            try
-            {
-                ToFrzeKerbalXformNme = CrewMember.seat.seatTransformName;                
-            }
-            catch (Exception ex)
-            {
-                Debug.Log("Unable to find internal seat for " + CrewMember.name);
-                Debug.Log("Err: " + ex);
+                ToFrzeKerbalSeat = seatindex; // Set their seat 
                 ToFrzeKerbalXformNme = "Unknown"; // Set their set Xform Name
-            }
-            this.Log_Debug("FreezeKerbal ACtiveFrzKerbal=" + ActiveFrzKerbal + ",ToFrzeKerbalSeat=" + ToFrzeKerbalSeat + ",ToFrzeKerbalXformNme=" + ToFrzeKerbalXformNme);
-            // If we are in IVA mode we must go to flight mode before freezing (until we sort out the internal space and it's finished...
-            if (CameraManager.Instance.currentCameraMode == CameraManager.CameraMode.IVA || CameraManager.Instance.currentCameraMode == CameraManager.CameraMode.Internal)
-            {
-                CameraManager.Instance.SetCameraFlight();
-                ScreenMessages.PostScreenMessage("Privacy Please! Camera must be in Flight mode to Freeze", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-            }
-
+            }          
+                            
             this.part.RemoveCrewmember(CrewMember);  // remove the CrewMember from the part, because they are frozen, and this is the only way to trick the game.
-            this.part.internalModel.seats[ToFrzeKerbalSeat].taken = true; // Set their seat to Taken, because they are really still there. :)
-            this.part.internalModel.seats[ToFrzeKerbalSeat].kerbalRef = CrewMember.KerbalRef;
-            //setCryoWindowOn(CryoPodWindowNames[ToFrzeKerbalSeat]);            
-
+            if (partHasInternals)
+                this.part.internalModel.seats[seatindex].taken = true; // Set their seat to Taken, because they are really still there. :)            
             IsFreezeActive = true; // Set the Freezer actively freezing mode on
             ScreenMessages.PostScreenMessage("Starting Freeze process", 5.0f, ScreenMessageStyle.UPPER_CENTER);
             this.Log_Debug("ActiveFrzKerbal=" + ActiveFrzKerbal.name + ",ToFrzeKerbal=" + ToFrzeKerbal + ",SeatIdx=" + ToFrzeKerbalSeat + ",seat transform name=" + ToFrzeKerbalXformNme);
@@ -876,35 +622,35 @@ namespace DF
             this.Log_Debug("FreezeKerbal ended");
         }
 
-        private void FreezeKerbalAbort(ProtoCrewMember CrewMember)
+        public void FreezeKerbalAbort(ProtoCrewMember CrewMember)
         {
             this.Log_Debug("FreezeKerbalAbort " + CrewMember.name + " seat " + ToFrzeKerbalSeat);
             ScreenMessages.PostScreenMessage("Freezing Aborted", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-
-            this.part.internalModel.seats[ToFrzeKerbalSeat].taken = false; // Set their seat to NotTaken before we assign them back to their seat, not sure we really need this.
-            this.part.AddCrewmemberAt(CrewMember, ToFrzeKerbalSeat); // Add the CrewMember back into the part in their assigned seat.
-            //setCryoWindowOff(CryoPodWindowNames[ToFrzeKerbalSeat]);                     
-            //respawnVesselCrew();
-            refreshPortraits = true;
-            refreshPortraitsTimer = 0f;
+            if (partHasInternals)
+            {
+                this.part.internalModel.seats[ToFrzeKerbalSeat].taken = false; // Set their seat to NotTaken before we assign them back to their seat, not sure we really need this.            
+                this.part.AddCrewmemberAt(CrewMember, ToFrzeKerbalSeat); // Add the CrewMember back into the part in their assigned seat.
+            }
+            else
+            {
+                this.part.AddCrewmember(CrewMember); // Add the CrewMember back into the part.
+            }                           
             IsFreezeActive = false; // Turn the Freezer actively freezing mode off
             ToFrzeKerbal = ""; // Set the Active Freeze Kerbal to null
             machine_hum.Stop(); // Stop the sound effects
-            UpdateCounts();  // Update the Crew counts
-            ScreenMessages.RemoveMessage(FreezeMsg);
             this.Log_Debug("FreezeKerbalAbort ended");
         }
 
-        private void FreezeKerbalConfirm(ProtoCrewMember CrewMember)
+        public void FreezeKerbalConfirm(ProtoCrewMember CrewMember)
         {
             this.Log_Debug("FreezeKerbalConfirm kerbal " + CrewMember.name + " seatIdx " + ToFrzeKerbalSeat);
             machine_hum.Stop(); // stop the sound effects
-            StoredCharge = 0;  // Discharge all EC stored
+            StoredCharge = 0;  // Discharge all EC stored    
 
-            // Add frozen kerbal details to the frozen kerbal list in this part.
-            FrznCrewMbr tmpcrew = new FrznCrewMbr(CrewMember.name, ToFrzeKerbalSeat, this.vessel.id, this.vessel.name);
+            // Add frozen kerbal details to the frozen kerbal list in this part.                       
+            FrznCrewMbr tmpcrew = new FrznCrewMbr(CrewMember.name, ToFrzeKerbalSeat, this.vessel.id, this.vessel.name);             
             StoredCrewList.Add(tmpcrew);
-
+            
             // Set our newly frozen Popsicle, er Kerbal, to Unowned type (usually a Crew) and Dead status.
             CrewMember.type = ProtoCrewMember.KerbalType.Unowned;
             CrewMember.rosterStatus = ProtoCrewMember.RosterStatus.Dead;
@@ -915,8 +661,8 @@ namespace DF
             kerbalInfo.vesselName = CrntVslName;
             kerbalInfo.type = CrewMember.type;
             kerbalInfo.status = CrewMember.rosterStatus;
-            kerbalInfo.seatName = ToFrzeKerbalXformNme;
-            kerbalInfo.seatIdx = ToFrzeKerbalSeat;
+            kerbalInfo.seatName = ToFrzeKerbalXformNme;            
+            kerbalInfo.seatIdx = ToFrzeKerbalSeat;                  
             kerbalInfo.partID = CrntPartID;
             try
             {
@@ -927,7 +673,7 @@ namespace DF
                 kerbalInfo.experienceTraitName = "Unknown";
                 this.Log("Unable to set ExperienceTraitTitle adding frozen crewmember " + CrewMember.name);
                 this.Log("Err: " + ex);
-            }
+            }            
             this.Log_Debug("Adding New Frozen Crew to dictionary");
             try
             {
@@ -939,19 +685,17 @@ namespace DF
                 this.Log("Err: " + ex);
                 ScreenMessages.PostScreenMessage("DeepFreezer mechanical failure", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                 FreezeKerbalAbort(CrewMember);
-            }
 
+            }
+            
             DFgameSettings.DmpKnownFznKerbals();
             UpdateCounts();  // Update the Crew counts
             IsFreezeActive = false; // Turn the Freezer actively freezing mode off
             ToFrzeKerbal = ""; // Set the Active Freeze Kerbal to null
             ActiveFrzKerbal = null; // Set the Active Freeze Kerbal to null
-            removeFreezeEvent(CrewMember.name);  // Remove the Freeze Event for this kerbal.
+            removeFreezeEvent(CrewMember);  // Remove the Freeze Event for this kerbal.
             ScreenMessages.PostScreenMessage(CrewMember.name + " frozen", 5.0f, ScreenMessageStyle.UPPER_CENTER);
             ice_freeze.Play();
-            //refreshPortraits = true;
-            //refreshPortraitsTimer = 0f;
-            //GameEvents.onVesselChange.Fire(vessel);
             this.Log_Debug("FreezeCompleted");
         }
 
@@ -961,190 +705,108 @@ namespace DF
 
         public void beginThawKerbal(string frozenkerbal)
         {
-            try
+            this.Log_Debug("beginThawKerbal " + frozenkerbal);
+            if (this.part.protoModuleCrew.Count >= this.part.CrewCapacity)
             {
-                this.Log_Debug("beginThawKerbal " + frozenkerbal);
-                if (DFInstalledMods.IsRTInstalled)
+                ScreenMessages.PostScreenMessage("Cannot Thaw " + frozenkerbal + " Part is full", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                this.Log_Debug("Cannot thaw " + frozenkerbal + " Part is full");
+            }
+            else
+            {
+                if (DeepFreeze.Instance.SMInstalled) // Check if Ship Manifest (SM) is installed? 
                 {
-                    if (!DFInstalledMods.RTVesselConnected)
-                    {
-                        this.Log_Debug("Cannot thaw " + frozenkerbal + " No RemoteTech Control of vessel");
-                        ScreenMessages.PostScreenMessage("Cannot initiate Thaw, No Active Vessel Control with RemoteTech installed", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-                        return;
-                    }
-                }
-                if (this.part.protoModuleCrew.Count >= this.part.CrewCapacity)
-                {
-                    ScreenMessages.PostScreenMessage("Cannot Thaw " + frozenkerbal + " Part is full", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-                    this.Log_Debug("Cannot thaw " + frozenkerbal + " Part is full");
-                }
-                else
-                {
-                    if (DFInstalledMods.SMInstalled) // Check if Ship Manifest (SM) is installed?
-                    {
-                        if (IsSMXferRunning()) // SM is installed and is a Xfer running? If so we can't run a Freeze while a SMXfer is running.
-                        {
-                            ScreenMessages.PostScreenMessage("Cannot Thaw while Crew Xfer in progress", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-                            return;
-                        }
-                    }
-                    if (crewXferFROMActive || crewXferTOActive)  // We can't run a thaw process if a crewXfer is active, this is catching Stock Xfers.
+                    if (IsSMXferRunning()) // SM is installed and is a Xfer running? If so we can't run a Freeze while a SMXfer is running.
                     {
                         ScreenMessages.PostScreenMessage("Cannot Thaw while Crew Xfer in progress", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                         return;
                     }
-                    if (IsThawActive || IsFreezeActive)
-                    {
-                        ScreenMessages.PostScreenMessage("Cannot run Thaw process on more than one Kerbal at a time", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-                        return;
-                    }
-                    // If we are in IVA mode we must go to flight mode before freezing (until we sort out the internal space and it's finished...
-                    if (CameraManager.Instance.currentCameraMode == CameraManager.CameraMode.IVA || CameraManager.Instance.currentCameraMode == CameraManager.CameraMode.Internal)
-                    {
-                        CameraManager.Instance.SetCameraFlight();
-                        ScreenMessages.PostScreenMessage("Privacy Please! Camera must be in Flight mode to Thaw", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-                    }
-                    
-                    ToThawKerbal = frozenkerbal;  // Set the Active Thaw Kerbal to frozenkerbal name
-                    IsThawActive = true;  // Turn the Freezer actively thawing mode on
-                    hatch_lock.Play();  // Play the sound effects.
-                    machine_hum.Play();
-                    machine_hum.loop = true;                    
-                    this.Log_Debug("beginThawKerbal has started thawing process");
                 }
-            }
-            catch (Exception ex)
-            {
-                Debug.Log("Exception attempting to start Thaw for " + frozenkerbal);
-                Debug.Log("Err: " + ex);
-                ScreenMessages.PostScreenMessage("Cannot thaw kerbal at this time", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                if (crewXferFROMActive || crewXferTOActive)  // We can't run a thaw process if a crewXfer is active, this is catching Stock Xfers.
+                {
+                    ScreenMessages.PostScreenMessage("Cannot Thaw while Crew Xfer in progress", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                    return;
+                } 
+                if (IsThawActive || IsFreezeActive)
+                {
+                    ScreenMessages.PostScreenMessage("Cannot run Thaw process on more than one Kerbal at a time", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                    return;
+                }
+                ToThawKerbal = frozenkerbal;  // Set the Active Thaw Kerbal to frozenkerbal name
+                IsThawActive = true;  // Turn the Freezer actively thawing mode on
+                hatch_lock.Play();  // Play the sound effects.
+                machine_hum.Play();
+                machine_hum.loop = true;
+                this.Log_Debug("beginThawKerbal has started thawing process");
             }
         }
 
-        private void ThawKerbalAbort(String ThawKerbal)
+        public void ThawKerbalAbort(String ThawKerbal)
         {
             this.Log_Debug("ThawkerbalAbort called");
             ScreenMessages.PostScreenMessage("Thawing Aborted", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-            IsThawActive = false; // Turn the Freezer actively thawing mode off
+            IsThawActive = false; // Turn the Freezer actively thawing mode off  
             ToThawKerbal = ""; // Set the Active Thaw Kerbal to null
-            StoredCharge = 0; // Discharge all EC stored
+            StoredCharge = 0; // Discharge all EC stored 
             machine_hum.Stop(); //stop the sound effects
-            ScreenMessages.RemoveMessage(ThawMsg);
             this.Log_Debug("ThawkerbalAbort End");
         }
 
-        private void ThawKerbalConfirm(String frozenkerbal)
+        public void ThawKerbalConfirm(String frozenkerbal)
         {
             this.Log_Debug("ThawKerbalConfirm start for " + frozenkerbal);
-            foreach (ProtoCrewMember crewlist in this.part.protoModuleCrew)
-            {
-                this.Log_Debug(crewlist.name + ",Seat=" + crewlist.seatIdx);
-            }
             ProtoCrewMember kerbal = HighLogic.CurrentGame.CrewRoster.Unowned.FirstOrDefault(a => a.name == frozenkerbal);
-            if (kerbal != null)
+            if (kerbal !=null)
             {
                 machine_hum.Stop(); //stop sound effects
-                StoredCharge = 0;   // Discharge all EC stored
+                StoredCharge = 0;   // Discharge all EC stored                  
                 // Set our newly thawed Popsicle, er Kerbal, to Crew type again (from Unowned) and Assigned status (from Dead status).
-                this.Log_Debug("set type to crew and assigned");
                 kerbal.type = ProtoCrewMember.KerbalType.Crew;
                 kerbal.rosterStatus = ProtoCrewMember.RosterStatus.Assigned;
-                this.Log_Debug("find the stored crew member");
                 FrznCrewMbr tmpcrew = StoredCrewList.Find(a => a.CrewName == frozenkerbal);  // Find the thawed kerbal in the frozen kerbal list.
                 if (tmpcrew != null)
                 {
                     //check if seat is empty, if it is we have to seat them in next available seat
-                    //this.part.CrewCapacity++;
-                    this.Log_Debug("frozenkerbal " + tmpcrew.CrewName + ",seatindx=" + tmpcrew.SeatIdx);
                     if (partHasInternals)
                     {
-                        this.Log_Debug("Part has internals");
-                        this.Log_Debug("Checking their seat taken=" + this.part.internalModel.seats[tmpcrew.SeatIdx].taken);
                         if (this.part.internalModel.seats[tmpcrew.SeatIdx].crew == null)
                         {
-                            this.Log_Debug("re-add them at seatidx=" + tmpcrew.SeatIdx);
                             this.part.internalModel.seats[tmpcrew.SeatIdx].taken = false; // Set their seat to NotTaken before we assign them back to their seat, not sure we really need this.
-                            try
-                            {
-                                this.part.AddCrewmemberAt(kerbal, tmpcrew.SeatIdx); //Add the CrewMember back into the part in their assigned seat.                                
-                                //setCryoWindowOff(CryoPodWindowNames[tmpcrew.SeatIdx]); 
-                            }                            
-                            catch (Exception ex)
-                            {
-                                Debug.Log("Exception attempting to add to seat for " + frozenkerbal);
-                                Debug.Log("Err: " + ex);
-                                ScreenMessages.PostScreenMessage("Code Error: Cannot thaw kerbal at this time, Check Log", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-                                ThawKerbalAbort(frozenkerbal);
-                                return;
-                            }   
+                            this.part.AddCrewmemberAt(kerbal, tmpcrew.SeatIdx);           // Add the CrewMember back into the part in their assigned seat.
                         }
                         else
                         {
-                            this.Log_Debug("Seat taken, just add");
-                            try
-                            {
-                                this.part.AddCrewmember(kerbal);  // Add them to the part anyway.
-                            }                            
-                            catch (Exception ex)
-                            {
-                                Debug.Log("Exception attempting to add to seat for " + frozenkerbal);
-                                Debug.Log("Err: " + ex);
-                                ScreenMessages.PostScreenMessage("Code Error: Cannot thaw kerbal at this time, Check Log", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-                                ThawKerbalAbort(frozenkerbal);
-                                return;
-                            }  
+                            this.part.AddCrewmember(kerbal);  // Add them to the part anyway.                            
                         }
                     }
                     else
                     {
-                        this.Log_Debug("Part has no internals, just add");
-                        try
-                        {
-                            this.part.AddCrewmember(kerbal);  // Add them to the part anyway.
-                        }                        
-                        catch (Exception ex)
-                        {
-                            Debug.Log("Exception attempting to add to seat for " + frozenkerbal);
-                            Debug.Log("Err: " + ex);
-                            ScreenMessages.PostScreenMessage("Code Error: Cannot thaw kerbal at this time, Check Log", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-                            ThawKerbalAbort(frozenkerbal);
-                            return;
-                        }  
-                    }                    
+                        this.part.AddCrewmember(kerbal);  // Add them to the part anyway.   
+                    }
+                    StoredCrewList.Remove(tmpcrew); // Remove them from the frozen kerbal list.
                 }
                 else // This should NEVER occur.
                 {
                     Debug.Log("Could not find frozen kerbal to Thaw, Very Very Bad. Report this to Mod thread");
-                    ScreenMessages.PostScreenMessage("Code Error: Cannot thaw kerbal at this time, Check Log", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-                    ThawKerbalAbort(frozenkerbal);
-                    return;
+                    this.part.AddCrewmember(kerbal);  // Add them to the part anyway.
                 }
                 // Remove thawed kerbal from the frozen kerbals dictionary
-                StoredCrewList.Remove(tmpcrew); // Remove them from the frozen kerbal list.
                 double timeFrozen = Planetarium.GetUniversalTime() - DFgameSettings.KnownFrozenKerbals[frozenkerbal].lastUpdate;
                 DFgameSettings.KnownFrozenKerbals.Remove(frozenkerbal);
                 DFgameSettings.DmpKnownFznKerbals();
 
                 ScreenMessages.PostScreenMessage(kerbal.name + " thawed out", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                 Debug.Log("Thawed out: " + kerbal.name + " They were frozen for " + timeFrozen.ToString());
-                foreach (ProtoCrewMember crewlist in this.part.protoModuleCrew)
-                {
-                    this.Log_Debug(crewlist.name + ",Seat=" + crewlist.seatIdx);
-                }
-                ToThawKerbal = ""; // Set the Active Thaw Kerbal to null
+                ToThawKerbal = null; // Set the Active Thaw Kerbal to null
                 IsThawActive = false; // Turn the Freezer actively thawing mode off
                 UpdateCounts(); // Update the Crew counts
                 removeThawEvent(frozenkerbal); // Remove the Thaw Event for this kerbal.
                 ding_ding.Play();
-                refreshPortraits = true;
-                refreshPortraitsTimer = 0f;
-                //GameEvents.onVesselChange.Fire(vessel);
             }
-            this.Log_Debug("ThawKerbalConfirm End");
+            this.Log_Debug("ThawKerbalConfirm End");     
         }
 
         #endregion ThwKerbals
-
+    
         #region CrewXfers
 
         public bool IsSMXferRunning()  // Checks if Ship Manifest is running a CrewXfer or Not.
@@ -1165,7 +827,7 @@ namespace DF
                         Utilities.Log_Debug("DeepFreeze", "SMXfer running but is it not from or to this part");
                     }
                     return false;
-                }
+                }   
             }
             catch (Exception ex)
             {
@@ -1173,109 +835,48 @@ namespace DF
                 Utilities.Log("DeepFreezer ", ex.Message);
                 return false;
             }
+                                      
         }
 
-        public bool IsSMXferStockRunning()  // Checks if Ship Manifest is running a Stock CrewXfer or Not.
+        // this is called when a crew transfer is STARTED. For catching stock Xfers. Because Ship Manifest Xfers will avoid these scenarios.
+        private void OnCrewTransferred(GameEvents.HostedFromToAction<ProtoCrewMember, Part> fromToAction)  
         {
-            ShipManifest.ICrewTransfer SMObject = null;
-            try
-            {
-                SMObject = ShipManifest.SMInterface.GetCrewTransfer();
-                if (SMObject.IsStockXfer == true)
-                {
-                    Utilities.Log_Debug("DeepFreeze", "SMXfer running and it is StockXfer");
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-            catch (Exception ex)
-            {
-                Utilities.Log("DeepFreezer", " Error attempting to check Ship Manifest if there is a crew transfer active");
-                Utilities.Log("DeepFreezer ", ex.Message);
-                return false;
-            }
-        }
-
-        public ShipManifest.ICrewTransfer GetSMXfer()  // Checks if Ship Manifest is running a CrewXfer or Not.
-        {
-            ShipManifest.ICrewTransfer SMObject = null;
-            try
-            {
-                SMObject = ShipManifest.SMInterface.GetCrewTransfer();
-                return SMObject;
-            }
-            catch (Exception ex)
-            {
-                Utilities.Log("DeepFreezer", " Error attempting to get Ship Manifest Xfer details");
-                Utilities.Log("DeepFreezer ", ex.Message);
-                return null;
-            }
-        }
-
-        // this is called when a crew transfer has completed. For catching stock Xfers. Because Ship Manifest Xfers will avoid these scenarios.
-        private void OnCrewTransferred(GameEvents.HostedFromToAction<ProtoCrewMember, Part> fromToAction)
-        {
-            Utilities.Log_Debug("DeepFreezer", "OnCrewTransferred Fired From: " + fromToAction.from.name + " To: " + fromToAction.to.name + " Host: " + fromToAction.host.name);
-            //Ship Manifest Transfers checked
-            if (DFInstalledMods.SMInstalled)
-            {
-                Utilities.Log_Debug("DeepFreezer", "SMInstalled This shouldn't execute");
-                ShipManifest.ICrewTransfer SMObject = null;
-                SMObject = GetSMXfer();
-                crewXferSMActive = SMObject.CrewXferActive;
-                crewXferSMStock = SMObject.IsStockXfer;
-                //return;
-            }
-
-            //Stock Transfer only past here
-
+            Utilities.Log_Debug("DeepFreezer","OnCrewTransferred Fired From: " + fromToAction.from.name + " To: " + fromToAction.to.name + " Host: " + fromToAction.host.name);
             if (fromToAction.from == this.part)  // if the Xfer is FROM this part
             {
                 Utilities.Log_Debug("DeepFreezer", "crewXferFROMActive");
-                removeFreezeEvent(fromToAction.host.name);  // Remove the Freeze Event for the crewMember leaving the part
-                if (fromToAction.to.Modules.Cast<PartModule>().Any(x => x is KerbalEVA)) // Kerbal is going EVA
-                {
-                    return;
-                }
-                crewXferFROMActive = true;  // Set a flag to know a Xfer has started and we check when it is finished in
+                removeFreezeEvent(fromToAction.host);  // Remove the Freeze Event for the crewMember leaving the part
+                crewXferFROMActive = true;  // Set a flag to know a Xfer has started and we check when it is finished in 
                 xferfromPart = fromToAction.from;
                 xfertoPart = fromToAction.to;
-                xfercrew = fromToAction.host;
-                return;
+                xfercrew = fromToAction.host;                
             }
-
             if (fromToAction.to == this.part)  // if the Xfer is TO this part
             {
                 Utilities.Log_Debug("DeepFreezer", "crewXferTOActive");
-                crewXferTOActive = true; // Set a flag to know a Xfer has started and we check when it is finished in
-
-                if (fromToAction.from.Modules.Cast<PartModule>().Any(x => x is KerbalEVA)) // Kerbal is entering from EVA
-                {
-                    Utilities.Log_Debug("DeepFreezer", "CrewXfer xferisfromEVA = true");
-                    xferisfromEVA = true;
-                    xferfromPart = null;
-                    xferfromSeat = null;
-                }
-                else
-                {
-                    Utilities.Log_Debug("DeepFreezer", "CrewXfer xferisfromEVA = false");
-                    xferisfromEVA = false;
-                    xferfromPart = fromToAction.from;
-                    xferfromSeat = fromToAction.host.seat;
-                }
-                xfertoPart = fromToAction.to;                
-                xfercrew = fromToAction.host;
-                
-                if (PartFull)  // If there is no free seats for this Kerbal we kick them back out.
-                {
-                    Utilities.Log_Debug("DeepFreezer", "CrewXfer PartFull transfer them back, part is full - attempt to cancel stock xfer");
-                    ScreenMessages.PostScreenMessage("Cannot enter this freezer, part is full", 5.0f, ScreenMessageStyle.UPPER_CENTER);                    
-                }
-                Utilities.Log_Debug("DeepFreezer", "crewXferTOActive end");
+                crewXferTOActive = true; // Set a flag to know a Xfer has started and we check when it is finished in 
+                xferfromPart = fromToAction.from;
+                xfertoPart = fromToAction.to;
+                xfercrew = fromToAction.host;                
             }
+        }
+
+        // this is called when a crew enters the Part from EVA.  It checks the freezer part isn't full, if it is it kicks them out. But this should NEVER happen.
+        // Better to be safe than sorry.
+        private void onCrewBoardVessel(GameEvents.FromToAction<Part, Part> action)
+        {
+            Utilities.Log_Debug("DeepFreezer", " onCrewBoardVessel " + action.to.vessel.name + " (" + action.to.vessel.id + ") Old " + action.from.vessel.name + " (" + action.from.vessel.id + ")");
+            Utilities.Log_Debug("DeepFreezer", "AYController active vessel " + FlightGlobals.ActiveVessel.id);
+            Utilities.Log_Debug("DeepFreezer", "ToPart = " + action.to.partName);
+            Utilities.Log_Debug("DeepFreezer", "FromPart = " + action.from.partName);
+            if (action.to == this.part)
+            {
+                if (this.part.CrewCapacity == 0)  // If there is no free seats for this Kerbal we kick them back out. this Should NEVER HAPPEN.
+                {
+                    Utilities.Log_Debug("DeepFreezer", "NoAvailableSeat Must Revert");
+                    FlightEVA.fetch.spawnEVA(action.from.vessel.GetVesselCrew()[0], action.to, action.to.airlock);
+                }
+            }            
         }
 
         #endregion CrewXfers
@@ -1288,85 +889,32 @@ namespace DF
             }
         }
 
-        private void respawnVesselCrew()
-        {
-            this.vessel.SpawnCrew();
-            onvslchgInternal = true;
-            //GameEvents.onVesselChange.Fire(vessel);
-        }
-
-        // this is called when a vessel change event fires.
-        private void OnVesselChange(Vessel vessel)
-        {
-            Debug.Log("OnVesselChange " + vessel.id);
-            if (onvslchgInternal)
-            {
-                onvslchgInternal = false;
-                return;
-            }
-            //resetCryoWindows();
-        }
-
-        private void OnCrewBoardVessel(GameEvents.FromToAction<Part, Part> fromToAction)
-        {
-            Debug.Log("OnCrewBoardVessel ");
-            //resetCryoWindows();
-        }
-
-
         private void UpdateCounts()
         {
-            // Update the part counts.
-            if (!IsThawActive && !IsFreezeActive)
+            // Update the part counts.            
+            FreezerSpace = (FreezerSize - StoredCrewList.Count);
+            TotalFrozen = StoredCrewList.Count;
+
+            // Reset the seat status for frozen crew to taken - true, because it seems to reset by something?? So better safe than sorry.
+            if (partHasInternals)
             {
-                FreezerSpace = (FreezerSize - StoredCrewList.Count);
-                TotalFrozen = StoredCrewList.Count;
-                PartFull = (TotalFrozen + this.part.protoModuleCrew.Count >= this.part.CrewCapacity);
-                Utilities.Log_Debug("DeepFreezer", "UpdateCounts FreezerSpace=" + FreezerSpace + ",TotalFrozen=" + TotalFrozen + ",Partfull=" + PartFull);
-                // Reset the seat status for frozen crew to taken - true, because it seems to reset by something?? So better safe than sorry.
-                if (partHasInternals)
+                foreach (FrznCrewMbr lst in StoredCrewList)
                 {
-                    // set cryotube window off for all crew onboard the part
-                    Utilities.Log_Debug("DeepFreezer", "Checking all actual crewseats status");
-                    foreach (ProtoCrewMember onbrdcrew in this.part.protoModuleCrew)
-                    {
-                        setCryoWindowOff(CryoPodWindowNames[onbrdcrew.seatIdx]);
-                        Utilities.Log_Debug("Setting CryoWindowOff for onboard crew " + onbrdcrew.name + ",Seatindx=" + onbrdcrew.seatIdx);
-                    }
-                    // set cryotube window off for all empty seats in the part
-                    int i = 0;
-                    foreach (InternalSeat chkpartseats in this.part.internalModel.seats)
-                    {
-                        string kerblrefstring;
-                        if (chkpartseats.kerbalRef == null)
-                        {
-                            kerblrefstring = "kerbalref not found";
-                            setCryoWindowOff(CryoPodWindowNames[i]);
-                        }
-                        else kerblrefstring = chkpartseats.kerbalRef.crewMemberName;
-                        Utilities.Log_Debug("DeepFreezer", "seatXformName=" + chkpartseats.seatTransformName + ",SeatIndex=" + i + ",KerbalRef=" + kerblrefstring);
-                        i++;
-                    }
-                    // set cryotube window ON for all frozen kerbals in the part
-                    Utilities.Log_Debug("DeepFreezer", "StoredCrewList");
-                    foreach (FrznCrewMbr lst in StoredCrewList)
-                    {
-                        this.part.internalModel.seats[lst.SeatIdx].taken = true;
-                        setCryoWindowOn(CryoPodWindowNames[lst.SeatIdx]);
-                        ProtoCrewMember kerbal = HighLogic.CurrentGame.CrewRoster.Unowned.FirstOrDefault(a => a.name == lst.CrewName);
-                        if (kerbal == null) Utilities.Log_Debug("DeepFreezer", "Frozen Kerbal " + lst.CrewName + " is not found in the currentgame.crewroster.unowned, this should never happen");
-                        else this.part.internalModel.seats[lst.SeatIdx].kerbalRef = kerbal.KerbalRef;
-                        string kerblrefstring;
-                        if (this.part.internalModel.seats[lst.SeatIdx].kerbalRef == null) kerblrefstring = "kerbalref not found";
-                        else kerblrefstring = this.part.internalModel.seats[lst.SeatIdx].kerbalRef.crewMemberName;
-                        Utilities.Log_Debug("DeepFreezer", "Frozen Crew SeatIdx= " + lst.SeatIdx + ",KerbalRef=" + kerblrefstring);
-                    }
-                    
+                    this.part.internalModel.seats[lst.SeatIdx].taken = true;
                 }
-                Utilities.Log_Debug("DeepFreezer", "UpdateCounts end");
+            }            
+
+            // Set the Part CrewCapacity to Zero if the freezer is full.
+            if (FreezerSpace == 0)
+            {
+                this.part.CrewCapacity = 0;
+            }
+            else  // Else, set the Part CrewCapacity to the amount of Freezer space.
+            {
+                this.part.CrewCapacity = FreezerSpace;                
             }
         }
-
+        
         // Simple bool for resource checking and usage.  Returns true and optionally uses resource if resAmount of res is available. - Credit TMarkos https://github.com/TMarkos/ as this is lifted verbatim from his Beacon's pack. Mad modify as needed.
         private bool requireResource(Vessel craft, string res, double resAmount, bool consumeResource)
         {
@@ -1402,71 +950,6 @@ namespace DF
             }
             return true;
         }
-
-        #region CryoWindows
-
-        private void resetCryoWindows()
-        {
-            Debug.Log("resetCryoWindows start for partid=" + this.part.flightID);
-            foreach (string element in CryoPodWindowNames)
-            {
-                Debug.Log("Hiding the renderers podname = " + element);                
-                setCryoWindowOff(element);
-            }
-            foreach (FrznCrewMbr frznkerbal in StoredCrewList)
-            {
-                Debug.Log("Showing the renderers podname = " + CryoPodWindowNames[frznkerbal.SeatIdx]);
-                setCryoWindowOn(CryoPodWindowNames[frznkerbal.SeatIdx]);
-            }
-            Debug.Log("resetCryoWindows end");
-        }
-
-        private void setCryoWindowOff(string windowname)
-        {
-            Renderer renderer;
-            try
-            {
-                Debug.Log("setCryoWindowOff for " + windowname + " on partid=" + this.part.flightID);
-                renderer = this.part.internalModel.FindModelComponent<Renderer>(windowname);
-                //renderer.enabled = false;
-                GameObject objfnd = renderer.gameObject;
-                objfnd.layer = 21;
-                Debug.Log("setcryoff set renderergo to layer 21 ok");
-                Component parobj = objfnd.GetComponentUpwards("Component");
-                parobj.gameObject.layer = 21;
-                Debug.Log("setcryoff set rendererparentgo to layer 21 ok");
-            }
-            catch (Exception ex)
-            {
-                Debug.Log("Exception Unable to find Renderer in internal model for this part called " + windowname);
-                Debug.Log("Err: " + ex);
-            }
-        }
-
-        private void setCryoWindowOn(string windowname)
-        {
-            Renderer renderer;
-            try
-            {
-                Debug.Log("setCryoWindowOn for " + windowname + " on partid=" + this.part.flightID);
-                renderer = this.part.internalModel.FindModelComponent<Renderer>(windowname);
-                //renderer.enabled = true;
-                GameObject objfnd = renderer.gameObject;
-                objfnd.layer = 16;
-                Debug.Log("setcryon set renderergo to layer 16 ok");
-                Component parobj = objfnd.GetComponentUpwards("Component");
-                parobj.gameObject.layer = 16;
-                Debug.Log("setcryon set rendererparentgo to layer 16 ok");
-            }
-            catch (Exception ex)
-            {
-                Debug.Log("Exception Unable to find Renderer in internal model for this part called " + windowname);
-                Debug.Log("Err: " + ex);
-            }
-        }
-
-        #endregion CryoWindows
-
-
+        
     }
 }

@@ -19,7 +19,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using UnityEngine;
 
 namespace DF
 {
@@ -29,8 +28,7 @@ namespace DF
         public string CrewName { get; set; }
         public int SeatIdx { get; set; }
         public Guid VesselID { get; set; }
-        public string VesselName { get; set; }       
-        
+        public string VesselName { get; set; }
 
         public FrznCrewMbr(string crewName, int seat, Guid vessel, string VesselName)
         {

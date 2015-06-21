@@ -16,82 +16,12 @@
  */
 
 using System;
-using System.Reflection;
 using UnityEngine;
 
 namespace DF
 {
     public static class Utilities
     {
-
-        // Dump an object by reflection
-        public static void DumpObjectFields(object o, string title = "---------")
-        {
-            // Dump the raw PQS of Dres (by reflection)
-            Debug.Log("---------" + title + "------------");
-            foreach (FieldInfo field in o.GetType().GetFields())
-            {
-                if (!field.IsStatic)
-                {
-                    Debug.Log(field.Name + " = " + field.GetValue(o));
-                }
-            }
-            Debug.Log("--------------------------------------");
-        }
-
-        /**
-          * Recursively searches for a named transform in the Transform heirarchy.  The requirement of
-          * such a function is sad.  This should really be in the Unity3D API.  Transform.Find() only
-          * searches in the immediate children.
-          *
-          * @param transform Transform in which is search for named child
-          * @param name Name of child to find
-          * 
-          * @return Desired transform or null if it could not be found
-          */
-        public static Transform FindInChildren(Transform transform, string name)
-        {
-            // Is this null?
-            if (transform == null)
-            {
-                return null;
-            }
-
-            // Are the names equivalent
-            if (transform.name == name)
-            {
-                return transform;
-            }
-
-            // If we did not find a transform, search through the children
-            foreach (Transform child in transform)
-            {
-                // Recurse into the child
-                Transform t = FindInChildren(child, name);
-                if (t != null)
-                {
-                    return t;
-                }
-            }
-
-            // Return the transform (will be null if it was not found)
-            return null;
-        } 
-
-
-        
-        //Temperature
-        public static float KelvintoCelsius(float kelvin)
-        {
-            return (kelvin - 273.15f);
-
-        }
-
-        public static float CelsiustoKelvin(float celsius)
-        {
-            return (celsius + 273.15f);
-        }
-        
         // GUI & Window Methods
 
         public static bool WindowVisibile(Rect winpos)
@@ -253,13 +183,6 @@ namespace DF
             DFSettings DFsettings = DeepFreeze.Instance.DFsettings;
             if (DFsettings.debugging)
                 Debug.Log(context + "[][" + Time.time.ToString("0.00") + "]: " + message);
-        }
-
-        public static void Log_Debug(string message)
-        {
-            DFSettings DFsettings = DeepFreeze.Instance.DFsettings;
-            if (DFsettings.debugging)
-                Debug.Log("[DeepFreeze][" + Time.time.ToString("0.00") + "]: " + message);
         }
     }
 }
