@@ -431,7 +431,7 @@ namespace DF
                         {
                             TempVar = Utilities.KelvintoCelsius((float)frzr.CabinTemp).ToString("####0") + "C";
                         }
-                        switch (frzr.FrzrTmp)
+                        switch (frzr.DFIFrzrTmp)
                         {
                             case FrzrTmpStatus.OK:
                                 GUILayout.Label(TempVar, StatusOKStyle, GUILayout.Width(txtWdthProf));
@@ -446,7 +446,7 @@ namespace DF
                     }                   
                     if (DFsettings.ECreqdForFreezer)
                     {
-                        if (frzr.FreezerOutofEC)
+                        if (frzr.DFIFreezerOutofEC)
                         {
                             GUILayout.Label("EC = OUT", StatusRedStyle, GUILayout.Width(txtWdthVslN));
                         }
@@ -489,9 +489,9 @@ namespace DF
                         {
                             foreach (DeepFreezer frzr in DpFrzrActVsl)
                             {                                
-                                if (frzr.StoredCrewList.FirstOrDefault(a => a.CrewName == kerbal.Key) != null)
+                                if (frzr.DFIStoredCrewList.FirstOrDefault(a => a.CrewName == kerbal.Key) != null)
                                 {
-                                    if (frzr.crewXferFROMActive || frzr.crewXferTOActive || (DFInstalledMods.SMInstalled && frzr.IsSMXferRunning())
+                                    if (frzr.DFIcrewXferFROMActive || frzr.DFIcrewXferTOActive || (DFInstalledMods.SMInstalled && frzr.IsSMXferRunning())
                                         || frzr.IsFreezeActive || frzr.IsThawActive)
                                     {
                                         GUI.enabled = false;
@@ -551,7 +551,7 @@ namespace DF
                         GUILayout.Label(crewMember.name, statusStyle, GUILayout.Width(txtWdthName));
                         GUILayout.Label(crewMember.experienceTrait.Title, statusStyle, GUILayout.Width(txtWdthProf));
                         GUILayout.Label(frzr.part.vessel.vesselName, statusStyle, GUILayout.Width(txtWdthVslN));
-                        if (frzr.crewXferFROMActive || frzr.crewXferTOActive || (DFInstalledMods.SMInstalled && frzr.IsSMXferRunning())
+                        if (frzr.DFIcrewXferFROMActive || frzr.DFIcrewXferTOActive || (DFInstalledMods.SMInstalled && frzr.IsSMXferRunning())
                             || frzr.IsFreezeActive || frzr.IsThawActive)                        
                         {
                             GUI.enabled = false;
