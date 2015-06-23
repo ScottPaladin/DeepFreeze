@@ -45,6 +45,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DFInterface.cs" />
+    <Compile Include="FrozenCrewClasses.cs" />
     <Compile Include="KerbalInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -56,7 +57,7 @@ xcopy "$(TargetPath)" "$(SolutionDir)..\GameData\REPOSoftTech\$(SolutionName)\Pl
 
 xcopy "$(TargetPath)" "$(SolutionDir)..\GameData\REPOSoftTech\$(ProjectName)\Plugins\" /Y
 
-xcopy "$(ProjectDir)$(OutDir)$(TargetName).pdb" "$(SolutionDir)..\GameData\PaladinLabs\$(ProjectName)\Plugins\" /Y
+xcopy "$(ProjectDir)$(OutDir)$(TargetName).pdb" "$(SolutionDir)..\GameData\REPOSoftTech\$(ProjectName)\Plugins\" /Y
 
 cd "$(TargetDir)"
 call "C:\Program Files (x86)\Unity\Editor\Data\MonoBleedingEdge\bin\cli.bat"  "C:\Program Files (x86)\Unity\Editor\Data\MonoBleedingEdge\lib\mono\4.0\pdb2mdb.exe" $(TargetFileName)

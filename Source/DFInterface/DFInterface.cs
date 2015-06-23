@@ -26,9 +26,30 @@ namespace DF
 {
     public interface IDFInterface
     {
+        // This is a Dictionary of all Known Frozen Kerbals in the current save game.
         Dictionary<string, KerbalInfo> FrozenKerbals { get; }
     }
 
+    // Interface for DeepFreezer PART Module.
+    public interface IDeepFreezer
+    {
+        bool DFIcrewXferTOActive { get; }
+        bool DFIcrewXferFROMActive { get; }
+        int DFIFreezerSize { get; }
+        int DFITotalFrozen { get; }
+        int DFIFreezerSpace { get; }
+        bool DFIPartFull { get; }
+        bool DFIIsFreezeActive { get; }
+        bool DFIIsThawActive { get; }
+        bool DFIFreezerOutofEC { get; }
+        FrzrTmpStatus DFIFrzrTmp { get; }
+        FrznCrewList DFIStoredCrewList{ get; }
+
+        void beginFreezeKerbal(ProtoCrewMember CrewMember);
+        void beginThawKerbal(string frozenkerbal);
+    }
+
+    // Interface class for checking if DeepFreeze is Installed.
     public static class DFInterface
     {
         private static bool _dfChecked = false;

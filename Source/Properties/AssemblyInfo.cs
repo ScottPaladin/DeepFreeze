@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("DeepFreeze")]
 [assembly: AssemblyDescription("Addon MOD for KerbalSpaceProgram")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Microsoft")]
+[assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("DeepFreeze")]
 [assembly: AssemblyCopyright("Copyright © 2014")]
 [assembly: AssemblyTrademark("")]
@@ -31,6 +31,7 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("0.15.0.5")]
-[assembly: AssemblyFileVersion("0.15.0.5")]
-[assembly: KSPAssembly("DeepFreeze", 0, 15)]
+[assembly: AssemblyVersion("0.16.0.2")]
+[assembly: AssemblyFileVersion("0.16.0.2")]
+[assembly: KSPAssembly("DeepFreeze", 0, 16)]
+[assembly: KSPAssemblyDependency("DFInterface", 0, 2)]
