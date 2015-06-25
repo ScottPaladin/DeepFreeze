@@ -76,10 +76,63 @@ namespace DF
 
             // Return the transform (will be null if it was not found)
             return null;
-        } 
+        }
 
+        // The following method is taken from RasterPropMonitor as-is. Which is covered by GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
+        public static bool ActiveKerbalIsLocal(this Part thisPart)
+        {
+            return FindCurrentKerbal(thisPart) != null;
+        }
 
-        
+        // The following method is taken from RasterPropMonitor as-is. Which is covered by GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
+        public static int CurrentActiveSeat(this Part thisPart)
+        {
+            Kerbal activeKerbal = thisPart.FindCurrentKerbal();
+            return activeKerbal != null ? activeKerbal.protoCrewMember.seatIdx : -1;
+        }
+
+        // The following method is taken from RasterPropMonitor as-is. Which is covered by GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
+        public static Kerbal FindCurrentKerbal(this Part thisPart)
+        {
+            if (thisPart.internalModel == null || !VesselIsInIVA(thisPart.vessel))
+                return null;
+            // InternalCamera instance does not contain a reference to the kerbal it's looking from.
+            // So we have to search through all of them...
+            Kerbal thatKerbal = null;
+            foreach (InternalSeat thatSeat in thisPart.internalModel.seats)
+            {
+                if (thatSeat.kerbalRef != null)
+                {
+                    if (thatSeat.kerbalRef.eyeTransform == InternalCamera.Instance.transform.parent)
+                    {
+                        thatKerbal = thatSeat.kerbalRef;
+                        break;
+                    }
+                }
+            }
+            return thatKerbal;
+        }
+
+        // The following method is taken from RasterPropMonitor as-is. Which is covered by GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
+        public static bool VesselIsInIVA(Vessel thatVessel)
+        {
+            // Inactive IVAs are renderer.enabled = false, this can and should be used...
+            // ... but now it can't because we're doing transparent pods, so we need a more complicated way to find which pod the player is in.
+            return HighLogic.LoadedSceneIsFlight && IsActiveVessel(thatVessel) && IsInIVA();
+        }
+
+        // The following method is taken from RasterPropMonitor as-is. Which is covered by GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
+        public static bool IsActiveVessel(Vessel thatVessel)
+        {
+            return (HighLogic.LoadedSceneIsFlight && thatVessel != null && thatVessel.isActiveVessel);
+        }
+
+        // The following method is taken from RasterPropMonitor as-is. Which is covered by GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
+        public static bool IsInIVA()
+        {
+            return CameraManager.Instance.currentCameraMode == CameraManager.CameraMode.IVA || CameraManager.Instance.currentCameraMode == CameraManager.CameraMode.Internal;
+        }
+
         //Temperature
         public static float KelvintoCelsius(float kelvin)
         {

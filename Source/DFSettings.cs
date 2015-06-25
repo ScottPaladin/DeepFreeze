@@ -23,26 +23,46 @@ namespace DF
 
         public float DFwindowPosX { get; set; }
         public float DFwindowPosY { get; set; }
+        public float CFwindowPosX { get; set; }
+        public float CFwindowPosY { get; set; }
         public bool UseAppLauncher { get; set; }
         public bool debugging { get; set; }
         public bool ECreqdForFreezer { get; set; }
         public bool AutoRecoverFznKerbals { get; set; }
         public float KSCcostToThawKerbal { get; set; }
+        public int ECReqdToFreezeThaw { get; set; }
+        public int GlykerolReqdToFreeze { get; set; }
+        public bool RegTempReqd { get; set; }
+        public double RegTempFreeze { get; set; }
+        public double RegTempMonitor { get; set; }
+        public double heatamtMonitoringFrznKerbals { get; set; }
+        public double heatamtThawFreezeKerbal { get; set; }
+        public bool TempinKelvin { get; set; }
 
-        public DFSettings()
+        internal DFSettings()
         {
             DFwindowPosX = 40;
             DFwindowPosY = 50;
+            CFwindowPosX = 380;
+            CFwindowPosY = 50;
             UseAppLauncher = true;
             debugging = true;
             ECreqdForFreezer = true;
             AutoRecoverFznKerbals = true;
             KSCcostToThawKerbal = 10000f;
+            ECReqdToFreezeThaw = 3000;
+            GlykerolReqdToFreeze = 5;
+            RegTempReqd = false;
+            RegTempFreeze = 300f;
+            RegTempMonitor = 400f;
+            heatamtMonitoringFrznKerbals = 10f;
+            heatamtThawFreezeKerbal = 100f;
+            TempinKelvin = true;
         }
 
         //Settings Functions Follow
 
-        public void Load(ConfigNode node)
+        internal void Load(ConfigNode node)
         {
             if (node.HasNode(configNodeName))
             {
@@ -50,16 +70,26 @@ namespace DF
 
                 DFwindowPosX = Utilities.GetNodeValue(DFsettingsNode, "DFwindowPosX", DFwindowPosX);
                 DFwindowPosY = Utilities.GetNodeValue(DFsettingsNode, "DFwindowPosY", DFwindowPosY);
+                CFwindowPosX = Utilities.GetNodeValue(DFsettingsNode, "CFwindowPosX", CFwindowPosX);
+                CFwindowPosY = Utilities.GetNodeValue(DFsettingsNode, "CFwindowPosY", CFwindowPosY);
                 ECreqdForFreezer = Utilities.GetNodeValue(DFsettingsNode, "ECreqdForFreezer", ECreqdForFreezer);
                 UseAppLauncher = Utilities.GetNodeValue(DFsettingsNode, "UseAppLauncher", UseAppLauncher);
                 debugging = Utilities.GetNodeValue(DFsettingsNode, "debugging", debugging);
                 AutoRecoverFznKerbals = Utilities.GetNodeValue(DFsettingsNode, "AutoRecoverFznKerbals", AutoRecoverFznKerbals);
                 KSCcostToThawKerbal = Utilities.GetNodeValue(DFsettingsNode, "KSCcostToThawKerbal", KSCcostToThawKerbal);
+                ECReqdToFreezeThaw = Utilities.GetNodeValue(DFsettingsNode, "ECReqdToFreezeThaw", ECReqdToFreezeThaw);
+                GlykerolReqdToFreeze = Utilities.GetNodeValue(DFsettingsNode, "GlykerolReqdToFreeze", GlykerolReqdToFreeze);
+                RegTempReqd = Utilities.GetNodeValue(DFsettingsNode, "RegTempReqd", RegTempReqd);
+                RegTempFreeze = Utilities.GetNodeValue(DFsettingsNode, "RegTempFreeze", RegTempFreeze);
+                RegTempMonitor = Utilities.GetNodeValue(DFsettingsNode, "RegTempMonitor", RegTempMonitor);
+                heatamtMonitoringFrznKerbals = Utilities.GetNodeValue(DFsettingsNode, "heatamtMonitoringFrznKerbals", heatamtMonitoringFrznKerbals);
+                heatamtThawFreezeKerbal = Utilities.GetNodeValue(DFsettingsNode, "heatamtThawFreezeKerbal", heatamtThawFreezeKerbal);
+                TempinKelvin = Utilities.GetNodeValue(DFsettingsNode, "TempinKelvin", TempinKelvin);
                 this.Log_Debug("DFSettings load complete");
             }
         }
 
-        public void Save(ConfigNode node)
+        internal void Save(ConfigNode node)
         {
             ConfigNode settingsNode;
             if (node.HasNode(configNodeName))
@@ -74,11 +104,21 @@ namespace DF
 
             settingsNode.AddValue("DFwindowPosX", DFwindowPosX);
             settingsNode.AddValue("DFwindowPosY", DFwindowPosY);
+            settingsNode.AddValue("CFwindowPosX", CFwindowPosX);
+            settingsNode.AddValue("CFwindowPosY", CFwindowPosY);
             settingsNode.AddValue("ECreqdForFreezer", ECreqdForFreezer);
             settingsNode.AddValue("UseAppLauncher", UseAppLauncher);
             settingsNode.AddValue("debugging", debugging);
             settingsNode.AddValue("AutoRecoverFznKerbals", AutoRecoverFznKerbals);
             settingsNode.AddValue("KSCcostToThawKerbal", KSCcostToThawKerbal);
+            settingsNode.AddValue("ECReqdToFreezeThaw", ECReqdToFreezeThaw);
+            settingsNode.AddValue("GlykerolReqdToFreeze", GlykerolReqdToFreeze);
+            settingsNode.AddValue("RegTempReqd", RegTempReqd);
+            settingsNode.AddValue("RegTempFreeze", RegTempFreeze);
+            settingsNode.AddValue("RegTempMonitor", RegTempMonitor);
+            settingsNode.AddValue("heatamtMonitoringFrznKerbals", heatamtMonitoringFrznKerbals);
+            settingsNode.AddValue("heatamtThawFreezeKerbal", heatamtThawFreezeKerbal);
+            settingsNode.AddValue("TempinKelvin", TempinKelvin);
             this.Log_Debug("DFSettings save complete");
         }
     }
