@@ -30,10 +30,14 @@ namespace DF
     {
         public static DeepFreeze Instance { get; private set; }
         internal DFSettings DFsettings { get; private set; }
-        internal DFGameSettings DFgameSettings { get; private set; }      
-        private readonly string globalConfigFilename;        
-        private ConfigNode globalNode = new ConfigNode();        
-        private readonly List<Component> children = new List<Component>();        
+        internal DFGameSettings DFgameSettings { get; private set; }
+
+        private readonly string globalConfigFilename;
+        //private readonly string FilePath;
+        private ConfigNode globalNode = new ConfigNode();
+
+        private readonly List<Component> children = new List<Component>();
+        
 
         public Dictionary<string, KerbalInfo> FrozenKerbals
         {
@@ -48,10 +52,13 @@ namespace DF
             Utilities.Log("DeepFreeze", "Constructor");
             Instance = this;
             DFsettings = new DFSettings();
-            DFgameSettings = new DFGameSettings();            
+            DFgameSettings = new DFGameSettings();
             globalConfigFilename = System.IO.Path.Combine(_AssemblyFolder, "Config.cfg").Replace("\\", "/");
-            this.Log("globalConfigFilename = " + globalConfigFilename);            
-            DeepFreezeEventAdd();                        
+            this.Log("globalConfigFilename = " + globalConfigFilename);
+
+            
+            DeepFreezeEventAdd();
+                        
         }
 
         public override void OnAwake()
@@ -102,7 +109,9 @@ namespace DF
                     this.Log("DeepFreeze Child Load Call for " + s.ToString());
                     s.Load(globalNode);
                 }
-            }            
+            }
+            
+
             this.Log("OnLoad: \n " + gameNode + "\n" + globalNode);
         }
 
@@ -116,7 +125,8 @@ namespace DF
                 s.Save(globalNode);
             }
             DFsettings.Save(globalNode);
-            globalNode.Save(globalConfigFilename);            
+            globalNode.Save(globalConfigFilename);
+
             this.Log("OnSave: " + gameNode + "\n" + globalNode);
         }
 

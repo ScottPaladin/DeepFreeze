@@ -31,6 +31,14 @@ namespace DF
             }
         }
 
+        internal static bool IsUSILSInstalled
+        {
+            get
+            {
+                return IsModInstalled("USILifeSupport");
+            }
+        }
+
         internal static bool IsSnacksInstalled
         {
             get

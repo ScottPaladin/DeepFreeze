@@ -55,6 +55,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\UnityEngine.dll</HintPath>
     </Reference>
+    <Reference Include="USILifeSupport">
+      <HintPath>.\USILifeSupport.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DeepFreeze.cs" />

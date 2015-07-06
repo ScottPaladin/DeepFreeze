@@ -20,10 +20,10 @@ using System.Reflection;
 using UnityEngine;
 
 namespace DF
-{
+{    
     public static class Utilities
     {
-
+              
         // Dump an object by reflection
         public static void DumpObjectFields(object o, string title = "---------")
         {
@@ -130,7 +130,13 @@ namespace DF
         // The following method is taken from RasterPropMonitor as-is. Which is covered by GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
         public static bool IsInIVA()
         {
-            return CameraManager.Instance.currentCameraMode == CameraManager.CameraMode.IVA || CameraManager.Instance.currentCameraMode == CameraManager.CameraMode.Internal;
+            return CameraManager.Instance.currentCameraMode == CameraManager.CameraMode.IVA;
+        }
+
+        
+        public static bool IsInInternal()
+        {
+            return CameraManager.Instance.currentCameraMode == CameraManager.CameraMode.Internal;
         }
 
         //Temperature

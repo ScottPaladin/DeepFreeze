@@ -408,6 +408,7 @@ namespace DF
                 onAppLaunchToggle();
                 return;
             }
+            
 
             if ((DFsettings.ECreqdForFreezer || DFsettings.RegTempReqd) && (HighLogic.LoadedScene == GameScenes.FLIGHT && ActVslHasDpFrezr))
             {
