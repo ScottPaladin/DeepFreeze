@@ -31,8 +31,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
-      <HintPath>..\..\..\Visual Studio 2013\Projects\FP-Test\FP-Test\Assembly-CSharp.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>E:\My_Games\KSP\KSP1.0\KSP_Win1.4\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="Assembly-CSharp-firstpass">
+      <HintPath>E:\My_Games\KSP\KSP1.0\KSP_Win1.4\KSP_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -42,8 +44,7 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="UnityEngine">
-      <HintPath>..\..\..\Visual Studio 2013\Projects\FP-Test\FP-Test\UnityEngine.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>E:\My_Games\KSP\KSP1.0\KSP_Win1.4\KSP_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
