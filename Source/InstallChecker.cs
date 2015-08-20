@@ -19,11 +19,12 @@ namespace DF
     [KSPAddon(KSPAddon.Startup.MainMenu, true)]
     internal class InstallChecker : MonoBehaviour
     {
+        // This class checks DeepFreeze is installed correctly.
         private const string modName = "DeepFreeze";
         private const string expectedPath = "REPOSoftTech/DeepFreeze/Plugins";
 
         protected void Start()
-        {
+        { 
             try
             {
                 // Log some information that might be of interest when debugging
@@ -44,6 +45,19 @@ namespace DF
                         ". Do not move any files from inside that folder.\n\nPlease Remove all old installations and invalid files, as follows.\n\nIncorrect path(s):\n" + badPathsString,
                         "OK", false, HighLogic.Skin);
                 }
+
+                // Check for Raster Prop Monitor, If installed must also have Module Manager Installed
+                if (AssemblyLoader.loadedAssemblies.Any(a => a.assembly.GetName().Name.StartsWith("RasterPropMonitor")))
+                {
+                    if (!AssemblyLoader.loadedAssemblies.Any(a => a.assembly.GetName().Name.StartsWith("ModuleManager") && a.url == ""))
+                    {
+                        this.Log(modName + " - Missing or incorrectly installed RPM & ModuleManager.");
+                        PopupDialog.SpawnPopupDialog("Missing Module Manager",
+                            modName + " requires the Module Manager mod in order to function properly with Raster Prop Monitor mod Installed.\n\nPlease download from http://forum.kerbalspaceprogram.com/threads/55219 and copy to the KSP/GameData/ directory.",
+                            "OK", false, HighLogic.Skin);
+                    }                        
+                }
+
                 /*
                 // Check for Module Manager
                 if (!AssemblyLoader.loadedAssemblies.Any(a => a.assembly.GetName().Name.StartsWith("ModuleManager") && a.url == ""))
@@ -92,30 +106,12 @@ namespace DF
             // Upgrading 14.3 -> 15.0
             // Moved into new directory for REPOSoftTech Forked version.
             // Was GameData/PaladinLabs now GameData/REPOSoftTech
-            if (File.Exists(KSPUtil.ApplicationRootPath + "GameData/ThunderAerospace/TacLifeSupport/StockPartChanges.cfg"))
+            if (File.Exists(KSPUtil.ApplicationRootPath + "x.cfg"))
             {
-                this.Log(modName + " - deleting the old StockPartChanges.cfg.");
-                File.Delete(KSPUtil.ApplicationRootPath + "GameData/ThunderAerospace/TacLifeSupport/StockPartChanges.cfg");
+                this.Log(modName + " - deleting the old x.cfg.");
+                File.Delete(KSPUtil.ApplicationRootPath + "x.cfg");
                 requireRestart = true;
-            }
-            if (File.Exists(KSPUtil.ApplicationRootPath + "GameData/ThunderAerospace/TacLifeSupportHexCans/HexCanLifeSupport/LargeWaste.cfg"))
-            {
-                this.Log(modName + " - deleting the old LargeWaste.cfg.");
-                File.Delete(KSPUtil.ApplicationRootPath + "GameData/ThunderAerospace/TacLifeSupportHexCans/HexCanLifeSupport/LargeWaste.cfg");
-                requireRestart = true;
-            }
-            if (File.Exists(KSPUtil.ApplicationRootPath + "GameData/ThunderAerospace/TacLifeSupportHexCans/HexCanLifeSupport/NormalWaste.cfg"))
-            {
-                this.Log(modName + " - deleting the old NormalWaste.cfg.");
-                File.Delete(KSPUtil.ApplicationRootPath + "GameData/ThunderAerospace/TacLifeSupportHexCans/HexCanLifeSupport/NormalWaste.cfg");
-                requireRestart = true;
-            }
-            if (File.Exists(KSPUtil.ApplicationRootPath + "GameData/ThunderAerospace/TacLifeSupportHexCans/HexCanLifeSupport/SmallWaste.cfg"))
-            {
-                this.Log(modName + " - deleting the old SmallWaste.cfg.");
-                File.Delete(KSPUtil.ApplicationRootPath + "GameData/ThunderAerospace/TacLifeSupportHexCans/HexCanLifeSupport/SmallWaste.cfg");
-                requireRestart = true;
-            }
+            }           
 
             if (requireRestart)
             {

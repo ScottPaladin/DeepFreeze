@@ -1,4 +1,20 @@
-﻿using System;
+﻿/**
+ * DeepFreeze Continued...
+ * (C) Copyright 2015, Jamie Leighton
+ *
+ * Kerbal Space Program is Copyright (C) 2013 Squad. See http://kerbalspaceprogram.com/. This
+ * project is in no way associated with nor endorsed by Squad.
+ *
+ *  This file is part of JPLRepo's DeepFreeze (continued...) - a Fork of DeepFreeze. Original Author of DeepFreeze is 'scottpaladin' on the KSP Forums.
+ *  This File was not part of the original Deepfreeze but was written by Jamie Leighton.
+ *  (C) Copyright 2015, Jamie Leighton
+ *
+ * Continues to be licensed under the Attribution-NonCommercial-ShareAlike 3.0 (CC BY-NC-SA 4.0)
+ * creative commons license. See <https://creativecommons.org/licenses/by-nc-sa/4.0/>
+ * for full details.
+ *
+ */
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,7 +25,7 @@ namespace DF
 {
     class DFInstalledMods
     {
-
+        // Class used to check what Other mods we are interested in are installed.
         private static bool? _SMInstalled = null;
         private static Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
@@ -55,6 +71,22 @@ namespace DF
             }
         }
 
+        internal static bool IsRPMInstalled
+        {
+            get
+            {
+                return IsModInstalled("RasterPropMonitor");
+            }
+        }
+
+        internal static bool IsBGPInstalled
+        {
+            get
+            {
+                return IsModInstalled("BackgroundProcessing");
+            }
+        }
+
         internal static bool IsModInstalled(string assemblyName)
         {
 
@@ -71,21 +103,24 @@ namespace DF
             }
         }
 
-        internal static bool RTVesselConnected
+        internal static bool RTVesselConnected(Guid id)
         {
-            get
-            {
+            //get
+            //{
                 bool RTVslConnected = false;
-                RTVslConnected = (RemoteTech.API.API.HasLocalControl(FlightGlobals.ActiveVessel.id) || RemoteTech.API.API.HasAnyConnection(FlightGlobals.ActiveVessel.id));            
-                Utilities.Log_Debug("RTVesselConnected = " + RTVslConnected);            
+                if (IsRTInstalled)
+                {
+                    RTVslConnected = (RemoteTech.API.API.HasLocalControl(id) || RemoteTech.API.API.HasAnyConnection(id));
+                    Utilities.Log_Debug("RTVesselConnected = " + RTVslConnected);
+                }                
                 return RTVslConnected;
-            }            
+            //}            
         }
 
         internal static double RTVesselDelay
         {
             get
-            {
+            {                
                 double RTVslDelay = 0f;
                 RTVslDelay = RemoteTech.API.API.GetShortestSignalDelay(FlightGlobals.ActiveVessel.id);
                 Utilities.Log_Debug("RTVesselDelay = " + RTVslDelay);

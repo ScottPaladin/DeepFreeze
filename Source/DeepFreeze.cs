@@ -1,6 +1,6 @@
 ﻿/**
- * DeepFreezerPart.cs
- *
+ * DeepFreeze Continued...
+ * (C) Copyright 2015, Jamie Leighton
  *
  * Kerbal Space Program is Copyright (C) 2013 Squad. See http://kerbalspaceprogram.com/. This
  * project is in no way associated with nor endorsed by Squad.
@@ -15,13 +15,10 @@
  *
  */
 
-using KSP.IO;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using UnityEngine;
-
 
 namespace DF
 {
@@ -30,14 +27,10 @@ namespace DF
     {
         public static DeepFreeze Instance { get; private set; }
         internal DFSettings DFsettings { get; private set; }
-        internal DFGameSettings DFgameSettings { get; private set; }
-
-        private readonly string globalConfigFilename;
-        //private readonly string FilePath;
-        private ConfigNode globalNode = new ConfigNode();
-
-        private readonly List<Component> children = new List<Component>();
-        
+        internal DFGameSettings DFgameSettings { get; private set; }      
+        private readonly string globalConfigFilename;        
+        private ConfigNode globalNode = new ConfigNode();        
+        private readonly List<Component> children = new List<Component>();        
 
         public Dictionary<string, KerbalInfo> FrozenKerbals
         {
@@ -52,13 +45,10 @@ namespace DF
             Utilities.Log("DeepFreeze", "Constructor");
             Instance = this;
             DFsettings = new DFSettings();
-            DFgameSettings = new DFGameSettings();
+            DFgameSettings = new DFGameSettings();            
             globalConfigFilename = System.IO.Path.Combine(_AssemblyFolder, "Config.cfg").Replace("\\", "/");
-            this.Log("globalConfigFilename = " + globalConfigFilename);
-
-            
-            DeepFreezeEventAdd();
-                        
+            this.Log("globalConfigFilename = " + globalConfigFilename);            
+            DeepFreezeEventAdd();                        
         }
 
         public override void OnAwake()
@@ -71,30 +61,38 @@ namespace DF
             if (HighLogic.LoadedScene == GameScenes.SPACECENTER)
             {
                 this.Log("Adding SpaceCenterManager");
+                var DFMem = gameObject.AddComponent<DFIntMemory>();
+                children.Add(DFMem);
                 var child = gameObject.AddComponent<DeepFreezeGUI>();
-                children.Add(child);
+                children.Add(child); 
             }
             else if (HighLogic.LoadedScene == GameScenes.FLIGHT)
             {
                 this.Log("Adding FlightManager");
+                var DFMem = gameObject.AddComponent<DFIntMemory>();
+                children.Add(DFMem);
                 var child = gameObject.AddComponent<DeepFreezeGUI>();
                 children.Add(child);
             }
-                /*
+                
             else if (HighLogic.LoadedScene == GameScenes.EDITOR)
             {
                 this.Log("Adding EditorController");
-                var child = gameObject.AddComponent<DeepFreezeGUI>();
-                children.Add(child);
-            } */
+                var DFMem = gameObject.AddComponent<DFIntMemory>();
+                children.Add(DFMem);
+                //var child = gameObject.AddComponent<DeepFreezeGUI>();
+                //children.Add(child);
+            } 
             else if (HighLogic.LoadedScene == GameScenes.TRACKSTATION)
             {
                 this.Log("Adding TrackingStationController");
+                var DFMem = gameObject.AddComponent<DFIntMemory>();
+                children.Add(DFMem);
                 var child = gameObject.AddComponent<DeepFreezeGUI>();
                 children.Add(child);
             }
         }
-
+        
         public override void OnLoad(ConfigNode gameNode)
         {
             base.OnLoad(gameNode);
@@ -109,10 +107,8 @@ namespace DF
                     this.Log("DeepFreeze Child Load Call for " + s.ToString());
                     s.Load(globalNode);
                 }
-            }
-            
-
-            this.Log("OnLoad: \n " + gameNode + "\n" + globalNode);
+            }            
+            this.Log("Scenario: " + HighLogic.LoadedScene.ToString() + " OnLoad: \n " + gameNode + "\n" + globalNode);
         }
 
         public override void OnSave(ConfigNode gameNode)
@@ -125,9 +121,8 @@ namespace DF
                 s.Save(globalNode);
             }
             DFsettings.Save(globalNode);
-            globalNode.Save(globalConfigFilename);
-
-            this.Log("OnSave: " + gameNode + "\n" + globalNode);
+            globalNode.Save(globalConfigFilename);            
+            this.Log("Scenario: " + HighLogic.LoadedScene.ToString() + " OnSave: \n" + gameNode + "\n" + globalNode);
         }
 
         protected void OnGameSceneLoadRequested(GameScenes gameScene)
@@ -153,7 +148,6 @@ namespace DF
         protected void DeepFreezeEventAdd()
         {
             this.Log("DeepFreezeEvents DeepFreezeEventAdd");
-            //GameEvents.OnVesselRecoveryRequested.Add(this.OnVesselRecoveryRequested);
             GameEvents.onVesselRecovered.Add(this.onVesselRecovered);
             GameEvents.onVesselTerminated.Add(this.onVesselTerminated);
             GameEvents.onVesselWillDestroy.Add(this.onVesselWillDestroy);
@@ -163,39 +157,12 @@ namespace DF
         protected void DeepFreezeEventRem()
         {
             this.Log("DeepFreezeEvents DeepFreezeEventRem");
-            //GameEvents.OnVesselRecoveryRequested.Remove(this.OnVesselRecoveryRequested);
             GameEvents.onVesselRecovered.Remove(this.onVesselRecovered);
             GameEvents.onVesselTerminated.Remove(this.onVesselTerminated);
             GameEvents.onVesselWillDestroy.Remove(this.onVesselWillDestroy);
             this.Log("DeepFreezeEvents DeepFreezeEventRem ended");
         }
-
-        /*
-        private void OnVesselRecoveryRequested(Vessel vessel)
-        {
-            Debug.Log("DeepFreezeEvents OnVesselRecoveryRequested");
-            if (vessel.FindPartModulesImplementing<DeepFreezer>().Count > 0 && DeepFreeze.Instance.DFsettings.AutoRecoverFznKerbals)
-            {
-                foreach (DeepFreezer freezer in vessel.FindPartModulesImplementing<DeepFreezer>())
-                {
-                    freezer.part.CrewCapacity = freezer.StoredCrewList.Count;
-                    foreach (var crewmember in freezer.StoredCrewList)
-                    {
-                        foreach (ProtoCrewMember kerbal in HighLogic.CurrentGame.CrewRoster.Crew)
-                        {
-                            if (kerbal.name == crewmember.CrewName)
-                            {
-                                kerbal.type = ProtoCrewMember.KerbalType.Crew;
-                                kerbal.rosterStatus = ProtoCrewMember.RosterStatus.Assigned;
-                                freezer.part.AddCrewmember(kerbal);
-                                Debug.Log("DeepFreezeEvents Crew Added" + kerbal.name);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        */
+                
         protected void onVesselRecovered(ProtoVessel vessel)
         {
             this.Log("DeepFreezeEvents onVesselRecovered " + vessel.vesselID);  
@@ -224,7 +191,17 @@ namespace DF
                             ScreenMessages.PostScreenMessage(key + " was stored frozen at KSC", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                         }
                     }
-                }                        
+                }                                        
+            }
+            var alarmsToDelete = new List<string>();
+            alarmsToDelete.AddRange(DeepFreeze.Instance.DFgameSettings.knownKACAlarms.Where(e => e.Value.VesselID == vessel.vesselID).Select(e => e.Key).ToList());
+            alarmsToDelete.ForEach(id => DeepFreeze.Instance.DFgameSettings.knownKACAlarms.Remove(id));
+            var partsToDelete = new List<uint>();
+            partsToDelete.AddRange(DeepFreeze.Instance.DFgameSettings.knownFreezerParts.Where(e => e.Value.vesselID == vessel.vesselID).Select(e => e.Key).ToList());
+            partsToDelete.ForEach(id => DeepFreeze.Instance.DFgameSettings.knownFreezerParts.Remove(id));
+            if (DFgameSettings.knownVessels.ContainsKey(vessel.vesselID))
+            {
+                DFgameSettings.knownVessels.Remove(vessel.vesselID);
             }                       
         }
 
@@ -238,6 +215,16 @@ namespace DF
                     KillFrozenCrew(kerbal.Key);
                 }
             }
+            var alarmsToDelete = new List<string>();
+            alarmsToDelete.AddRange(DeepFreeze.Instance.DFgameSettings.knownKACAlarms.Where(e => e.Value.VesselID == vessel.vesselID).Select(e => e.Key).ToList());
+            alarmsToDelete.ForEach(id => DeepFreeze.Instance.DFgameSettings.knownKACAlarms.Remove(id));
+            var partsToDelete = new List<uint>();
+            partsToDelete.AddRange(DeepFreeze.Instance.DFgameSettings.knownFreezerParts.Where(e => e.Value.vesselID == vessel.vesselID).Select(e => e.Key).ToList());
+            partsToDelete.ForEach(id => DeepFreeze.Instance.DFgameSettings.knownFreezerParts.Remove(id));
+            if (DFgameSettings.knownVessels.ContainsKey(vessel.vesselID))
+            {
+                DFgameSettings.knownVessels.Remove(vessel.vesselID);
+            }
         }
 
         protected void onVesselWillDestroy(Vessel vessel)
@@ -249,6 +236,16 @@ namespace DF
                 {                    
                     KillFrozenCrew(kerbal.Key);
                 }
+            }
+            var alarmsToDelete = new List<string>();
+            alarmsToDelete.AddRange(DeepFreeze.Instance.DFgameSettings.knownKACAlarms.Where(e => e.Value.VesselID == vessel.id).Select(e => e.Key).ToList());
+            alarmsToDelete.ForEach(id => DeepFreeze.Instance.DFgameSettings.knownKACAlarms.Remove(id));
+            var partsToDelete = new List<uint>();
+            partsToDelete.AddRange(DeepFreeze.Instance.DFgameSettings.knownFreezerParts.Where(e => e.Value.vesselID == vessel.id).Select(e => e.Key).ToList());
+            partsToDelete.ForEach(id => DeepFreeze.Instance.DFgameSettings.knownFreezerParts.Remove(id));
+            if (DFgameSettings.knownVessels.ContainsKey(vessel.id))
+            {
+                DFgameSettings.knownVessels.Remove(vessel.id);
             }
         }
 

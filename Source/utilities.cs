@@ -1,6 +1,6 @@
 ﻿/**
- * Utilities.cs
- *
+ * DeepFreeze Continued...
+ * (C) Copyright 2015, Jamie Leighton
  *
  * Kerbal Space Program is Copyright (C) 2013 Squad. See http://kerbalspaceprogram.com/. This
  * project is in no way associated with nor endorsed by Squad.
@@ -18,16 +18,26 @@
 using System;
 using System.Reflection;
 using UnityEngine;
+using System.Collections;
 
 namespace DF
-{    
-    public static class Utilities
+{
+
+    public enum DoorState
     {
-              
+        OPEN,
+        CLOSED,
+        OPENING,
+        CLOSING,
+        UNKNOWN
+    }
+
+    internal static class Utilities
+    {             
         // Dump an object by reflection
-        public static void DumpObjectFields(object o, string title = "---------")
+        internal static void DumpObjectFields(object o, string title = "---------")
         {
-            // Dump the raw PQS of Dres (by reflection)
+            // Dump (by reflection)
             Debug.Log("---------" + title + "------------");
             foreach (FieldInfo field in o.GetType().GetFields())
             {
@@ -35,6 +45,18 @@ namespace DF
                 {
                     Debug.Log(field.Name + " = " + field.GetValue(o));
                 }
+            }
+            Debug.Log("--------------------------------------");
+        }
+
+        // Dump all Unity Cameras
+        internal static void DumpCameras() 
+        {
+            // Dump (by reflection)
+            Debug.Log("--------- Dump Unity Cameras ------------");
+            foreach(Camera c in Camera.allCameras)
+            {
+                Debug.Log("Camera " + c.name + " cullingmask " + c.cullingMask + " depth " + c.depth + " farClipPlane " + c.farClipPlane + " nearClipPlane " + c.nearClipPlane);              
             }
             Debug.Log("--------------------------------------");
         }
@@ -49,7 +71,7 @@ namespace DF
           * 
           * @return Desired transform or null if it could not be found
           */
-        public static Transform FindInChildren(Transform transform, string name)
+        internal static Transform FindInChildren(Transform transform, string name)
         {
             // Is this null?
             if (transform == null)
@@ -77,22 +99,166 @@ namespace DF
             // Return the transform (will be null if it was not found)
             return null;
         }
-
-        // The following method is taken from RasterPropMonitor as-is. Which is covered by GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
-        public static bool ActiveKerbalIsLocal(this Part thisPart)
+                   
+        public static Camera FindCamera(string name)
         {
-            return FindCurrentKerbal(thisPart) != null;
+            foreach (Camera c in Camera.allCameras)
+            {
+                if (c.name == name)
+                {
+                    return c;
+                }
+            }                                 
+            return null;
+        }
+
+        // The following method is modified from RasterPropMonitor as-is. Which is covered by GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
+        internal static void setTransparentTransforms(this Part thisPart, string transparentTransforms)
+        {
+            string transparentShaderName = "Transparent/Specular";
+            Shader transparentShader;
+            transparentShader = Shader.Find(transparentShaderName);
+            foreach (string transformName in transparentTransforms.Split('|'))
+            {
+                Log_Debug("setTransparentTransforms " + transformName);
+                try
+                {
+                    Transform tr = thisPart.FindModelTransform(transformName.Trim());
+                    if (tr != null)
+                    {
+                        // We both change the shader and backup the original shader so we can undo it later.
+                        Shader backupShader = tr.renderer.material.shader;
+                        tr.renderer.material.shader = transparentShader;                        
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.Log("Unable to set transparent shader transform " + transformName);
+                    Debug.LogException(e);
+                }
+            }
+
+        }
+              
+        // The following method is derived from TextureReplacer mod. Which is licensed as:
+        //Copyright © 2013-2015 Davorin Učakar, Ryan Bray
+        //Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files(the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+        //The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+        private static double atmSuitPressure = 50.0;
+        public static bool isAtmBreathable()
+        {
+            bool value = !HighLogic.LoadedSceneIsFlight
+                         || (FlightGlobals.getStaticPressure() >= atmSuitPressure);
+            Log_Debug("isATMBreathable Inflight? " + value + " InFlight " + HighLogic.LoadedSceneIsFlight + " StaticPressure " + FlightGlobals.getStaticPressure());
+            return value;  
+        }
+
+        // The following method is derived from TextureReplacer mod. Which is licensed as:
+        //Copyright © 2013-2015 Davorin Učakar, Ryan Bray
+        //Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files(the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+        //The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+        private static Mesh[] helmetMesh = { null, null };
+        private static Mesh[] visorMesh = { null, null };
+        private static bool helmetMeshstored = false;
+
+        internal static void storeHelmetMesh()
+        {
+            Log_Debug("StoreHelmetMesh");
+            foreach (Kerbal kerbal in Resources.FindObjectsOfTypeAll<Kerbal>())
+            {
+                int gender = kerbal.transform.name == "kerbalFemale" ? 1 : 0;                
+                // Save pointer to helmet & visor meshes so helmet removal can restore them.
+                foreach (SkinnedMeshRenderer smr in kerbal.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+                {                    
+                    if (smr.name.EndsWith("helmet", StringComparison.Ordinal))
+                        helmetMesh[gender] = smr.sharedMesh;
+                    else if (smr.name.EndsWith("visor", StringComparison.Ordinal))
+                        visorMesh[gender] = smr.sharedMesh;
+                }                
+            }            
+            helmetMeshstored = true;
+        }
+
+        // The following method is derived from TextureReplacer mod.Which is licensed as:
+        //Copyright © 2013-2015 Davorin Učakar, Ryan Bray
+        //Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files(the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+        //The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+        internal static void setHelmetshaders(Kerbal thatKerbal, bool helmetOn)
+        {
+            if (!helmetMeshstored)
+                storeHelmetMesh();
+
+            //This will check if Atmospher is breathable then we always remove our hetmets regardless.
+            if (helmetOn && isAtmBreathable())
+            {
+                helmetOn = false;
+                Log_Debug("setHelmetShaders to put on helmet but in breathable atmosphere");
+            }
+
+            try
+            {
+                foreach (SkinnedMeshRenderer smr in thatKerbal.helmetTransform.GetComponentsInChildren<SkinnedMeshRenderer>())
+                {
+                    if (smr.name.EndsWith("helmet", StringComparison.Ordinal))
+                        smr.sharedMesh = helmetOn ? helmetMesh[(int)thatKerbal.protoCrewMember.gender] : null;
+                    else if (smr.name.EndsWith("visor", StringComparison.Ordinal))
+                        smr.sharedMesh = helmetOn ? visorMesh[(int)thatKerbal.protoCrewMember.gender] : null;
+                }
+            }
+            catch (Exception ex)
+            {
+               Log("DeepFreezer","Error attempting to setHelmetshaders for " + thatKerbal.name + " to " + helmetOn);
+               Log("DeepFreezer ", ex.Message);
+            }
+        }
+
+        // The following method is derived from TextureReplacer mod. Which is licensed as:
+        //Copyright © 2013-2015 Davorin Učakar, Ryan Bray
+        //Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files(the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+        //The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+        internal static void setHelmets(this Part thisPart, bool helmetOn)
+        {
+            if  (thisPart.internalModel == null)
+            {
+                Log_Debug("setHelmets but no internalModel");
+                return;
+            }
+
+            if (!helmetMeshstored)
+                storeHelmetMesh();              
+                        
+            Log_Debug("setHelmets helmetOn=" + helmetOn);
+            //Kerbal thatKerbal = null;
+            foreach (InternalSeat thatSeat in thisPart.internalModel.seats)
+            {
+                if (thatSeat.crew != null)
+                {
+                    Kerbal thatKerbal = thatSeat.kerbalRef;
+                    if (thatKerbal != null)
+                    {
+                        thatSeat.allowCrewHelmet = helmetOn;
+                        Log_Debug("Setting helmet=" + helmetOn + " for kerbal " + thatSeat.crew.name);                        
+                        // `Kerbal.ShowHelmet(false)` irreversibly removes a helmet while
+                        // `Kerbal.ShowHelmet(true)` has no effect at all. We need the following workaround.
+                        // I think this can be done using a coroutine to despawn and spawn the internalseat crewmember kerbalref. 
+                        // But I found this workaround in TextureReplacer so easier to use that.
+                        //if (thatKerbal.showHelmet)
+                        //{                        
+                            setHelmetshaders(thatKerbal, helmetOn); 
+                        //}
+                        //else
+                        //    Log_Debug("Showhelmet is OFF so the helmettransform does not exist");
+                        
+                    }
+                    else
+                        Log_Debug("kerbalref = null?");
+                    
+                }
+            }
         }
 
         // The following method is taken from RasterPropMonitor as-is. Which is covered by GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
-        public static int CurrentActiveSeat(this Part thisPart)
-        {
-            Kerbal activeKerbal = thisPart.FindCurrentKerbal();
-            return activeKerbal != null ? activeKerbal.protoCrewMember.seatIdx : -1;
-        }
-
-        // The following method is taken from RasterPropMonitor as-is. Which is covered by GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
-        public static Kerbal FindCurrentKerbal(this Part thisPart)
+        internal static Kerbal FindCurrentKerbal(this Part thisPart)
         {
             if (thisPart.internalModel == null || !VesselIsInIVA(thisPart.vessel))
                 return null;
@@ -114,7 +280,7 @@ namespace DF
         }
 
         // The following method is taken from RasterPropMonitor as-is. Which is covered by GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
-        public static bool VesselIsInIVA(Vessel thatVessel)
+        internal static bool VesselIsInIVA(Vessel thatVessel)
         {
             // Inactive IVAs are renderer.enabled = false, this can and should be used...
             // ... but now it can't because we're doing transparent pods, so we need a more complicated way to find which pod the player is in.
@@ -122,38 +288,46 @@ namespace DF
         }
 
         // The following method is taken from RasterPropMonitor as-is. Which is covered by GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
-        public static bool IsActiveVessel(Vessel thatVessel)
+        internal static bool IsActiveVessel(Vessel thatVessel)
         {
             return (HighLogic.LoadedSceneIsFlight && thatVessel != null && thatVessel.isActiveVessel);
         }
 
         // The following method is taken from RasterPropMonitor as-is. Which is covered by GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
-        public static bool IsInIVA()
+        internal static bool IsInIVA()
         {
             return CameraManager.Instance.currentCameraMode == CameraManager.CameraMode.IVA;
         }
 
-        
-        public static bool IsInInternal()
+
+        internal static bool IsInInternal()
         {
             return CameraManager.Instance.currentCameraMode == CameraManager.CameraMode.Internal;
         }
 
+        internal static IEnumerator WaitForAnimation(Animation animation, string name)
+        {
+            do
+            {
+                yield return null;
+            } while (animation.IsPlaying(name));
+        }
+
         //Temperature
-        public static float KelvintoCelsius(float kelvin)
+        internal static float KelvintoCelsius(float kelvin)
         {
             return (kelvin - 273.15f);
 
         }
 
-        public static float CelsiustoKelvin(float celsius)
+        internal static float CelsiustoKelvin(float celsius)
         {
             return (celsius + 273.15f);
         }
-        
+
         // GUI & Window Methods
 
-        public static bool WindowVisibile(Rect winpos)
+        internal static bool WindowVisibile(Rect winpos)
         {
             float minmargin = 20.0f; // 20 bytes margin for the window
             float xMin = minmargin - winpos.width;
@@ -165,7 +339,7 @@ namespace DF
             return xRnge && yRnge;
         }
 
-        public static Rect MakeWindowVisible(Rect winpos)
+        internal static Rect MakeWindowVisible(Rect winpos)
         {
             float minmargin = 20.0f; // 20 bytes margin for the window
             float xMin = minmargin - winpos.width;
@@ -181,7 +355,7 @@ namespace DF
 
         // Get Config Node Values out of a config node Methods
 
-        public static bool GetNodeValue(ConfigNode confignode, string fieldname, bool defaultValue)
+        internal static bool GetNodeValue(ConfigNode confignode, string fieldname, bool defaultValue)
         {
             bool newValue;
             if (confignode.HasValue(fieldname) && bool.TryParse(confignode.GetValue(fieldname), out newValue))
@@ -194,7 +368,7 @@ namespace DF
             }
         }
 
-        public static int GetNodeValue(ConfigNode confignode, string fieldname, int defaultValue)
+        internal static int GetNodeValue(ConfigNode confignode, string fieldname, int defaultValue)
         {
             int newValue;
             if (confignode.HasValue(fieldname) && int.TryParse(confignode.GetValue(fieldname), out newValue))
@@ -207,7 +381,7 @@ namespace DF
             }
         }
 
-        public static float GetNodeValue(ConfigNode confignode, string fieldname, float defaultValue)
+        internal static float GetNodeValue(ConfigNode confignode, string fieldname, float defaultValue)
         {
             float newValue;
             if (confignode.HasValue(fieldname) && float.TryParse(confignode.GetValue(fieldname), out newValue))
@@ -220,7 +394,7 @@ namespace DF
             }
         }
 
-        public static double GetNodeValue(ConfigNode confignode, string fieldname, double defaultValue)
+        internal static double GetNodeValue(ConfigNode confignode, string fieldname, double defaultValue)
         {
             double newValue;
             if (confignode.HasValue(fieldname) && double.TryParse(confignode.GetValue(fieldname), out newValue))
@@ -233,7 +407,7 @@ namespace DF
             }
         }
 
-        public static string GetNodeValue(ConfigNode confignode, string fieldname, string defaultValue)
+        internal static string GetNodeValue(ConfigNode confignode, string fieldname, string defaultValue)
         {
             if (confignode.HasValue(fieldname))
             {
@@ -245,13 +419,22 @@ namespace DF
             }
         }
 
-        public static Guid GetNodeValue(ConfigNode confignode, string fieldname)
+        internal static Guid GetNodeValue(ConfigNode confignode, string fieldname)
         {
             if (confignode.HasValue(fieldname))
             {
-                confignode.GetValue(fieldname);
-                Log_Debug("getnodguid ", fieldname);
-                return new Guid(fieldname);
+                try
+                {
+                    Guid id = new Guid(confignode.GetValue(fieldname));                    
+                    return id;
+                }
+                catch (Exception ex)
+                {
+                    Debug.Log("Unable to getNodeValue " + fieldname + " from " + confignode);
+                    Debug.Log("Err: " + ex);
+                    return Guid.Empty;
+                }
+                
             }
             else
             {
@@ -260,7 +443,7 @@ namespace DF
             }
         }
 
-        public static T GetNodeValue<T>(ConfigNode confignode, string fieldname, T defaultValue) where T : IComparable, IFormattable, IConvertible
+        internal static T GetNodeValue<T>(ConfigNode confignode, string fieldname, T defaultValue) where T : IComparable, IFormattable, IConvertible
         {
             if (confignode.HasValue(fieldname))
             {
@@ -273,48 +456,108 @@ namespace DF
             return defaultValue;
         }
 
+        //Format a Time double variable into format "YxxxxDxxxhh:mm:ss"
+        //Future expansion required to format to different formats.
+        public static string FormatDateString(double time)
+        {
+            string outputstring = string.Empty;
+            int[] datestructure = new int[5];
+            if (GameSettings.KERBIN_TIME)
+            {
+                datestructure[0] = (int)time / 60 / 60 / 6 / 426; /// Years 
+                datestructure[1] = (int)time / 60 / 60 / 6 % 426; // Days
+                datestructure[2] = (int)time / 60 / 60 % 6;    // Hours
+                datestructure[3] = (int)time / 60 % 60;    // Minutes
+                datestructure[4] = (int)time % 60; //seconds
+            }
+            else
+            {
+                datestructure[0] = (int)time / 60 / 60 / 24 / 365; /// Years 
+                datestructure[1] = (int)time / 60 / 60 / 24 % 365; // Days
+                datestructure[2] = (int)time / 60 / 60 % 24;    // Hours
+                datestructure[3] = (int)time / 60 % 60;    // Minutes
+                datestructure[4] = (int)time % 60; //seconds
+            }
+            if (datestructure[0] > 0)
+            outputstring += "Y" + datestructure[0].ToString("####") + ":";
+            if (datestructure[1] > 0)
+            outputstring += "D" + datestructure[1].ToString("###") + ":";
+            outputstring += datestructure[2].ToString("00:");
+            outputstring += datestructure[3].ToString("00:");
+            outputstring += datestructure[4].ToString("00");
+            return outputstring;
+        }
+
+        //Returns True if the PauseMenu is open. Because the GameEvent callbacks don't work on the mainmenu.
+        internal static bool isPauseMenuOpen
+        {
+            get
+            {
+                try
+                {
+                    return PauseMenu.isOpen;
+                }
+                catch
+                {
+                    return false;
+                }
+            }            
+        }
+
+        // Electricity and temperature functions are only valid if timewarp factor is < 5.
+        internal static bool timewarpIsValid(int max)
+        {            
+            return TimeWarp.CurrentRateIndex < max;         
+        }
+
+        internal static void stopWarp()
+        {
+            TimeWarp.SetRate(0, false);
+        }
+            
+
         // Logging Functions
         // Name of the Assembly that is running this MonoBehaviour
         internal static String _AssemblyName
         { get { return System.Reflection.Assembly.GetExecutingAssembly().GetName().Name; } }
 
-        public static void Log(this UnityEngine.Object obj, string message)
+        internal static void Log(this UnityEngine.Object obj, string message)
         {
             Debug.Log(obj.GetType().FullName + "[" + obj.GetInstanceID().ToString("X") + "][" + Time.time.ToString("0.00") + "]: " + message);
         }
 
-        public static void Log(this System.Object obj, string message)
+        internal static void Log(this System.Object obj, string message)
         {
             Debug.Log(obj.GetType().FullName + "[" + obj.GetHashCode().ToString("X") + "][" + Time.time.ToString("0.00") + "]: " + message);
         }
 
-        public static void Log(string context, string message)
+        internal static void Log(string context, string message)
         {
             Debug.Log(context + "[][" + Time.time.ToString("0.00") + "]: " + message);
         }
 
-        public static void Log_Debug(this UnityEngine.Object obj, string message)
+        internal static void Log_Debug(this UnityEngine.Object obj, string message)
         {
             DFSettings DFsettings = DeepFreeze.Instance.DFsettings;
             if (DFsettings.debugging)
                 Debug.Log(obj.GetType().FullName + "[" + obj.GetInstanceID().ToString("X") + "][" + Time.time.ToString("0.00") + "]: " + message);
         }
 
-        public static void Log_Debug(this System.Object obj, string message)
+        internal static void Log_Debug(this System.Object obj, string message)
         {
             DFSettings DFsettings = DeepFreeze.Instance.DFsettings;
             if (DFsettings.debugging)
                 Debug.Log(obj.GetType().FullName + "[" + obj.GetHashCode().ToString("X") + "][" + Time.time.ToString("0.00") + "]: " + message);
         }
 
-        public static void Log_Debug(string context, string message)
+        internal static void Log_Debug(string context, string message)
         {
             DFSettings DFsettings = DeepFreeze.Instance.DFsettings;
             if (DFsettings.debugging)
                 Debug.Log(context + "[][" + Time.time.ToString("0.00") + "]: " + message);
         }
 
-        public static void Log_Debug(string message)
+        internal static void Log_Debug(string message)
         {
             DFSettings DFsettings = DeepFreeze.Instance.DFsettings;
             if (DFsettings.debugging)

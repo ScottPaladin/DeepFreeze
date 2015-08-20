@@ -1,6 +1,6 @@
 ﻿/**
- * DFSettings.cs
- *
+ * DeepFreeze Continued...
+ * (C) Copyright 2015, Jamie Leighton
  *
  * Kerbal Space Program is Copyright (C) 2013 Squad. See http://kerbalspaceprogram.com/. This
  * project is in no way associated with nor endorsed by Squad.
@@ -19,12 +19,14 @@ namespace DF
 {
     public class DFSettings
     {
+        // this class stores the DeepFreeze Settings from the config file.
         private const string configNodeName = "DFSettings";
-
         public float DFwindowPosX { get; set; }
         public float DFwindowPosY { get; set; }
         public float CFwindowPosX { get; set; }
         public float CFwindowPosY { get; set; }
+        public float DFKACwindowPosX { get; set; }
+        public float DFKACwindowPosY { get; set; }
         public bool UseAppLauncher { get; set; }
         public bool debugging { get; set; }
         public bool ECreqdForFreezer { get; set; }
@@ -45,6 +47,8 @@ namespace DF
             DFwindowPosY = 50;
             CFwindowPosX = 380;
             CFwindowPosY = 50;
+            DFKACwindowPosX = 600;
+            DFKACwindowPosY = 50;
             UseAppLauncher = true;
             debugging = true;
             ECreqdForFreezer = true;
@@ -72,6 +76,8 @@ namespace DF
                 DFwindowPosY = Utilities.GetNodeValue(DFsettingsNode, "DFwindowPosY", DFwindowPosY);
                 CFwindowPosX = Utilities.GetNodeValue(DFsettingsNode, "CFwindowPosX", CFwindowPosX);
                 CFwindowPosY = Utilities.GetNodeValue(DFsettingsNode, "CFwindowPosY", CFwindowPosY);
+                DFKACwindowPosX = Utilities.GetNodeValue(DFsettingsNode, "DFKACwindowPosX", DFKACwindowPosX);
+                DFKACwindowPosY = Utilities.GetNodeValue(DFsettingsNode, "DFKACwindowPosY", DFKACwindowPosY);
                 ECreqdForFreezer = Utilities.GetNodeValue(DFsettingsNode, "ECreqdForFreezer", ECreqdForFreezer);
                 UseAppLauncher = Utilities.GetNodeValue(DFsettingsNode, "UseAppLauncher", UseAppLauncher);
                 debugging = Utilities.GetNodeValue(DFsettingsNode, "debugging", debugging);
@@ -106,6 +112,8 @@ namespace DF
             settingsNode.AddValue("DFwindowPosY", DFwindowPosY);
             settingsNode.AddValue("CFwindowPosX", CFwindowPosX);
             settingsNode.AddValue("CFwindowPosY", CFwindowPosY);
+            settingsNode.AddValue("DFKACwindowPosX", DFKACwindowPosX);
+            settingsNode.AddValue("DFKACwindowPosY", DFKACwindowPosY);
             settingsNode.AddValue("ECreqdForFreezer", ECreqdForFreezer);
             settingsNode.AddValue("UseAppLauncher", UseAppLauncher);
             settingsNode.AddValue("debugging", debugging);
