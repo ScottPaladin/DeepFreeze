@@ -22,7 +22,7 @@ using System.Text;
 
 namespace DF
 {
-    public class DFGameSettings
+    internal class DFGameSettings
     {
         // This class stores the DeepFreeze Gamesettings config node.
         // which includes the following Dictionaries
@@ -31,14 +31,14 @@ namespace DF
         // knownFreezerPArts - all parts in the save game that contain a DeepFreezer partmodule
         // knownKACAlarms = all Kerbal Alarm Clock alarms that are associated with a DeppFreezer knownVessels entry
 
-        private const string configNodeName = "DFGameSettings";
+        public const string configNodeName = "DFGameSettings";
         public bool Enabled { get; set; }
-        public Dictionary<string, KerbalInfo> KnownFrozenKerbals { get; private set; }
-        public Dictionary<Guid, VesselInfo> knownVessels { get; private set; }
-        public Dictionary<uint, PartInfo> knownFreezerParts { get; private set; }
-        public Dictionary<string, AlarmInfo> knownKACAlarms { get; private set; }
+        internal Dictionary<string, KerbalInfo> KnownFrozenKerbals { get; private set; }
+        internal Dictionary<Guid, VesselInfo> knownVessels { get; private set; }
+        internal Dictionary<uint, PartInfo> knownFreezerParts { get; private set; }
+        internal Dictionary<string, AlarmInfo> knownKACAlarms { get; private set; }
 
-    public DFGameSettings()
+        internal DFGameSettings()
         {
             Enabled = true;
             KnownFrozenKerbals = new Dictionary<string, KerbalInfo>();
@@ -58,7 +58,7 @@ namespace DF
                 ConfigNode DFsettingsNode = node.GetNode(configNodeName);
                 Enabled = Utilities.GetNodeValue(DFsettingsNode, "Enabled", Enabled);
 
-                KnownFrozenKerbals.Clear();                
+                KnownFrozenKerbals.Clear();
                 var kerbalNodes = DFsettingsNode.GetNodes(KerbalInfo.ConfigNodeName);
                 foreach (ConfigNode kerbalNode in kerbalNodes)
                 {
@@ -76,7 +76,7 @@ namespace DF
                 foreach (ConfigNode vesselNode in vesselNodes)
                 {
                     if (vesselNode.HasValue("Guid"))
-                    {                        
+                    {
                         Guid id = new Guid(vesselNode.GetValue("Guid"));
                         this.Log_Debug("DFGameSettings Loading Guid = " + id);
                         VesselInfo vesselInfo = VesselInfo.Load(vesselNode);
@@ -108,7 +108,7 @@ namespace DF
                         AlarmInfo alarmInfo = AlarmInfo.Load(alarmNode);
                         knownKACAlarms[alarmID] = alarmInfo;
                     }
-                }                
+                }
             }
             this.Log_Debug("DFGameSettings Loading Complete");
         }
@@ -170,11 +170,8 @@ namespace DF
                 foreach (KeyValuePair<string, KerbalInfo> kerbal in KnownFrozenKerbals)
                 {
                     this.Log_Debug("Kerbal = " + kerbal.Key + " status = " + kerbal.Value.status + " type = " + kerbal.Value.type + " vesselID = " + kerbal.Value.vesselID);
-
                 }
             }
-            
         }
     }
 }
-

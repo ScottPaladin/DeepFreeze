@@ -14,6 +14,7 @@
  * for full details.
  *
  */
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,13 +29,14 @@ namespace DF
         // which currently consist of any partprefab that has component DeepFreezer (All the freezer parts)
         // and the GlykerolTankRadial.
         private static List<AvailablePart> avPartItems = new List<AvailablePart>();
+
         internal string category = "Filter by Function";
         internal string subCategoryTitle = "DeepFreeze Items";
         internal string defaultTitle = "DF";
         internal string iconName = "R&D_node_icon_evatech";
         internal bool filter = true;
 
-        void Awake()
+        private void Awake()
         {
             GameEvents.onGUIEditorToolbarReady.Add(SubCategories);
 
@@ -45,7 +47,7 @@ namespace DF
                 DeepFreezer moduleItem = avPart.partPrefab.GetComponent<DeepFreezer>();
                 if (avPart.name == "GlykerolTankRadial" || moduleItem)
                 {
-                    avPartItems.Add(avPart);                    
+                    avPartItems.Add(avPart);
                 }
             }
         }

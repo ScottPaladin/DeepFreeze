@@ -13,12 +13,12 @@
  * creative commons license. See <https://creativecommons.org/licenses/by-nc-sa/4.0/>
  * for full details.
  */
- 
+
 namespace DF
 {
-    public class VesselInfo
+    internal class VesselInfo
     {
-        //This class stores Info about vessels that have the DeepFreezer parts attached.    
+        //This class stores Info about vessels that have the DeepFreezer parts attached.
         //VesselName                - Name of the vessel
         //vesselType                - The vessel type.
         //numCrew                   - Number of crew on-board (does not include FROZEN crew)
@@ -30,32 +30,33 @@ namespace DF
         //lastUpdate                - Time this class entry was last updated
         //storedEC                  - How much ElectricCharge the vessel has
         //predictedECOut            - Predicted time in seconds ElectricCharge will run out (by just running the freezers)
-        public const string ConfigNodeName = "VesselInfo";
-        public string vesselName;
-        public VesselType vesselType = VesselType.Unknown;
-        public int numCrew;
-        public int numSeats;
-        public int numOccupiedParts;
-        public int numFrznCrew;      
-        public bool hibernating;
-        public bool hasextDoor;             
-        public double lastUpdate = 0f;
-        public double storedEC = 0f;
-        public double predictedECOut = 0f;
+        internal const string ConfigNodeName = "VesselInfo";
 
-        public VesselInfo(string vesselName, double currentTime)
+        internal string vesselName;
+        internal VesselType vesselType = VesselType.Unknown;
+        internal int numCrew;
+        internal int numSeats;
+        internal int numOccupiedParts;
+        internal int numFrznCrew;
+        internal bool hibernating;
+        internal bool hasextDoor;
+        internal double lastUpdate = 0f;
+        internal double storedEC = 0f;
+        internal double predictedECOut = 0f;
+
+        internal VesselInfo(string vesselName, double currentTime)
         {
             this.vesselName = vesselName;
             hibernating = false;
             hasextDoor = false;
-            lastUpdate = currentTime;                     
+            lastUpdate = currentTime;
         }
 
-        public static VesselInfo Load(ConfigNode node)
+        internal static VesselInfo Load(ConfigNode node)
         {
             string vesselName = Utilities.GetNodeValue(node, "vesselName", "Unknown");
             double lastUpdate = Utilities.GetNodeValue(node, "lastUpdate", 0.0);
-            
+
             VesselInfo info = new VesselInfo(vesselName, lastUpdate);
             info.numSeats = Utilities.GetNodeValue(node, "numSeats", 0);
             info.vesselType = Utilities.GetNodeValue(node, "vesselType", VesselType.Unknown);
@@ -70,7 +71,7 @@ namespace DF
             return info;
         }
 
-        public ConfigNode Save(ConfigNode config)
+        internal ConfigNode Save(ConfigNode config)
         {
             ConfigNode node = config.AddNode(ConfigNodeName);
             node.AddValue("vesselName", vesselName);
@@ -80,14 +81,14 @@ namespace DF
             node.AddValue("numOccupiedParts", numOccupiedParts);
             node.AddValue("numFrznCrew", numFrznCrew);
             node.AddValue("hibernating", hibernating);
-            node.AddValue("hasextDoor", hasextDoor);                        
+            node.AddValue("hasextDoor", hasextDoor);
             node.AddValue("lastUpdate", lastUpdate);
             node.AddValue("storedEC", storedEC);
             node.AddValue("predictedECOut", predictedECOut);
             return node;
         }
 
-        public void ClearAmounts()
+        internal void ClearAmounts()
         {
             numCrew = 0;
             numOccupiedParts = 0;

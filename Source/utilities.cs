@@ -16,13 +16,14 @@
  */
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using UnityEngine;
-using System.Collections;
 
 namespace DF
 {
-
     public enum DoorState
     {
         OPEN,
@@ -33,7 +34,7 @@ namespace DF
     }
 
     internal static class Utilities
-    {             
+    {
         // Dump an object by reflection
         internal static void DumpObjectFields(object o, string title = "---------")
         {
@@ -50,13 +51,13 @@ namespace DF
         }
 
         // Dump all Unity Cameras
-        internal static void DumpCameras() 
+        internal static void DumpCameras()
         {
             // Dump (by reflection)
             Debug.Log("--------- Dump Unity Cameras ------------");
-            foreach(Camera c in Camera.allCameras)
+            foreach (Camera c in Camera.allCameras)
             {
-                Debug.Log("Camera " + c.name + " cullingmask " + c.cullingMask + " depth " + c.depth + " farClipPlane " + c.farClipPlane + " nearClipPlane " + c.nearClipPlane);              
+                Debug.Log("Camera " + c.name + " cullingmask " + c.cullingMask + " depth " + c.depth + " farClipPlane " + c.farClipPlane + " nearClipPlane " + c.nearClipPlane);
             }
             Debug.Log("--------------------------------------");
         }
@@ -68,9 +69,10 @@ namespace DF
           *
           * @param transform Transform in which is search for named child
           * @param name Name of child to find
-          * 
+          *
           * @return Desired transform or null if it could not be found
           */
+
         internal static Transform FindInChildren(Transform transform, string name)
         {
             // Is this null?
@@ -99,8 +101,8 @@ namespace DF
             // Return the transform (will be null if it was not found)
             return null;
         }
-                   
-        public static Camera FindCamera(string name)
+
+        internal static Camera FindCamera(string name)
         {
             foreach (Camera c in Camera.allCameras)
             {
@@ -108,7 +110,7 @@ namespace DF
                 {
                     return c;
                 }
-            }                                 
+            }
             return null;
         }
 
@@ -128,7 +130,7 @@ namespace DF
                     {
                         // We both change the shader and backup the original shader so we can undo it later.
                         Shader backupShader = tr.renderer.material.shader;
-                        tr.renderer.material.shader = transparentShader;                        
+                        tr.renderer.material.shader = transparentShader;
                     }
                 }
                 catch (Exception e)
@@ -137,20 +139,20 @@ namespace DF
                     Debug.LogException(e);
                 }
             }
-
         }
-              
+
         // The following method is derived from TextureReplacer mod. Which is licensed as:
         //Copyright © 2013-2015 Davorin Učakar, Ryan Bray
         //Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files(the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
         //The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
         private static double atmSuitPressure = 50.0;
-        public static bool isAtmBreathable()
+
+        internal static bool isAtmBreathable()
         {
             bool value = !HighLogic.LoadedSceneIsFlight
                          || (FlightGlobals.getStaticPressure() >= atmSuitPressure);
             Log_Debug("isATMBreathable Inflight? " + value + " InFlight " + HighLogic.LoadedSceneIsFlight + " StaticPressure " + FlightGlobals.getStaticPressure());
-            return value;  
+            return value;
         }
 
         // The following method is derived from TextureReplacer mod. Which is licensed as:
@@ -158,6 +160,7 @@ namespace DF
         //Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files(the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
         //The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
         private static Mesh[] helmetMesh = { null, null };
+
         private static Mesh[] visorMesh = { null, null };
         private static bool helmetMeshstored = false;
 
@@ -166,16 +169,16 @@ namespace DF
             Log_Debug("StoreHelmetMesh");
             foreach (Kerbal kerbal in Resources.FindObjectsOfTypeAll<Kerbal>())
             {
-                int gender = kerbal.transform.name == "kerbalFemale" ? 1 : 0;                
+                int gender = kerbal.transform.name == "kerbalFemale" ? 1 : 0;
                 // Save pointer to helmet & visor meshes so helmet removal can restore them.
                 foreach (SkinnedMeshRenderer smr in kerbal.GetComponentsInChildren<SkinnedMeshRenderer>(true))
-                {                    
+                {
                     if (smr.name.EndsWith("helmet", StringComparison.Ordinal))
                         helmetMesh[gender] = smr.sharedMesh;
                     else if (smr.name.EndsWith("visor", StringComparison.Ordinal))
                         visorMesh[gender] = smr.sharedMesh;
-                }                
-            }            
+                }
+            }
             helmetMeshstored = true;
         }
 
@@ -207,8 +210,8 @@ namespace DF
             }
             catch (Exception ex)
             {
-               Log("DeepFreezer","Error attempting to setHelmetshaders for " + thatKerbal.name + " to " + helmetOn);
-               Log("DeepFreezer ", ex.Message);
+                Log("DeepFreezer", "Error attempting to setHelmetshaders for " + thatKerbal.name + " to " + helmetOn);
+                Log("DeepFreezer ", ex.Message);
             }
         }
 
@@ -218,15 +221,15 @@ namespace DF
         //The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
         internal static void setHelmets(this Part thisPart, bool helmetOn)
         {
-            if  (thisPart.internalModel == null)
+            if (thisPart.internalModel == null)
             {
                 Log_Debug("setHelmets but no internalModel");
                 return;
             }
 
             if (!helmetMeshstored)
-                storeHelmetMesh();              
-                        
+                storeHelmetMesh();
+
             Log_Debug("setHelmets helmetOn=" + helmetOn);
             //Kerbal thatKerbal = null;
             foreach (InternalSeat thatSeat in thisPart.internalModel.seats)
@@ -237,24 +240,100 @@ namespace DF
                     if (thatKerbal != null)
                     {
                         thatSeat.allowCrewHelmet = helmetOn;
-                        Log_Debug("Setting helmet=" + helmetOn + " for kerbal " + thatSeat.crew.name);                        
+                        Log_Debug("Setting helmet=" + helmetOn + " for kerbal " + thatSeat.crew.name);
                         // `Kerbal.ShowHelmet(false)` irreversibly removes a helmet while
                         // `Kerbal.ShowHelmet(true)` has no effect at all. We need the following workaround.
-                        // I think this can be done using a coroutine to despawn and spawn the internalseat crewmember kerbalref. 
+                        // I think this can be done using a coroutine to despawn and spawn the internalseat crewmember kerbalref.
                         // But I found this workaround in TextureReplacer so easier to use that.
                         //if (thatKerbal.showHelmet)
-                        //{                        
-                            setHelmetshaders(thatKerbal, helmetOn); 
+                        //{
+                        setHelmetshaders(thatKerbal, helmetOn);
                         //}
                         //else
                         //    Log_Debug("Showhelmet is OFF so the helmettransform does not exist");
-                        
                     }
                     else
                         Log_Debug("kerbalref = null?");
-                    
                 }
             }
+        }
+
+        // Sets the kerbal layers to make them visible (Thawed) or not (Frozen), setVisible = true sets layers to visible, false turns them off.
+        // If bodyOnly is true only the "body01" mesh is changed (to be replaced by placeholder mesh lying down as kerbals in IVA are always in sitting position).
+        internal static void setFrznKerbalLayer(ProtoCrewMember kerbal, bool setVisible, bool bodyOnly)
+        {
+            int layer = 16;
+            if (!setVisible)
+            {
+                layer = 21;
+            }
+
+            foreach (Renderer renderer in kerbal.KerbalRef.GetComponentsInChildren<Renderer>(true))
+            {
+                if ((bodyOnly && renderer.name == "body01") || !bodyOnly)
+                {
+                    if (renderer.gameObject.layer == layer)
+                    {
+                        Log_Debug("Layers already set");
+                        break;
+                    }
+                    Log_Debug("Renderer: " + renderer.name + " set to layer " + layer);
+                    renderer.gameObject.layer = layer;
+                    if (setVisible) renderer.enabled = true;
+                    else renderer.enabled = false;
+                }
+            }
+        }
+
+        internal static void CheckPortraitCams(Vessel vessel)
+        {
+            // Only the pods in the active vessel should be doing it since the list refers to them.
+            Log_Debug("CheckPortraitCams");
+            if (vessel.isActiveVessel)
+            {
+                // First, every pod should check through the list of portaits and remove everyone who is from some other vessel, or NO vessel.
+                var stowaways = new List<Kerbal>();
+                foreach (Kerbal thatKerbal in KerbalGUIManager.ActiveCrew)
+                {
+                    if (thatKerbal.InPart == null)
+                    {
+                        stowaways.Add(thatKerbal);
+                    }
+                    else
+                    {
+                        if (thatKerbal.InVessel != vessel)
+                        {
+                            stowaways.Add(thatKerbal);
+                        }
+                    }
+                }
+                foreach (Kerbal thatKerbal in stowaways)
+                {
+                    KerbalGUIManager.RemoveActiveCrew(thatKerbal);
+                }
+                // Then, every pod should check the list of seats in itself and see if anyone is missing who should be present.
+                List<Part> crewparts = (from p in vessel.parts where (p.CrewCapacity > 0 && p.internalModel != null) select p).ToList();
+                foreach (Part part in crewparts)
+                {
+                    Log_Debug("Check Portraits for part " + part.name);
+                    foreach (InternalSeat seat in part.internalModel.seats)
+                    {
+                        Log_Debug("checking Seat " + seat.seatTransformName);
+                        if (seat.kerbalRef != null) Log_Debug("kerbalref=" + seat.kerbalRef.crewMemberName);
+                        else Log_Debug("Seat kerbalref is null");
+                        if (seat.kerbalRef != null && !KerbalGUIManager.ActiveCrew.Contains(seat.kerbalRef))
+                        {
+                            Log_Debug("Checking crewstatus " + seat.kerbalRef.protoCrewMember.rosterStatus + " " + seat.kerbalRef.protoCrewMember.type);
+                            if (seat.kerbalRef.protoCrewMember.rosterStatus != ProtoCrewMember.RosterStatus.Dead || seat.kerbalRef.protoCrewMember.type != ProtoCrewMember.KerbalType.Unowned)
+                            {
+                                Log_Debug("Adding missing Portrait for " + seat.kerbalRef.crewMemberName);
+                                KerbalGUIManager.AddActiveCrew(seat.kerbalRef);
+                            }
+                        }
+                    }
+                }
+            }
+            else Log_Debug("Vessel is not active vessel");
         }
 
         // The following method is taken from RasterPropMonitor as-is. Which is covered by GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
@@ -299,7 +378,6 @@ namespace DF
             return CameraManager.Instance.currentCameraMode == CameraManager.CameraMode.IVA;
         }
 
-
         internal static bool IsInInternal()
         {
             return CameraManager.Instance.currentCameraMode == CameraManager.CameraMode.Internal;
@@ -317,7 +395,6 @@ namespace DF
         internal static float KelvintoCelsius(float kelvin)
         {
             return (kelvin - 273.15f);
-
         }
 
         internal static float CelsiustoKelvin(float celsius)
@@ -425,7 +502,7 @@ namespace DF
             {
                 try
                 {
-                    Guid id = new Guid(confignode.GetValue(fieldname));                    
+                    Guid id = new Guid(confignode.GetValue(fieldname));
                     return id;
                 }
                 catch (Exception ex)
@@ -434,11 +511,9 @@ namespace DF
                     Debug.Log("Err: " + ex);
                     return Guid.Empty;
                 }
-                
             }
             else
             {
-
                 return Guid.Empty;
             }
         }
@@ -458,13 +533,13 @@ namespace DF
 
         //Format a Time double variable into format "YxxxxDxxxhh:mm:ss"
         //Future expansion required to format to different formats.
-        public static string FormatDateString(double time)
+        internal static string FormatDateString(double time)
         {
             string outputstring = string.Empty;
             int[] datestructure = new int[5];
             if (GameSettings.KERBIN_TIME)
             {
-                datestructure[0] = (int)time / 60 / 60 / 6 / 426; /// Years 
+                datestructure[0] = (int)time / 60 / 60 / 6 / 426; /// Years
                 datestructure[1] = (int)time / 60 / 60 / 6 % 426; // Days
                 datestructure[2] = (int)time / 60 / 60 % 6;    // Hours
                 datestructure[3] = (int)time / 60 % 60;    // Minutes
@@ -472,16 +547,16 @@ namespace DF
             }
             else
             {
-                datestructure[0] = (int)time / 60 / 60 / 24 / 365; /// Years 
+                datestructure[0] = (int)time / 60 / 60 / 24 / 365; /// Years
                 datestructure[1] = (int)time / 60 / 60 / 24 % 365; // Days
                 datestructure[2] = (int)time / 60 / 60 % 24;    // Hours
                 datestructure[3] = (int)time / 60 % 60;    // Minutes
                 datestructure[4] = (int)time % 60; //seconds
             }
             if (datestructure[0] > 0)
-            outputstring += "Y" + datestructure[0].ToString("####") + ":";
+                outputstring += "Y" + datestructure[0].ToString("####") + ":";
             if (datestructure[1] > 0)
-            outputstring += "D" + datestructure[1].ToString("###") + ":";
+                outputstring += "D" + datestructure[1].ToString("###") + ":";
             outputstring += datestructure[2].ToString("00:");
             outputstring += datestructure[3].ToString("00:");
             outputstring += datestructure[4].ToString("00");
@@ -501,20 +576,19 @@ namespace DF
                 {
                     return false;
                 }
-            }            
+            }
         }
 
         // Electricity and temperature functions are only valid if timewarp factor is < 5.
         internal static bool timewarpIsValid(int max)
-        {            
-            return TimeWarp.CurrentRateIndex < max;         
+        {
+            return TimeWarp.CurrentRateIndex < max;
         }
 
         internal static void stopWarp()
         {
             TimeWarp.SetRate(0, false);
         }
-            
 
         // Logging Functions
         // Name of the Assembly that is running this MonoBehaviour

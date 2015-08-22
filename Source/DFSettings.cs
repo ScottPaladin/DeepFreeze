@@ -17,29 +17,38 @@
 
 namespace DF
 {
-    public class DFSettings
+    internal class DFSettings
     {
         // this class stores the DeepFreeze Settings from the config file.
         private const string configNodeName = "DFSettings";
-        public float DFwindowPosX { get; set; }
-        public float DFwindowPosY { get; set; }
-        public float CFwindowPosX { get; set; }
-        public float CFwindowPosY { get; set; }
-        public float DFKACwindowPosX { get; set; }
-        public float DFKACwindowPosY { get; set; }
-        public bool UseAppLauncher { get; set; }
-        public bool debugging { get; set; }
-        public bool ECreqdForFreezer { get; set; }
-        public bool AutoRecoverFznKerbals { get; set; }
-        public float KSCcostToThawKerbal { get; set; }
-        public int ECReqdToFreezeThaw { get; set; }
-        public int GlykerolReqdToFreeze { get; set; }
-        public bool RegTempReqd { get; set; }
-        public double RegTempFreeze { get; set; }
-        public double RegTempMonitor { get; set; }
-        public double heatamtMonitoringFrznKerbals { get; set; }
-        public double heatamtThawFreezeKerbal { get; set; }
-        public bool TempinKelvin { get; set; }
+
+        internal float DFwindowPosX { get; set; }
+        internal float DFwindowPosY { get; set; }
+        internal float CFwindowPosX { get; set; }
+        internal float CFwindowPosY { get; set; }
+        internal float DFKACwindowPosX { get; set; }
+        internal float DFKACwindowPosY { get; set; }
+        internal bool UseAppLauncher { get; set; }
+        internal bool debugging { get; set; }
+        internal bool ECreqdForFreezer { get; set; }
+        internal bool AutoRecoverFznKerbals { get; set; }
+        internal float KSCcostToThawKerbal { get; set; }
+        internal int ECReqdToFreezeThaw { get; set; }
+        internal int GlykerolReqdToFreeze { get; set; }
+        internal bool RegTempReqd { get; set; }
+        internal double RegTempFreeze { get; set; }
+        internal double RegTempMonitor { get; set; }
+        internal double heatamtMonitoringFrznKerbals { get; set; }
+        internal double heatamtThawFreezeKerbal { get; set; }
+        internal bool TempinKelvin { get; set; }
+        internal double defaultTimeoutforCrewXfer { get; set; }
+        internal double cryopodResettimeDelay { get; set; }
+        internal float DFWindowWidth { get; set; }
+        internal float CFWindowWidth { get; set; }
+        internal float KACWindowWidth { get; set; }
+        internal float WindowbaseHeight { get; set; }
+        internal float ECLowWarningTime { get; set; }
+        internal float EClowCriticalTime { get; set; }
 
         internal DFSettings()
         {
@@ -62,6 +71,13 @@ namespace DF
             heatamtMonitoringFrznKerbals = 10f;
             heatamtThawFreezeKerbal = 100f;
             TempinKelvin = true;
+            defaultTimeoutforCrewXfer = 30;
+            cryopodResettimeDelay = 5;
+            DFWindowWidth = 420f;
+            CFWindowWidth = 340f;
+            KACWindowWidth = 485f;
+            ECLowWarningTime = 3600f;
+            EClowCriticalTime = 900f;
         }
 
         //Settings Functions Follow
@@ -91,6 +107,13 @@ namespace DF
                 heatamtMonitoringFrznKerbals = Utilities.GetNodeValue(DFsettingsNode, "heatamtMonitoringFrznKerbals", heatamtMonitoringFrznKerbals);
                 heatamtThawFreezeKerbal = Utilities.GetNodeValue(DFsettingsNode, "heatamtThawFreezeKerbal", heatamtThawFreezeKerbal);
                 TempinKelvin = Utilities.GetNodeValue(DFsettingsNode, "TempinKelvin", TempinKelvin);
+                defaultTimeoutforCrewXfer = Utilities.GetNodeValue(DFsettingsNode, "defaultTimeoutforCrewXfer", defaultTimeoutforCrewXfer);
+                cryopodResettimeDelay = Utilities.GetNodeValue(DFsettingsNode, "cryopodResettimeDelay", cryopodResettimeDelay);
+                DFWindowWidth = Utilities.GetNodeValue(DFsettingsNode, "DFWindowWidth", DFWindowWidth);
+                CFWindowWidth = Utilities.GetNodeValue(DFsettingsNode, "CFWindowWidth", CFWindowWidth);
+                KACWindowWidth = Utilities.GetNodeValue(DFsettingsNode, "KACWindowWidth", KACWindowWidth);
+                ECLowWarningTime = Utilities.GetNodeValue(DFsettingsNode, "ECLowWarningTime", ECLowWarningTime);
+                EClowCriticalTime = Utilities.GetNodeValue(DFsettingsNode, "EClowCriticalTime", EClowCriticalTime);
                 this.Log_Debug("DFSettings load complete");
             }
         }
@@ -127,6 +150,13 @@ namespace DF
             settingsNode.AddValue("heatamtMonitoringFrznKerbals", heatamtMonitoringFrznKerbals);
             settingsNode.AddValue("heatamtThawFreezeKerbal", heatamtThawFreezeKerbal);
             settingsNode.AddValue("TempinKelvin", TempinKelvin);
+            settingsNode.AddValue("defaultTimeoutforCrewXfer", defaultTimeoutforCrewXfer);
+            settingsNode.AddValue("cryopodResettimeDelay", cryopodResettimeDelay);
+            settingsNode.AddValue("DFWindowWidth", DFWindowWidth);
+            settingsNode.AddValue("CFWindowWidth", CFWindowWidth);
+            settingsNode.AddValue("KACWindowWidth", KACWindowWidth);
+            settingsNode.AddValue("ECLowWarningTime", ECLowWarningTime);
+            settingsNode.AddValue("EClowCriticalTime", EClowCriticalTime);
             this.Log_Debug("DFSettings save complete");
         }
     }

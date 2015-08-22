@@ -19,9 +19,9 @@ using System.Collections.Generic;
 
 namespace DF
 {
-    public class AlarmInfo
+    internal class AlarmInfo
     {
-        //This class stores Info about Kerbal Alarm Clock Alarms that are associated with DeepFreeze Vessels.    
+        //This class stores Info about Kerbal Alarm Clock Alarms that are associated with DeepFreeze Vessels.
         //VesselID              - VesselID of the Vessel this Alarm is attached to
         //string Name           - The name of the KAC Alarm
         //AlarmType             - The type of KAC Alarm
@@ -32,33 +32,34 @@ namespace DF
         //ThwKerbals            - a List of kerbals to thaw from the vessel when the alarm fires.
         //AlarmExecute          - Bool is true when Alarm has fired from KAC and we are processing it in DeepFreeze.
         //
-        public const string ConfigNodeName = "AlarmInfo";
-        public Guid VesselID;
-        public string Name;
-        public KACWrapper.KACAPI.AlarmTypeEnum AlarmType;
-        public string Notes;
-        public double AlarmTime;
-        public double AlarmMargin;
-        public List<string> FrzKerbals;
-        public List<string> ThwKerbals;
-        public bool AlarmExecute;
+        internal const string ConfigNodeName = "AlarmInfo";
 
-        public AlarmInfo(string Name, Guid vesselID)
+        internal Guid VesselID;
+        internal string Name;
+        internal KACWrapper.KACAPI.AlarmTypeEnum AlarmType;
+        internal string Notes;
+        internal double AlarmTime;
+        internal double AlarmMargin;
+        internal List<string> FrzKerbals;
+        internal List<string> ThwKerbals;
+        internal bool AlarmExecute;
+
+        internal AlarmInfo(string Name, Guid vesselID)
         {
             this.Name = Name;
             this.VesselID = vesselID;
             this.FrzKerbals = new List<string>();
-            this.ThwKerbals = new List<string>();        
+            this.ThwKerbals = new List<string>();
         }
 
-        public static AlarmInfo Load(ConfigNode node)
+        internal static AlarmInfo Load(ConfigNode node)
         {
             Guid vesselID = Utilities.GetNodeValue(node, "vesselID");
             string Name = Utilities.GetNodeValue(node, "Name", string.Empty);
-            AlarmInfo info = new AlarmInfo(Name, vesselID);                        
+            AlarmInfo info = new AlarmInfo(Name, vesselID);
             info.AlarmType = Utilities.GetNodeValue(node, "AlarmType", KACWrapper.KACAPI.AlarmTypeEnum.Raw);
             info.Notes = Utilities.GetNodeValue(node, "Notes", string.Empty);
-            info.AlarmTime = Utilities.GetNodeValue(node, "AlarmTime", 0d);            
+            info.AlarmTime = Utilities.GetNodeValue(node, "AlarmTime", 0d);
             info.AlarmMargin = Utilities.GetNodeValue(node, "AlarmMargin", 0d);
             info.AlarmExecute = Utilities.GetNodeValue(node, "AlarmExecute", false);
             string frzkbllst = Utilities.GetNodeValue(node, "FrzKerbals", string.Empty);
@@ -79,18 +80,18 @@ namespace DF
                     if (thwStrings[i].Length > 0)
                         info.ThwKerbals.Add(thwStrings[i]);
                 }
-            }          
+            }
             return info;
         }
 
-        public ConfigNode Save(ConfigNode config)
+        internal ConfigNode Save(ConfigNode config)
         {
-            ConfigNode node = config.AddNode(ConfigNodeName);            
+            ConfigNode node = config.AddNode(ConfigNodeName);
             node.AddValue("vesselID", VesselID);
             node.AddValue("Name", Name);
             node.AddValue("AlarmType", AlarmType.ToString());
             node.AddValue("Notes", Notes);
-            node.AddValue("AlarmTime", AlarmTime);            
+            node.AddValue("AlarmTime", AlarmTime);
             node.AddValue("AlarmMargin", AlarmMargin);
             node.AddValue("AlarmExecute", AlarmExecute);
             string frzkbllst = string.Join(",", FrzKerbals.ToArray());
@@ -100,12 +101,12 @@ namespace DF
             return node;
         }
 
-        public void ClearFrzKerbals()
+        internal void ClearFrzKerbals()
         {
             FrzKerbals.Clear();
         }
 
-        public void ClearThwKerbals()
+        internal void ClearThwKerbals()
         {
             ThwKerbals.Clear();
         }

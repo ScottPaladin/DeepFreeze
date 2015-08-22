@@ -20,9 +20,9 @@ using UnityEngine;
 
 namespace DF
 {
-    public class PartInfo
+    internal class PartInfo
     {
-        //This class stores Info about DeepFreezer Parts that have the DeepFreezer partmodule attached.    
+        //This class stores Info about DeepFreezer Parts that have the DeepFreezer partmodule attached.
         //VesselID              - VesselID of the Vessel this part is a part of.
         //PartName              - The name of the part
         //numSeats              - How many seats in the part
@@ -33,6 +33,7 @@ namespace DF
         //hibernating           - true if the part/vessel is unloaded
         //hasextDoor            - true if the part has an External door and therefore needs TransparentPod treatment, etc.
         //timeLastElectricity   - the time last EC was taken to run the part's Frozen kerbal monitoring
+        //frznChargeRequired    - the amount of EC required per frozen kerbal to run the part's Frozen kerbal monitoring
         //timeLastTempCheck     - the time last Temperature check was taken on the part
         //deathCounter          - the EC has run out death counter
         //tmpdeathCounter       - the Temp is too hot death counter
@@ -41,26 +42,28 @@ namespace DF
         //cabinTemp             - The part cabin temperature in Kelvin
         //lastUpdate            - Time this class entry was last updated
         //
-        public const string ConfigNodeName = "PartInfo";
-        public Guid vesselID;
-        public string PartName;
-        public int numSeats;
-        public int numCrew;
-        public List<string> crewMembers;
-        public List<string> crewMemberTraits;
-        public int numFrznCrew;
-        public bool hibernating;
-        public bool hasextDoor;
-        public double timeLastElectricity = 0f;
-        public double timeLastTempCheck = 0f;        
-        public double deathCounter = 0f;
-        public double tmpdeathCounter = 0f;
-        public bool outofEC;
-        public FrzrTmpStatus TmpStatus = FrzrTmpStatus.OK;
-        public float cabinTemp = 0f;
-        public double lastUpdate = 0f;
+        internal const string ConfigNodeName = "PartInfo";
 
-        public PartInfo(Guid vesselid, string PartName, double currentTime)
+        internal Guid vesselID;
+        internal string PartName;
+        internal int numSeats;
+        internal int numCrew;
+        internal List<string> crewMembers;
+        internal List<string> crewMemberTraits;
+        internal int numFrznCrew;
+        internal bool hibernating;
+        internal bool hasextDoor;
+        internal double timeLastElectricity = 0f;
+        internal double frznChargeRequired = 0f;
+        internal double timeLastTempCheck = 0f;
+        internal double deathCounter = 0f;
+        internal double tmpdeathCounter = 0f;
+        internal bool outofEC;
+        internal FrzrTmpStatus TmpStatus = FrzrTmpStatus.OK;
+        internal float cabinTemp = 0f;
+        internal double lastUpdate = 0f;
+
+        internal PartInfo(Guid vesselid, string PartName, double currentTime)
         {
             this.vesselID = vesselid;
             this.PartName = PartName;
@@ -69,10 +72,10 @@ namespace DF
             outofEC = false;
             lastUpdate = currentTime;
             crewMembers = new List<string>();
-            crewMemberTraits = new List<string>();          
+            crewMemberTraits = new List<string>();
         }
 
-        public static PartInfo Load(ConfigNode node)
+        internal static PartInfo Load(ConfigNode node)
         {
             string PartName = Utilities.GetNodeValue(node, "PartName", "Unknown");
             double lastUpdate = Utilities.GetNodeValue(node, "lastUpdate", 0.0);
@@ -88,7 +91,7 @@ namespace DF
                 Debug.Log("DFInterface - Load of GUID VesselID for known part failed Err: " + ex);
             }
             PartInfo info = new PartInfo(vesselID, PartName, lastUpdate);
-            info.numSeats = Utilities.GetNodeValue(node, "numSeats", 0);            
+            info.numSeats = Utilities.GetNodeValue(node, "numSeats", 0);
             info.numCrew = Utilities.GetNodeValue(node, "numCrew", 0);
             string CrewString = Utilities.GetNodeValue(node, "crewMembers", string.Empty);
             string[] CrewStrings = CrewString.Split(',');
@@ -111,7 +114,8 @@ namespace DF
             info.numFrznCrew = Utilities.GetNodeValue(node, "numFrznCrew", 0);
             info.hibernating = Utilities.GetNodeValue(node, "hibernating", false);
             info.hasextDoor = Utilities.GetNodeValue(node, "hasextDoor", false);
-            info.timeLastElectricity = Utilities.GetNodeValue(node, "timeLastElectricity", lastUpdate);            
+            info.timeLastElectricity = Utilities.GetNodeValue(node, "timeLastElectricity", lastUpdate);
+            info.frznChargeRequired = Utilities.GetNodeValue(node, "frznChargeRequired", 0d);
             info.timeLastTempCheck = Utilities.GetNodeValue(node, "timeLastTempCheck", lastUpdate);
             info.deathCounter = Utilities.GetNodeValue(node, "deathCounter", 0d);
             info.tmpdeathCounter = Utilities.GetNodeValue(node, "tmpdeathCounter", 0d);
@@ -122,7 +126,7 @@ namespace DF
             return info;
         }
 
-        public ConfigNode Save(ConfigNode config)
+        internal ConfigNode Save(ConfigNode config)
         {
             ConfigNode node = config.AddNode(ConfigNodeName);
             node.AddValue("vesselID", vesselID);
@@ -136,7 +140,8 @@ namespace DF
             node.AddValue("numFrznCrew", numFrznCrew);
             node.AddValue("hibernating", hibernating);
             node.AddValue("hasextDoor", hasextDoor);
-            node.AddValue("timeLastElectricity", timeLastElectricity);            
+            node.AddValue("timeLastElectricity", timeLastElectricity);
+            node.AddValue("frznChargeRequired", frznChargeRequired);
             node.AddValue("timeLastTempCheck", timeLastTempCheck);
             node.AddValue("deathCounter", deathCounter);
             node.AddValue("tmpdeathCounter", tmpdeathCounter);
@@ -144,14 +149,14 @@ namespace DF
             node.AddValue("TmpStatus", TmpStatus.ToString());
             node.AddValue("cabinTemp", cabinTemp);
             node.AddValue("lastUpdate", lastUpdate);
-            return node;            
-    }
+            return node;
+        }
 
-        public void ClearAmounts()
+        internal void ClearAmounts()
         {
-            numCrew = 0;            
+            numCrew = 0;
             numFrznCrew = 0;
-            timeLastElectricity = 0f;            
+            timeLastElectricity = 0f;
             timeLastTempCheck = 0f;
         }
     }

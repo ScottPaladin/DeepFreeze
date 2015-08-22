@@ -14,27 +14,28 @@
  * for full details.
  *
  */
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Reflection;
+using System.Text;
 using UnityEngine;
 
 namespace DF
 {
-    class DFInstalledMods
+    internal class DFInstalledMods
     {
         // Class used to check what Other mods we are interested in are installed.
         private static bool? _SMInstalled = null;
-        private static Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
+        private static Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
         internal static bool SMInstalled
         {
             get
             {
-                _SMInstalled = ShipManifest.SMInterface.IsSMInstalled;                
+                _SMInstalled = ShipManifest.SMInterface.IsSMInstalled;
                 return (bool)_SMInstalled;
             }
         }
@@ -89,7 +90,6 @@ namespace DF
 
         internal static bool IsModInstalled(string assemblyName)
         {
-
             try
             {
                 Assembly assembly = (from a in assemblies
@@ -105,28 +105,23 @@ namespace DF
 
         internal static bool RTVesselConnected(Guid id)
         {
-            //get
-            //{
-                bool RTVslConnected = false;
-                if (IsRTInstalled)
-                {
-                    RTVslConnected = (RemoteTech.API.API.HasLocalControl(id) || RemoteTech.API.API.HasAnyConnection(id));
-                    Utilities.Log_Debug("RTVesselConnected = " + RTVslConnected);
-                }                
-                return RTVslConnected;
-            //}            
+            bool RTVslConnected = false;
+            if (IsRTInstalled)
+            {
+                RTVslConnected = (RemoteTech.API.API.HasLocalControl(id) || RemoteTech.API.API.HasAnyConnection(id));
+                //Utilities.Log_Debug("vessel " + id + "haslocal " + RemoteTech.API.API.HasLocalControl(id) + " has any " + RemoteTech.API.API.HasAnyConnection(id));
+            }
+            return RTVslConnected;
         }
 
         internal static double RTVesselDelay
         {
             get
-            {                
+            {
                 double RTVslDelay = 0f;
                 RTVslDelay = RemoteTech.API.API.GetShortestSignalDelay(FlightGlobals.ActiveVessel.id);
-                Utilities.Log_Debug("RTVesselDelay = " + RTVslDelay);
                 return RTVslDelay;
             }
-            
         }
     }
 }

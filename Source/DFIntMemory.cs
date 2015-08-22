@@ -14,36 +14,36 @@
  * for full details.
  *
  */
+
 using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
-
-
 
 namespace DF
 {
-    class DFIntMemory : MonoBehaviour
+    internal class DFIntMemory : MonoBehaviour
     {
         // The DeepFreeze Internal memory class.
         // this class maintains the information in the knownVessels, knownFreezerParts and knownKACalarms dictionaries.
         // It also Executes KAC Alarms when they occur and have DeepFreeze events to execute.
         public static DFIntMemory Instance { get; private set; }
+
         internal List<DeepFreezer> DpFrzrActVsl = new List<DeepFreezer>();
         internal bool ActVslHasDpFrezr = false;
         internal Guid ActVslID = new Guid();
         internal bool BGPinstalled = false;
-        
 
         protected DFIntMemory()
         {
             Utilities.Log("DFIntMemory", "Constructor");
             Instance = this;
         }
-        internal void Awake()
+
+        private void Awake()
         {
             this.Log_Debug("DFIntMemory Awake");
-            KACWrapper.InitKACWrapper();      //KAC Mod      
+            KACWrapper.InitKACWrapper();      //KAC Mod
             if (KACWrapper.APIReady)
                 KACWrapper.KAC.onAlarmStateChanged += KAC_onAlarmStateChanged;
             BGPinstalled = DFInstalledMods.IsBGPInstalled;  //Background Processing Mod
@@ -51,15 +51,15 @@ namespace DF
             this.Log_Debug("DFIntMemory end Awake");
         }
 
-        internal void Start()
+        private void Start()
         {
             this.Log_Debug("DFIntMemory startup");
             ChkUnknownFrozenKerbals();
             ChkActiveFrozenKerbals();
-            DeepFreeze.Instance.DFgameSettings.DmpKnownFznKerbals();                                   
+            DeepFreeze.Instance.DFgameSettings.DmpKnownFznKerbals();
         }
 
-        internal void OnDestroy()
+        private void OnDestroy()
         {
             this.Log_Debug("DFIntMemory OnDestroy");
             //destroy the event hook for KAC
@@ -68,10 +68,10 @@ namespace DF
             this.Log_Debug("DFIntMemory end OnDestroy");
         }
 
-        internal void FixedUpdate()
+        private void FixedUpdate()
         {
             if (Time.timeSinceLevelLoad < 2f) return; //Wait 2 seconds on level load before executing
-                                  
+
             if (HighLogic.LoadedSceneIsFlight)
             {
                 //chk if current active vessel Has one or more DeepFreezer modules attached
@@ -93,7 +93,7 @@ namespace DF
                     this.Log("Failed to set active vessel and Check Freezers");
                     this.Log("Err: " + ex);
                     ActVslHasDpFrezr = false;
-                }                
+                }
             }
             else
             {
@@ -113,7 +113,7 @@ namespace DF
 
             //We check/update KAC alarms in EVERY Game Scene.
             try
-            {                
+            {
                 if (KACWrapper.AssemblyExists && KACWrapper.InstanceExists && KACWrapper.APIReady)
                 {
                     CheckKACAlarmsUpdate();
@@ -126,7 +126,7 @@ namespace DF
             }
         }
 
-        internal void ChkUnknownFrozenKerbals()
+        private void ChkUnknownFrozenKerbals()
         {
             // Check the roster list for any unknown dead kerbals (IE: Frozen) that were not in the save file and add them.
             List<ProtoCrewMember> unknownkerbals = HighLogic.CurrentGame.CrewRoster.Unowned.ToList();
@@ -230,7 +230,7 @@ namespace DF
                 this.Log("Err: " + ex);
             }
         }
-        
+
         #region UpdateVesselDictionary
 
         private void CheckVslUpdate()
@@ -320,31 +320,32 @@ namespace DF
                     int crewCapacity = UpdateVesselCounts(vesselInfo, vessel, currentTime);
                     knownVessels[vessel.id] = vesselInfo;
                 }
-            }            
+            }
             this.Log_Debug("CheckVslUpdate complete");
         }
 
         private void UpdatePredictedVesselEC(VesselInfo vesselInfo, Vessel vessel, double currentTime)
         {
             double ECreqdsincelastupdate = 0f;
-            int FrznChargeRequired = 0;
-            List<KeyValuePair<uint, PartInfo>> DpFrzrUnLoadedVsls = DeepFreeze.Instance.DFgameSettings.knownFreezerParts.Where(p => p.Value.vesselID == vessel.id).ToList();
-            foreach (KeyValuePair<uint, PartInfo> frzr in DpFrzrUnLoadedVsls)
+            int frznChargeRequired = 0;
+            List<KeyValuePair<uint, PartInfo>> DpFrzrVsl = DeepFreeze.Instance.DFgameSettings.knownFreezerParts.Where(p => p.Value.vesselID == vessel.id).ToList();
+            foreach (KeyValuePair<uint, PartInfo> frzr in DpFrzrVsl)
             {
-                
-                    //calculate the predicated time EC will run out                        
-                    double timeperiod = Planetarium.GetUniversalTime() - (double)frzr.Value.timeLastElectricity;
-                    ProtoPartSnapshot partsnapshot = vessel.protoVessel.protoPartSnapshots.Find(p => p.flightID == frzr.Key);
-                    ProtoPartModuleSnapshot modulesnapshot = partsnapshot.modules.Find(m => m.moduleName == "DeepFreezer");
-                    string strFrznChargeRequired = modulesnapshot.moduleValues.GetValue("FrznChargeRequired");
-                    
-                    bool success = Int32.TryParse(strFrznChargeRequired, out FrznChargeRequired);
-                    ECreqdsincelastupdate += ((FrznChargeRequired / 60.0f) * timeperiod * frzr.Value.numFrznCrew);                                   
+                //calculate the predicated time EC will run out
+                double timeperiod = Planetarium.GetUniversalTime() - (double)frzr.Value.timeLastElectricity;
+                //ProtoPartSnapshot partsnapshot = vessel.protoVessel.protoPartSnapshots.Find(p => p.flightID == frzr.Key);
+                //ProtoPartModuleSnapshot modulesnapshot = partsnapshot.modules.Find(m => m.moduleName == "DeepFreezer");
+                //string strFrznChargeRequired = modulesnapshot.moduleValues.GetValue("FrznChargeRequired");
+                //bool success = Int32.TryParse(strFrznChargeRequired, out frznChargeRequired);
+                frznChargeRequired = (int)frzr.Value.frznChargeRequired;
+                ECreqdsincelastupdate += ((frznChargeRequired / 60.0f) * timeperiod * frzr.Value.numFrznCrew);
+                this.Log_Debug("predicted EC part " + frzr.Value.vesselID + " " + frzr.Value.PartName + " FrznChargeRequired " + frznChargeRequired + " timeperiod " + timeperiod + " #frzncrew " + frzr.Value.numFrznCrew);
             }
             double ECafterlastupdate = vesselInfo.storedEC - ECreqdsincelastupdate;
-            double predictedMinutes = ECafterlastupdate / FrznChargeRequired;  // This probably should be per PART, but for simplicity we will do for the whole vessel            
+            double predictedMinutes = ECafterlastupdate / frznChargeRequired;  // This probably should be per PART, but for simplicity we will do for the whole vessel
             vesselInfo.predictedECOut = predictedMinutes * 60;
             this.Log_Debug("UpdatePredictedVesselEC vessel " + vessel.id + " " + vessel.name + " StoredEC=" + vesselInfo.storedEC + " ECreqd=" + ECreqdsincelastupdate + " Prediction Secs=" + vesselInfo.predictedECOut);
+            this.Log_Debug("ECafterlastupdate " + ECafterlastupdate + " FrznChargeRequired " + frznChargeRequired + " predictedMinutes " + predictedMinutes);
         }
 
         private void UpdateVesselInfo(VesselInfo vesselInfo, Vessel vessel, double currentTime)
@@ -367,6 +368,7 @@ namespace DF
                     partInfo.hasextDoor = frzr.hasExternalDoor;
                     partInfo.numSeats = frzr.FreezerSize;
                     partInfo.timeLastElectricity = frzr.timeSinceLastECtaken;
+                    partInfo.frznChargeRequired = frzr.FrznChargeRequired;
                     partInfo.timeLastTempCheck = frzr.timeSinceLastTmpChk;
                     partInfo.deathCounter = frzr.deathCounter;
                     partInfo.tmpdeathCounter = frzr.tmpdeathCounter;
@@ -378,7 +380,7 @@ namespace DF
                         partInfo.crewMembers.Add(crew.name);
                         partInfo.crewMemberTraits.Add(crew.experienceTrait.Title);
                     }
-                    
+
                     DeepFreeze.Instance.DFgameSettings.knownFreezerParts[frzr.part.flightID] = partInfo;
                 }
                 else   // Update existing entry
@@ -386,6 +388,7 @@ namespace DF
                     partInfo.hasextDoor = frzr.hasExternalDoor;
                     partInfo.numSeats = frzr.FreezerSize;
                     partInfo.timeLastElectricity = frzr.timeSinceLastECtaken;
+                    partInfo.frznChargeRequired = frzr.FrznChargeRequired;
                     partInfo.timeLastTempCheck = frzr.timeSinceLastTmpChk;
                     partInfo.deathCounter = frzr.deathCounter;
                     partInfo.tmpdeathCounter = frzr.tmpdeathCounter;
@@ -437,10 +440,10 @@ namespace DF
                     if (part.protoModuleCrew.Count > 0 || freezer.DFIStoredCrewList.Count() > 0)
                     {
                         ++vesselInfo.numOccupiedParts;
-                    }                    
+                    }
                 }
                 else //this vessel part does not contain a freezer
-                {                    
+                {
                     crewCapacity += part.CrewCapacity;
                     vesselInfo.numSeats += part.CrewCapacity;
                     if (part.protoModuleCrew.Count > 0)
@@ -474,9 +477,9 @@ namespace DF
         }
 
         #endregion UpdateVesselDictionary
-        
+
         #region KACAlarms
-        
+
         private void KAC_onAlarmStateChanged(KACWrapper.KACAPI.AlarmStateChangedEventArgs e)
         {
             //This is triggered whenever the KAC API triggers an Alarm event.
@@ -526,9 +529,9 @@ namespace DF
                     alarmstoDelete.Add(entry.Key);
                     continue;
                 }
-                // Check if Alarm has been modified and no longer has any DeepFreeze association, in which case we delete it.                
-                if ((entry.Value.FrzKerbals.Count == 0 && entry.Value.ThwKerbals.Count == 0) || !DeepFreeze.Instance.DFgameSettings.knownVessels.ContainsKey(entry.Value.VesselID)) 
-                    // No FREEZE or THAW events in the Notes and unknown vessel, so delete it.
+                // Check if Alarm has been modified and no longer has any DeepFreeze association, in which case we delete it.
+                if ((entry.Value.FrzKerbals.Count == 0 && entry.Value.ThwKerbals.Count == 0) || !DeepFreeze.Instance.DFgameSettings.knownVessels.ContainsKey(entry.Value.VesselID))
+                // No FREEZE or THAW events in the Notes and unknown vessel, so delete it.
                 {
                     this.Log_Debug("Alarm has no THAW FREEZE any more so deleting");
                     alarmstoDelete.Add(entry.Key);
@@ -536,7 +539,7 @@ namespace DF
                 }
                 // Check if alarm has occurred and still executing and try to execute it.
                 if (entry.Value.AlarmExecute == true)
-                {                    
+                {
                     if (entry.Value.ThwKerbals.Count == 0 && entry.Value.FrzKerbals.Count == 0)
                     {
                         // we are all done. Delete the alarm. Do a message.
@@ -798,6 +801,5 @@ namespace DF
         }
 
         #endregion KACAlarms
-
     }
 }
