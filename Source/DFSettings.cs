@@ -49,6 +49,10 @@ namespace DF
         internal float WindowbaseHeight { get; set; }
         internal float ECLowWarningTime { get; set; }
         internal float EClowCriticalTime { get; set; }
+        internal bool StripLightsActive { get; set; }
+        internal int internalFrzrCamCode { get; set; }
+        internal int internalNxtFrzrCamCode { get; set; }
+        internal int internalPrvFrzrCamCode { get; set; }
 
         internal DFSettings()
         {
@@ -78,6 +82,10 @@ namespace DF
             KACWindowWidth = 485f;
             ECLowWarningTime = 3600f;
             EClowCriticalTime = 900f;
+            StripLightsActive = true;
+            internalFrzrCamCode = 100;
+            internalNxtFrzrCamCode = 110;
+            internalPrvFrzrCamCode = 98;
         }
 
         //Settings Functions Follow
@@ -114,6 +122,10 @@ namespace DF
                 KACWindowWidth = Utilities.GetNodeValue(DFsettingsNode, "KACWindowWidth", KACWindowWidth);
                 ECLowWarningTime = Utilities.GetNodeValue(DFsettingsNode, "ECLowWarningTime", ECLowWarningTime);
                 EClowCriticalTime = Utilities.GetNodeValue(DFsettingsNode, "EClowCriticalTime", EClowCriticalTime);
+                StripLightsActive = Utilities.GetNodeValue(DFsettingsNode, "StripLightsActive", StripLightsActive);
+                internalFrzrCamCode = Utilities.GetNodeValue(DFsettingsNode, "internalFrzrCamCode", internalFrzrCamCode);
+                internalNxtFrzrCamCode = Utilities.GetNodeValue(DFsettingsNode, "internalNxtFrzrCamCode", internalNxtFrzrCamCode);
+                internalPrvFrzrCamCode = Utilities.GetNodeValue(DFsettingsNode, "internalPrvFrzrCamCode", internalPrvFrzrCamCode);
                 this.Log_Debug("DFSettings load complete");
             }
         }
@@ -157,6 +169,10 @@ namespace DF
             settingsNode.AddValue("KACWindowWidth", KACWindowWidth);
             settingsNode.AddValue("ECLowWarningTime", ECLowWarningTime);
             settingsNode.AddValue("EClowCriticalTime", EClowCriticalTime);
+            settingsNode.AddValue("StripLightsActive", StripLightsActive);
+            settingsNode.AddValue("internalFrzrCamCode", internalFrzrCamCode);
+            settingsNode.AddValue("internalNxtFrzrCamCode", internalNxtFrzrCamCode);
+            settingsNode.AddValue("internalPrvFrzrCamCode", internalPrvFrzrCamCode);
             this.Log_Debug("DFSettings save complete");
         }
     }

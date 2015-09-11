@@ -60,6 +60,8 @@ namespace DF
         internal double tmpdeathCounter = 0f;
         internal bool outofEC;
         internal FrzrTmpStatus TmpStatus = FrzrTmpStatus.OK;
+        internal bool ECWarning;
+        internal bool TempWarning;
         internal float cabinTemp = 0f;
         internal double lastUpdate = 0f;
 
@@ -70,6 +72,8 @@ namespace DF
             hibernating = false;
             hasextDoor = false;
             outofEC = false;
+            ECWarning = false;
+            TempWarning = false;
             lastUpdate = currentTime;
             crewMembers = new List<string>();
             crewMemberTraits = new List<string>();
@@ -122,6 +126,8 @@ namespace DF
             info.outofEC = Utilities.GetNodeValue(node, "outofEC", false);
             info.TmpStatus = Utilities.GetNodeValue(node, "TmpStatus", FrzrTmpStatus.OK);
             info.cabinTemp = Utilities.GetNodeValue(node, "cabinTemp", 0f);
+            info.ECWarning = Utilities.GetNodeValue(node, "ECWarning", false);
+            info.TempWarning = Utilities.GetNodeValue(node, "TempWarning", false);
 
             return info;
         }
@@ -148,6 +154,8 @@ namespace DF
             node.AddValue("outofEC", outofEC);
             node.AddValue("TmpStatus", TmpStatus.ToString());
             node.AddValue("cabinTemp", cabinTemp);
+            node.AddValue("ECWarning", ECWarning);
+            node.AddValue("TempWarning", TempWarning);
             node.AddValue("lastUpdate", lastUpdate);
             return node;
         }

@@ -114,6 +114,70 @@ namespace DF
             return null;
         }
 
+        internal static void dmpKerbalRefs(Kerbal kerbal, Kerbal seatkerbalref, Kerbal protocrewkerbalref)
+        {
+            if (kerbal != null)
+            {
+                Log_Debug("kerbal " + kerbal.name + " " + kerbal.GetInstanceID());
+                if (kerbal.GetComponent("TRIvaModule") != null)
+                {
+                    Log_Debug("kerbal has TRIvaModule attached");
+                }
+                else
+                {
+                    Log_Debug("kerbal DOES NOT have TRIvaModule attached");
+                }
+            }
+
+            if (seatkerbalref != null)
+            {
+                Log_Debug("seatkerbalref " + seatkerbalref.name + " " + seatkerbalref.GetInstanceID());
+                if (seatkerbalref.GetComponent("TRIvaModule") != null)
+                {
+                    Log_Debug("seatkerbalref has TRIvaModule attached");
+                }
+                else
+                {
+                    Log_Debug("seatkerbalref DOES NOT have TRIvaModule attached");
+                }
+            }
+            if (protocrewkerbalref != null)
+            {
+                Log_Debug("protocrewkerbalref " + protocrewkerbalref.name + " " + protocrewkerbalref.GetInstanceID());
+                if (protocrewkerbalref.GetComponent("TRIvaModule") != null)
+                {
+                    Log_Debug("protocrewkerbalref has TRIvaModule attached");
+                }
+                else
+                {
+                    Log_Debug("protocrewkerbalref DOES NOT have TRIvaModule attached");
+                }
+            }
+        }
+
+        internal static void dmpAnimationNames(Animation anim)
+        {
+            List<AnimationState> states = new List<AnimationState>(anim.Cast<AnimationState>());
+            Log_Debug("Animation " + anim.name);
+            foreach (AnimationState state in states)
+            {
+                Log_Debug("Animation clip " + state.name);
+            }
+        }
+
+        internal static void dmpAllKerbals()
+        {
+            foreach (Kerbal kerbal in Resources.FindObjectsOfTypeAll<Kerbal>())
+            {
+                Log_Debug("Kerbal " + kerbal.name + " " + kerbal.crewMemberName + " instance " + kerbal.GetInstanceID() + " rosterstatus " + kerbal.rosterStatus.ToString());
+                Log_Debug(kerbal.protoCrewMember == null ? "ProtoCrewmember is null " : "ProtoCrewmember exists " + kerbal.protoCrewMember.name);
+                if (kerbal.animation != null)
+                {
+                    dmpAnimationNames(kerbal.animation);
+                }
+            }
+        }
+
         // The following method is modified from RasterPropMonitor as-is. Which is covered by GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
         internal static void setTransparentTransforms(this Part thisPart, string transparentTransforms)
         {
@@ -262,6 +326,7 @@ namespace DF
         // If bodyOnly is true only the "body01" mesh is changed (to be replaced by placeholder mesh lying down as kerbals in IVA are always in sitting position).
         internal static void setFrznKerbalLayer(ProtoCrewMember kerbal, bool setVisible, bool bodyOnly)
         {
+            Log_Debug("setFrznKerbalLayer " + kerbal.name + " visible " + setVisible);
             int layer = 16;
             if (!setVisible)
             {

@@ -81,6 +81,9 @@
   <ItemGroup>
     <None Include="ksp_dir.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="Changelog.txt" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>set /p KSP_DIR=&lt;"$(ProjectDir)ksp_dir.txt"
@@ -96,7 +99,8 @@ if %25ERRORLEVEL%25 == 1 (
 if exist "$(SolutionDir)..\$(ProjectName).zip" del "$(SolutionDir)..\$(ProjectName).zip"
    
 c:\7za\7za a -tzip -r  "$(SolutionDir)..\$(ProjectName).zip" "$(SolutionDir)..\GameData"
-c:\7za\7za d -r "$(SolutionDir)..\$(ProjectName).zip" "*.ddsified" "*.pdb" "*.mdb"
+c:\7za\7za d -r  -x!REPOSoftTech.png -x!Glykerol.png -x!DFtoolbar.png -x!DeepFreezeOff.png -x!DeepFreezeOn.png -x!alphaonly.png "$(SolutionDir)..\$(ProjectName).zip" "*.ddsified" "*.pdb" "*.mdb" "*.png"
+c:\7za\7za d -r "$(SolutionDir)..\$(ProjectName).zip" "*\DFInterface*" *\DFInterface.zip"
 xcopy /E /Y "$(SolutionDir)..\GameData" "%25KSP_DIR%25\GameData"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

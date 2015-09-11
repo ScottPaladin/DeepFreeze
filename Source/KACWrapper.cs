@@ -4,14 +4,12 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 
 // TODO: Change this namespace to something specific to your plugin here.
 //EG:
 // namespace MyPlugin_KACWrapper
 namespace DF
 {
-
     ///////////////////////////////////////////////////////////////////////////////////////////
     // BELOW HERE SHOULD NOT BE EDITED - this links to the loaded KAC module without requiring a Hard Dependancy
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -28,25 +26,28 @@ namespace DF
 
         /// <summary>
         /// This is the Kerbal Alarm Clock object
-        /// 
+        ///
         /// SET AFTER INIT
         /// </summary>
         public static KACAPI KAC = null;
+
         /// <summary>
-        /// Whether we found the KerbalAlarmClock assembly in the loadedassemblies. 
-        /// 
+        /// Whether we found the KerbalAlarmClock assembly in the loadedassemblies.
+        ///
         /// SET AFTER INIT
         /// </summary>
         public static Boolean AssemblyExists { get { return (KACType != null); } }
+
         /// <summary>
-        /// Whether we managed to hook the running Instance from the assembly. 
-        /// 
+        /// Whether we managed to hook the running Instance from the assembly.
+        ///
         /// SET AFTER INIT
         /// </summary>
         public static Boolean InstanceExists { get { return (KAC != null); } }
+
         /// <summary>
-        /// Whether we managed to wrap all the methods/functions from the instance. 
-        /// 
+        /// Whether we managed to wrap all the methods/functions from the instance.
+        ///
         /// SET AFTER INIT
         /// </summary>
         private static Boolean _KACWrapped = false;
@@ -55,7 +56,6 @@ namespace DF
         /// Whether the object has been wrapped and the APIReady flag is set in the real KAC
         /// </summary>
         public static Boolean APIReady { get { return _KACWrapped && KAC.APIReady && !NeedUpgrade; } }
-
 
         public static Boolean NeedUpgrade { get; private set; }
 
@@ -135,7 +135,6 @@ namespace DF
         /// </summary>
         public class KACAPI
         {
-
             internal KACAPI(Object KAC)
             {
                 //store the actual object
@@ -188,6 +187,7 @@ namespace DF
             private Object actualKAC;
 
             private FieldInfo APIReadyField;
+
             /// <summary>
             /// Whether the APIReady flag is set in the real KAC
             /// </summary>
@@ -203,6 +203,7 @@ namespace DF
             }
 
             #region Alarms
+
             private Object actualAlarms;
             private FieldInfo AlarmsField;
 
@@ -244,9 +245,10 @@ namespace DF
                 return ListToReturn;
             }
 
-            #endregion
+            #endregion Alarms
 
             #region Events
+
             /// <summary>
             /// Takes an EventInfo and binds a method to the event firing
             /// </summary>
@@ -270,11 +272,13 @@ namespace DF
             /// Event that fires when the State of an Alarm changes
             /// </summary>
             public event AlarmStateChangedHandler onAlarmStateChanged;
+
             /// <summary>
             /// Structure of the event delegeate
             /// </summary>
             /// <param name="e"></param>
             public delegate void AlarmStateChangedHandler(AlarmStateChangedEventArgs e);
+
             /// <summary>
             /// This is the structure that holds the event arguments
             /// </summary>
@@ -285,19 +289,18 @@ namespace DF
                     Type type = actualEvent.GetType();
                     this.alarm = new KACAlarm(type.GetField("alarm").GetValue(actualEvent));
                     this.eventType = (KACAlarm.AlarmStateEventsEnum)type.GetField("eventType").GetValue(actualEvent);
-
                 }
 
                 /// <summary>
                 /// Alarm that has had the state change
                 /// </summary>
                 public KACAlarm alarm;
+
                 /// <summary>
                 /// What the state was before the event
                 /// </summary>
                 public KACAlarm.AlarmStateEventsEnum eventType;
             }
-
 
             /// <summary>
             /// private function that grabs the actual event and fires our wrapped one
@@ -310,10 +313,11 @@ namespace DF
                     onAlarmStateChanged(new AlarmStateChangedEventArgs(actualEvent, this));
                 }
             }
-            #endregion
 
+            #endregion Events
 
             #region Methods
+
             private MethodInfo CreateAlarmMethod;
 
             /// <summary>
@@ -328,8 +332,8 @@ namespace DF
                 return (String)CreateAlarmMethod.Invoke(actualKAC, new System.Object[] { (Int32)AlarmType, Name, UT });
             }
 
-
             private MethodInfo DeleteAlarmMethod;
+
             /// <summary>
             /// Delete an Alarm
             /// </summary>
@@ -340,8 +344,8 @@ namespace DF
                 return (Boolean)DeleteAlarmMethod.Invoke(actualKAC, new System.Object[] { AlarmID });
             }
 
-
             private MethodInfo DrawAlarmActionChoiceMethod;
+
             /// <summary>
             /// Delete an Alarm
             /// </summary>
@@ -373,8 +377,7 @@ namespace DF
             //    return (InValue != OutValue);
             //}
 
-
-            #endregion
+            #endregion Methods
 
             public class KACAlarm
             {
@@ -409,9 +412,11 @@ namespace DF
                     //    LogFormatted("F:{0}-{1}", fi.Name, fi.DeclaringType);
                     //}
                 }
+
                 private Object actualAlarm;
 
                 private FieldInfo VesselIDField;
+
                 /// <summary>
                 /// Unique Identifier of the Vessel that the alarm is attached to
                 /// </summary>
@@ -422,6 +427,7 @@ namespace DF
                 }
 
                 private FieldInfo IDField;
+
                 /// <summary>
                 /// Unique Identifier of this alarm
                 /// </summary>
@@ -431,6 +437,7 @@ namespace DF
                 }
 
                 private FieldInfo NameField;
+
                 /// <summary>
                 /// Short Text Name for the Alarm
                 /// </summary>
@@ -441,6 +448,7 @@ namespace DF
                 }
 
                 private FieldInfo NotesField;
+
                 /// <summary>
                 /// Longer Text Description for the Alarm
                 /// </summary>
@@ -451,6 +459,7 @@ namespace DF
                 }
 
                 private FieldInfo XferOriginBodyNameField;
+
                 /// <summary>
                 /// Name of the origin body for a transfer
                 /// </summary>
@@ -461,6 +470,7 @@ namespace DF
                 }
 
                 private FieldInfo XferTargetBodyNameField;
+
                 /// <summary>
                 /// Name of the destination body for a transfer
                 /// </summary>
@@ -471,12 +481,14 @@ namespace DF
                 }
 
                 private FieldInfo AlarmTypeField;
+
                 /// <summary>
                 /// What type of Alarm is this - affects icon displayed and some calc options
                 /// </summary>
                 public AlarmTypeEnum AlarmType { get { return (AlarmTypeEnum)AlarmTypeField.GetValue(actualAlarm); } }
 
                 private PropertyInfo AlarmTimeProperty;
+
                 /// <summary>
                 /// In game UT value of the alarm
                 /// </summary>
@@ -487,6 +499,7 @@ namespace DF
                 }
 
                 private FieldInfo AlarmMarginField;
+
                 /// <summary>
                 /// In game seconds the alarm will fire before the event it is for
                 /// </summary>
@@ -497,6 +510,7 @@ namespace DF
                 }
 
                 private FieldInfo AlarmActionField;
+
                 /// <summary>
                 /// What should the Alarm Clock do when the alarm fires
                 /// </summary>
@@ -507,13 +521,14 @@ namespace DF
                 }
 
                 private FieldInfo RemainingField;
+
                 /// <summary>
                 /// How much Game time is left before the alarm fires
                 /// </summary>
                 public Double Remaining { get { return (Double)RemainingField.GetValue(actualAlarm); } }
 
-
                 private FieldInfo RepeatAlarmField;
+
                 /// <summary>
                 /// Whether the alarm will be repeated after it fires
                 /// </summary>
@@ -522,7 +537,9 @@ namespace DF
                     get { return (Boolean)RepeatAlarmField.GetValue(actualAlarm); }
                     set { RepeatAlarmField.SetValue(actualAlarm, value); }
                 }
+
                 private PropertyInfo RepeatAlarmPeriodProperty;
+
                 /// <summary>
                 /// Value in Seconds after which the alarm will repeat
                 /// </summary>
@@ -571,14 +588,19 @@ namespace DF
             {
                 [Description("Do Nothing-Delete When Past")]
                 DoNothingDeleteWhenPassed,
+
                 [Description("Do Nothing")]
                 DoNothing,
+
                 [Description("Message Only-No Affect on warp")]
                 MessageOnly,
+
                 [Description("Kill Warp Only-No Message")]
                 KillWarpOnly,
+
                 [Description("Kill Warp and Message")]
                 KillWarp,
+
                 [Description("Pause Game and Message")]
                 PauseGame,
             }
@@ -594,10 +616,11 @@ namespace DF
 
             public class KACAlarmList : List<KACAlarm>
             {
-
             }
         }
+
         #region Logging Stuff
+
         /// <summary>
         /// Some Structured logging to the debug file - ONLY RUNS WHEN DLL COMPILED IN DEBUG MODE
         /// </summary>
@@ -622,6 +645,7 @@ namespace DF
                 System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name);
             UnityEngine.Debug.Log(strMessageLine);
         }
-        #endregion
+
+        #endregion Logging Stuff
     }
 }

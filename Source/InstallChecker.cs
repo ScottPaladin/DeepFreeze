@@ -1,13 +1,14 @@
 ﻿/**
  * Based on the InstallChecker from the Kethane mod for Kerbal Space Program.
  * https://github.com/Majiir/Kethane/blob/b93b1171ec42b4be6c44b257ad31c7efd7ea1702/Plugin/InstallChecker.cs
- * 
+ *
  * Original is (C) Copyright Majiir.
  * CC0 Public Domain (http://creativecommons.org/publicdomain/zero/1.0/)
  * http://forum.kerbalspaceprogram.com/threads/65395-CompatibilityChecker-Discussion-Thread?p=899895&viewfull=1#post899895
- * 
+ *
  * This file has been modified extensively and is released under the same license.
  */
+
 using System;
 using System.IO;
 using System.Linq;
@@ -21,10 +22,11 @@ namespace DF
     {
         // This class checks DeepFreeze is installed correctly.
         private const string modName = "DeepFreeze";
+
         private const string expectedPath = "REPOSoftTech/DeepFreeze/Plugins";
 
         protected void Start()
-        { 
+        {
             try
             {
                 // Log some information that might be of interest when debugging
@@ -41,7 +43,7 @@ namespace DF
                     string badPathsString = String.Join("\n", badPaths.ToArray());
                     this.Log(modName + " - Incorrectly installed, bad paths:\n" + badPathsString);
                     PopupDialog.SpawnPopupDialog("Incorrect " + modName + " Installation",
-                        modName + " has been installed incorrectly and will not function properly. All files should be located in KSP/GameData/" + expectedPath + 
+                        modName + " has been installed incorrectly and will not function properly. All files should be located in KSP/GameData/" + expectedPath +
                         ". Do not move any files from inside that folder.\n\nPlease Remove all old installations and invalid files, as follows.\n\nIncorrect path(s):\n" + badPathsString,
                         "OK", false, HighLogic.Skin);
                 }
@@ -55,7 +57,7 @@ namespace DF
                         PopupDialog.SpawnPopupDialog("Missing Module Manager",
                             modName + " requires the Module Manager mod in order to function properly with Raster Prop Monitor mod Installed.\n\nPlease download from http://forum.kerbalspaceprogram.com/threads/55219 and copy to the KSP/GameData/ directory.",
                             "OK", false, HighLogic.Skin);
-                    }                        
+                    }
                 }
 
                 /*
@@ -84,7 +86,7 @@ namespace DF
             }
             catch (Exception ex)
             {
-                Utilities.Log(modName ," - Caught an exception:\n" + ex.Message + "\n" + ex.StackTrace);
+                Utilities.Log(modName, " - Caught an exception:\n" + ex.Message + "\n" + ex.StackTrace);
                 PopupDialog.SpawnPopupDialog("Incorrect " + modName + " Installation",
                     "A very serious error has occurred while checking the installation of " + modName + ".\n\n" +
                     "You need to\n" +
@@ -98,11 +100,12 @@ namespace DF
         /*
          * Tries to fix the install if it was installed over the top of a previous version
          */
-        void CleanupOldVersions()
+
+        private void CleanupOldVersions()
         {
             /*
             bool requireRestart = false;
-            
+
             // Upgrading 14.3 -> 15.0
             // Moved into new directory for REPOSoftTech Forked version.
             // Was GameData/PaladinLabs now GameData/REPOSoftTech
@@ -111,7 +114,7 @@ namespace DF
                 this.Log(modName + " - deleting the old x.cfg.");
                 File.Delete(KSPUtil.ApplicationRootPath + "x.cfg");
                 requireRestart = true;
-            }           
+            }
 
             if (requireRestart)
             {

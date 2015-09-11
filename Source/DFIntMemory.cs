@@ -29,10 +29,36 @@ namespace DF
         // It also Executes KAC Alarms when they occur and have DeepFreeze events to execute.
         public static DFIntMemory Instance { get; private set; }
 
+        public class VslFrzrCams
+        {
+            public Transform FrzrCamTransform { get; set; }
+            public InternalModel FrzrCamModel { get; set; }
+            public int FrzrCamSeatIndex { get; set; }
+            public string FrzrCamPartName { get; set; }
+            public DeepFreezer FrzrCamPart { get; set; }
+
+            public VslFrzrCams(Transform frzrcamTransform, InternalModel frzrcamModel, int frzrcamSeatIndex, string frzrcamPartName, DeepFreezer frzrcamPart)
+            {
+                FrzrCamTransform = frzrcamTransform;
+                FrzrCamModel = frzrcamModel;
+                FrzrCamSeatIndex = frzrcamSeatIndex;
+                FrzrCamPartName = frzrcamPartName;
+                FrzrCamPart = frzrcamPart;
+            }
+        }
+
         internal List<DeepFreezer> DpFrzrActVsl = new List<DeepFreezer>();
         internal bool ActVslHasDpFrezr = false;
         internal Guid ActVslID = new Guid();
         internal bool BGPinstalled = false;
+        internal double invalidKACGUIDItems = 0;
+        internal int ActFrzrCamPart = 0;
+        internal List<VslFrzrCams> ActFrzrCams = new List<VslFrzrCams>();  //This array of transforms stores the transforms for the cryopod cameras for the active vessel.
+        internal int lastFrzrCam = 0;                                       //Index of last frzrcam used.
+        private KeyCode keyFrzrCam = (KeyCode)100;                         //Keycode for frzrcam. Loaded from settings.  Default is n
+        private KeyCode keyNxtFrzrCam = (KeyCode)110;                       //Keycode for next frzrcam. Loaded from settings. Default is n
+        private KeyCode keyPrvFrzrCam = (KeyCode)98;                       //Keycode for previous frzrcam. Loaded from settings. Default is b
+        internal ScreenMessage IVAKerbalName, IVAkerbalPart, IVAkerbalPod;  // used for the bottom right screen messages
 
         protected DFIntMemory()
         {
@@ -48,6 +74,24 @@ namespace DF
                 KACWrapper.KAC.onAlarmStateChanged += KAC_onAlarmStateChanged;
             BGPinstalled = DFInstalledMods.IsBGPInstalled;  //Background Processing Mod
             GameEvents.onVesselRename.Add(onVesselRename);
+            GameEvents.onVesselChange.Add(onVesselChange);
+            GameEvents.onVesselLoaded.Add(onVesselChange);
+            try
+            {
+                keyFrzrCam = (KeyCode)DeepFreeze.Instance.DFsettings.internalFrzrCamCode;
+                this.Log_Debug("Freeze Cam Code set to " + keyFrzrCam.ToString());
+                keyNxtFrzrCam = (KeyCode)DeepFreeze.Instance.DFsettings.internalNxtFrzrCamCode;
+                this.Log_Debug("Next Freeze Cam Code set to " + keyNxtFrzrCam.ToString());
+                keyPrvFrzrCam = (KeyCode)DeepFreeze.Instance.DFsettings.internalPrvFrzrCamCode;
+                this.Log_Debug("Previous Freeze Cam Code set to " + keyPrvFrzrCam.ToString());
+                if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ActiveVessel != null)
+                    onVesselChange(FlightGlobals.ActiveVessel);
+            }
+            catch (Exception ex)
+            {
+                this.Log_Debug("Invalid Freezer Cam Code in settings. Settings value=" + DeepFreeze.Instance.DFsettings.internalFrzrCamCode);
+                keyFrzrCam = (KeyCode)100;
+            }
             this.Log_Debug("DFIntMemory end Awake");
         }
 
@@ -57,6 +101,8 @@ namespace DF
             ChkUnknownFrozenKerbals();
             ChkActiveFrozenKerbals();
             DeepFreeze.Instance.DFgameSettings.DmpKnownFznKerbals();
+            this.Log_Debug("DFIMemory startup dump all kerballs");
+            Utilities.dmpAllKerbals();
         }
 
         private void OnDestroy()
@@ -65,40 +111,181 @@ namespace DF
             //destroy the event hook for KAC
             KACWrapper.KAC.onAlarmStateChanged -= KAC_onAlarmStateChanged;
             GameEvents.onVesselRename.Remove(onVesselRename);
+            GameEvents.onVesselChange.Remove(onVesselChange);
+            GameEvents.onVesselLoaded.Remove(onVesselChange);
             this.Log_Debug("DFIntMemory end OnDestroy");
+        }
+
+        private void Update()
+        {
+            //For some reason when we Freeze a Kerbal and switch to the Internal camera (if in IVA mode) the cameramanager gets stuck.
+            //If the user hits the camera mode key while in Internal camera mode this will kick them out to flight
+            if (GameSettings.CAMERA_MODE.GetKeyDown() && Utilities.IsInInternal())
+            {
+                CameraManager.Instance.SetCameraFlight();
+            }
+
+            //Check if the FreezerCam references have disappeared and if they have reset.
+            if (ActFrzrCams.Count() > 0)
+            {
+                if (ActFrzrCams[lastFrzrCam].FrzrCamTransform == null || ActFrzrCams[lastFrzrCam].FrzrCamModel == null)
+                {
+                    resetFreezerCams();
+                }
+            }
+
+            if (HighLogic.LoadedSceneIsFlight && ActVslHasDpFrezr)
+            {
+                //If user hits Modifier Key - D switch to freezer cams.
+                if (GameSettings.MODIFIER_KEY.GetKey() && Input.GetKeyDown(keyFrzrCam) && ActFrzrCams.Count > 0)
+                {
+                    this.Log_Debug("User hit InternalCamera modifier keys lastFrzrCam=" + lastFrzrCam);
+                    if (Utilities.IsInIVA())
+                    {
+                        this.Log_Debug("Vessel is in IVA, looking for active kerbal");
+                        Kerbal activeKerbal;
+                        foreach (DeepFreezer frzr in DpFrzrActVsl)
+                        {
+                            activeKerbal = Utilities.FindCurrentKerbal(frzr.part);
+                            if (activeKerbal != null)
+                            {
+                                int CamIndex = -1;
+                                CamIndex = ActFrzrCams.FindIndex(a => a.FrzrCamPart == activeKerbal.InPart && a.FrzrCamSeatIndex == activeKerbal.protoCrewMember.seatIdx);
+                                if (CamIndex != -1)
+                                {
+                                    lastFrzrCam = CamIndex;
+                                    this.Log_Debug("Vessel was in IVA so Set lastFrzrCam to " + ActFrzrCams[lastFrzrCam].FrzrCamPartName + " " + ActFrzrCams[lastFrzrCam].FrzrCamSeatIndex);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    // If we have gone outside the bounds of the camera list, reset to index 0.
+                    if (lastFrzrCam > ActFrzrCams.Count)
+                    {
+                        lastFrzrCam = 0;
+                    }
+                    // Try to set the freezer cam.
+                    if (ActFrzrCams[lastFrzrCam].FrzrCamTransform != null && ActFrzrCams[lastFrzrCam].FrzrCamModel != null)
+                    {
+                        try
+                        {
+                            //CameraManager.Instance.SetCameraMode(CameraManager.CameraMode.Internal);
+                            CameraManager.Instance.SetCameraInternal(ActFrzrCams[lastFrzrCam].FrzrCamModel, ActFrzrCams[lastFrzrCam].FrzrCamTransform);
+                        }
+                        catch (Exception ex)
+                        {
+                            this.Log("Failed to set Internal Camera. " + lastFrzrCam);
+                            if (ActFrzrCams[lastFrzrCam].FrzrCamModel == null) this.Log_Debug("FrzrcamModel is null");
+                            if (ActFrzrCams[lastFrzrCam].FrzrCamTransform == null) this.Log_Debug("FrzrcamTransform is null");
+                            this.Log("Err: " + ex);
+                            CameraManager.Instance.SetCameraFlight();
+                        }
+                    }
+                    else
+                    {
+                        this.Log_Debug("lastFrzrCam is null");
+                    }
+                }
+                //If user hits n while we are in internal camera mode switch to the next freezer camera.
+                if (Input.GetKeyDown(keyNxtFrzrCam) && Utilities.IsInInternal())
+                {
+                    this.Log_Debug("User hit InternalCamera nextCamera key lastFrzrCam=" + lastFrzrCam);
+                    if ((lastFrzrCam == (ActFrzrCams.Count() - 1)) || (lastFrzrCam > ActFrzrCams.Count))
+                    {
+                        lastFrzrCam = 0;
+                    }
+                    else
+                    {
+                        lastFrzrCam++;
+                    }
+                    this.Log_Debug("CameraCam = " + lastFrzrCam);
+
+                    try
+                    {
+                        if (ActFrzrCams[lastFrzrCam].FrzrCamTransform != null && ActFrzrCams[lastFrzrCam].FrzrCamModel != null)
+                        {
+                            CameraManager.Instance.SetCameraInternal(ActFrzrCams[lastFrzrCam].FrzrCamModel, ActFrzrCams[lastFrzrCam].FrzrCamTransform);
+                        }
+                        else
+                        {
+                            if (ActFrzrCams[lastFrzrCam].FrzrCamTransform == null) this.Log_Debug("lastFrzrCamTransform is null");
+                            if (ActFrzrCams[lastFrzrCam].FrzrCamModel == null) this.Log_Debug("lastFrzrCamModel is null");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        this.Log("Failed to set Internal Camera.");
+                        if (ActFrzrCams[lastFrzrCam].FrzrCamModel == null) this.Log_Debug("FrzrcamModel is null");
+                        if (ActFrzrCams[lastFrzrCam].FrzrCamTransform == null) this.Log_Debug("FrzrcamTransform is null");
+                        this.Log("Err: " + ex);
+                        CameraManager.Instance.SetCameraFlight();
+                    }
+                }
+                //If user hits b while we are in internal camera mode switch to the previous freezer camera.
+                if (Input.GetKeyDown(keyPrvFrzrCam) && Utilities.IsInInternal())
+                {
+                    this.Log_Debug("User hit InternalCamera prevCamera key lastFrzrCam=" + lastFrzrCam);
+                    if (lastFrzrCam <= 0)
+                    {
+                        lastFrzrCam = (ActFrzrCams.Count() - 1);
+                    }
+                    else
+                    {
+                        lastFrzrCam--;
+                    }
+                    this.Log_Debug("CameraCam = " + lastFrzrCam);
+
+                    try
+                    {
+                        if (ActFrzrCams[lastFrzrCam].FrzrCamTransform != null && ActFrzrCams[lastFrzrCam].FrzrCamModel != null)
+                        {
+                            CameraManager.Instance.SetCameraInternal(ActFrzrCams[lastFrzrCam].FrzrCamModel, ActFrzrCams[lastFrzrCam].FrzrCamTransform);
+                        }
+                        else
+                        {
+                            if (ActFrzrCams[lastFrzrCam].FrzrCamTransform == null) this.Log_Debug("lastFrzrCamTransform is null");
+                            if (ActFrzrCams[lastFrzrCam].FrzrCamModel == null) this.Log_Debug("lastFrzrCamModel is null");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        this.Log("Failed to set Internal Camera.");
+                        if (ActFrzrCams[lastFrzrCam].FrzrCamModel == null) this.Log_Debug("FrzrcamModel is null");
+                        if (ActFrzrCams[lastFrzrCam].FrzrCamTransform == null) this.Log_Debug("FrzrcamTransform is null");
+                        this.Log("Err: " + ex);
+                        CameraManager.Instance.SetCameraFlight();
+                    }
+                }
+                ScreenMessages.RemoveMessage(IVAKerbalName);
+                ScreenMessages.RemoveMessage(IVAkerbalPart);
+                ScreenMessages.RemoveMessage(IVAkerbalPod);
+                if (Utilities.IsInInternal() && ActFrzrCams.Count > 0)
+                {
+                    // Set Bottom right messages for FreezerCam mode
+
+                    // See if there is a kerbal seated/frozen in that seat get their reference
+
+                    IVAkerbalPod = ScreenMessages.PostScreenMessage("Pod:" + ActFrzrCams[lastFrzrCam].FrzrCamSeatIndex);
+                    IVAkerbalPart = ScreenMessages.PostScreenMessage(ActFrzrCams[lastFrzrCam].FrzrCamPartName);
+                    string kerbalname;
+                    try
+                    {
+                        kerbalname = ActFrzrCams[lastFrzrCam].FrzrCamPart.part.internalModel.seats[lastFrzrCam].kerbalRef.name;
+                    }
+                    catch (Exception ex)
+                    {
+                        kerbalname = string.Empty;
+                    }
+                    List<ProtoCrewMember> activecrew = FlightGlobals.ActiveVessel.GetVesselCrew();
+                    IVAKerbalName = ScreenMessages.PostScreenMessage(kerbalname);
+                }
+            }
         }
 
         private void FixedUpdate()
         {
             if (Time.timeSinceLevelLoad < 2f) return; //Wait 2 seconds on level load before executing
-
-            if (HighLogic.LoadedSceneIsFlight)
-            {
-                //chk if current active vessel Has one or more DeepFreezer modules attached
-                try
-                {
-                    if (FlightGlobals.ActiveVessel.FindPartModulesImplementing<DeepFreezer>().Count() == 0)
-                    {
-                        ActVslHasDpFrezr = false;
-                    }
-                    else
-                    {
-                        ActVslHasDpFrezr = true;
-                        DpFrzrActVsl = FlightGlobals.ActiveVessel.FindPartModulesImplementing<DeepFreezer>();
-                    }
-                    ActVslID = FlightGlobals.ActiveVessel.id;
-                }
-                catch (Exception ex)
-                {
-                    this.Log("Failed to set active vessel and Check Freezers");
-                    this.Log("Err: " + ex);
-                    ActVslHasDpFrezr = false;
-                }
-            }
-            else
-            {
-                ActVslHasDpFrezr = false;
-            }
 
             //We check/update Vessel and Part Dictionary in EVERY Game Scene.
             try
@@ -231,6 +418,85 @@ namespace DF
             }
         }
 
+        internal void onVesselChange(Vessel vessel)
+        {
+            this.Log_Debug("OnVesselChange activevessel " + FlightGlobals.ActiveVessel.id + " parametervesselid " + vessel.id);
+            if (HighLogic.LoadedSceneIsFlight)
+            {
+                //chk if current active vessel Has one or more DeepFreezer modules attached
+                try
+                {
+                    if (FlightGlobals.ActiveVessel.FindPartModulesImplementing<DeepFreezer>().Count() == 0)
+                    {
+                        ActVslHasDpFrezr = false;
+                    }
+                    else
+                    {
+                        ActVslHasDpFrezr = true;
+                        DpFrzrActVsl = FlightGlobals.ActiveVessel.FindPartModulesImplementing<DeepFreezer>();
+                        //Check if vessel id has changed or last freezer cam transforms is now null, reset the freezer cams.
+
+                        this.Log_Debug("About to test actfrzrcams.count=" + ActFrzrCams.Count());
+                        if (ActVslID != vessel.id || ActFrzrCams.Count() > 0)
+                        {
+                            if (ActFrzrCams.Count() > 0)
+                            {
+                                if (ActFrzrCams[lastFrzrCam].FrzrCamTransform == null)
+                                {
+                                    this.Log_Debug("about to reset");
+                                    resetFreezerCams();
+                                }
+                            }
+                        }
+                    }
+                    ActVslID = FlightGlobals.ActiveVessel.id;
+                    this.Log_Debug("OnVesselChange ActVslID " + ActVslID + " HasFreezers " + ActVslHasDpFrezr + " FreezerCams Listed " + ActFrzrCams.Count());
+                }
+                catch (Exception ex)
+                {
+                    this.Log("Failed to set active vessel and Check Freezers");
+                    this.Log("Err: " + ex);
+                    ActVslHasDpFrezr = false;
+                }
+            }
+            else
+            {
+                ActVslHasDpFrezr = false;
+            }
+        }
+
+        private void resetFreezerCams()
+        {
+            ActFrzrCams.Clear();
+            lastFrzrCam = 0;
+            this.Log_Debug("ActVslHasDpFrezer " + ActVslHasDpFrezr + " #ofFrzrs " + DpFrzrActVsl.Count());
+            foreach (DeepFreezer Frzr in DpFrzrActVsl)
+            {
+                if (Frzr.part.internalModel != null)
+                {
+                    for (int i = 0; i < Frzr.FreezerSize; i++)
+                    {
+                        string frzrcamname = "FrzCam" + (i + 1).ToString();
+                        Transform frzrcam = Frzr.part.internalModel.FindModelComponent<Transform>(frzrcamname);
+                        if (frzrcam != null)
+                        {
+                            VslFrzrCams vslfrzrcam = new VslFrzrCams(frzrcam, Frzr.part.internalModel, (i + 1), Frzr.part.name.Substring(0, 8), Frzr);
+                            ActFrzrCams.Add(vslfrzrcam);
+                            this.Log_Debug("Adding ActFrzrCams " + vslfrzrcam.FrzrCamModel.internalName + " " + vslfrzrcam.FrzrCamTransform.name);
+                        }
+                        else
+                        {
+                            this.Log_Debug("Unable to find FrzCam transform " + frzrcamname);
+                        }
+                    }
+                }
+                else
+                {
+                    this.Log_Debug("Frzr " + Frzr.name + " internalmodel is null");
+                }
+            }
+        }
+
         #region UpdateVesselDictionary
 
         private void CheckVslUpdate()
@@ -262,10 +528,10 @@ namespace DF
                 {
                     UpdateVesselInfo(vesselInfo, vessel, currentTime);
                     int crewCapacity = UpdateVesselCounts(vesselInfo, vessel, currentTime);
-                    if (DeepFreeze.Instance.DFsettings.ECreqdForFreezer && vesselInfo.numFrznCrew > 0)
-                    {
-                        UpdatePredictedVesselEC(vesselInfo, vessel, currentTime);
-                    }
+                    //if (DeepFreeze.Instance.DFsettings.ECreqdForFreezer && vesselInfo.numFrznCrew > 0)
+                    //{
+                    //    UpdatePredictedVesselEC(vesselInfo, vessel, currentTime);
+                    //}
                     if (vessel.FindPartModulesImplementing<DeepFreezer>().Count() == 0)
                     {
                         this.Log_Debug("Deleting vessel " + vesselInfo.vesselName + " - no freezer parts anymore");
@@ -300,6 +566,10 @@ namespace DF
                 }
                 else //vessel not loaded
                 {
+                    if (!DFInstalledMods.IsBGPInstalled)
+                    {
+                        UpdatePredictedVesselEC(vesselInfo, vessel, currentTime);
+                    }
                     vesselInfo.hibernating = true;
                 }
             }
@@ -333,10 +603,6 @@ namespace DF
             {
                 //calculate the predicated time EC will run out
                 double timeperiod = Planetarium.GetUniversalTime() - (double)frzr.Value.timeLastElectricity;
-                //ProtoPartSnapshot partsnapshot = vessel.protoVessel.protoPartSnapshots.Find(p => p.flightID == frzr.Key);
-                //ProtoPartModuleSnapshot modulesnapshot = partsnapshot.modules.Find(m => m.moduleName == "DeepFreezer");
-                //string strFrznChargeRequired = modulesnapshot.moduleValues.GetValue("FrznChargeRequired");
-                //bool success = Int32.TryParse(strFrznChargeRequired, out frznChargeRequired);
                 frznChargeRequired = (int)frzr.Value.frznChargeRequired;
                 ECreqdsincelastupdate += ((frznChargeRequired / 60.0f) * timeperiod * frzr.Value.numFrznCrew);
                 this.Log_Debug("predicted EC part " + frzr.Value.vesselID + " " + frzr.Value.PartName + " FrznChargeRequired " + frznChargeRequired + " timeperiod " + timeperiod + " #frzncrew " + frzr.Value.numFrznCrew);
@@ -698,21 +964,54 @@ namespace DF
             {
                 if (!DeepFreeze.Instance.DFgameSettings.knownKACAlarms.ContainsKey(entry.ID)) // So we don't already know about it
                 {
-                    Guid tmpid = new Guid(entry.VesselID);
-                    if (DeepFreeze.Instance.DFgameSettings.knownVessels.ContainsKey(tmpid)) // So we do know that vessel does have a Freezer Assocation so we add it to the KnownList
+                    if (entry.VesselID != string.Empty)
                     {
-                        AlarmInfo tempAlarmInfo = new AlarmInfo(entry.Name, tmpid);
-                        UpdateKACAlarmInfo(tempAlarmInfo, entry);
-                        DeepFreeze.Instance.DFgameSettings.knownKACAlarms.Add(entry.ID, tempAlarmInfo);
+                        Guid tmpid = Guid.Empty;
+                        try
+                        {
+                            tmpid = new Guid(entry.VesselID);
+                        }
+                        catch (FormatException)
+                        {
+                            if (invalidKACGUIDItems < 10)
+                            {
+                                Debug.Log("DeepFreeze invalid KAC alarm GUID caught (" + entry.VesselID + ")");
+                                invalidKACGUIDItems++;
+                            }
+                        }
+                        if (tmpid != Guid.Empty)
+                        {
+                            if (DeepFreeze.Instance.DFgameSettings.knownVessels.ContainsKey(tmpid)) // So we do know that vessel does have a Freezer Assocation so we add it to the KnownList
+                            {
+                                AlarmInfo tempAlarmInfo = new AlarmInfo(entry.Name, tmpid);
+                                UpdateKACAlarmInfo(tempAlarmInfo, entry);
+                                DeepFreeze.Instance.DFgameSettings.knownKACAlarms.Add(entry.ID, tempAlarmInfo);
+                            }
+                        }
                     }
                 }
                 else  //We do know about it, we update it's details
                 {
-                    Guid tmpid = new Guid(entry.VesselID);
-                    AlarmInfo tempAlarmInfo = new AlarmInfo(entry.Name, tmpid);
-                    UpdateKACAlarmInfo(tempAlarmInfo, entry);
-                    tempAlarmInfo.AlarmExecute = DeepFreeze.Instance.DFgameSettings.knownKACAlarms[entry.ID].AlarmExecute;
-                    DeepFreeze.Instance.DFgameSettings.knownKACAlarms[entry.ID] = tempAlarmInfo;
+                    Guid tmpid = Guid.Empty;
+                    try
+                    {
+                        tmpid = new Guid(entry.VesselID);
+                    }
+                    catch (FormatException)
+                    {
+                        if (invalidKACGUIDItems < 10)
+                        {
+                            Debug.Log("DeepFreeze invalid KAC alarm GUID caught (" + entry.VesselID + ")");
+                            invalidKACGUIDItems++;
+                        }
+                    }
+                    if (tmpid != Guid.Empty)
+                    {
+                        AlarmInfo tempAlarmInfo = new AlarmInfo(entry.Name, tmpid);
+                        UpdateKACAlarmInfo(tempAlarmInfo, entry);
+                        tempAlarmInfo.AlarmExecute = DeepFreeze.Instance.DFgameSettings.knownKACAlarms[entry.ID].AlarmExecute;
+                        DeepFreeze.Instance.DFgameSettings.knownKACAlarms[entry.ID] = tempAlarmInfo;
+                    }
                 }
             }
         }

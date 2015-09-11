@@ -94,6 +94,7 @@ namespace DF
         private string InputSheatamtThawFreezeKerbal = "";
         private double InputVheatamtThawFreezeKerbal = 0f;
         private bool InputVTempinKelvin = true;
+        private bool InputStripLightsOn = true;
 
         //Settings vars
         private bool ECreqdForFreezer;
@@ -109,6 +110,7 @@ namespace DF
         private double heatamtMonitoringFrznKerbals;
         private double heatamtThawFreezeKerbal;
         private bool TempinKelvin;
+        private bool StripLightsOn;
 
         //GuiVisibility
         private bool _Visible = false;
@@ -293,6 +295,7 @@ namespace DF
                         InputSheatamtMonitoringFrznKerbals = heatamtMonitoringFrznKerbals.ToString();
                         InputSheatamtThawFreezeKerbal = heatamtThawFreezeKerbal.ToString();
                         InputVTempinKelvin = TempinKelvin;
+                        InputStripLightsOn = StripLightsOn;
                         LoadConfig = false;
                     }
                     if (!Utilities.WindowVisibile(CFwindowPos))
@@ -419,7 +422,7 @@ namespace DF
                 {
                     if (frzr.Value.numFrznCrew == 0)
                     {
-                        GUILayout.Label("OK", StatusOKStyle, GUILayout.Width(DFvslPrtElec));
+                        GUILayout.Label("S/BY", StatusOKStyle, GUILayout.Width(DFvslPrtElec));
                     }
                     else
                     {
@@ -500,7 +503,7 @@ namespace DF
                             }
                             else
                             {
-                                GUILayout.Label(Utilities.FormatDateString(Planetarium.GetUniversalTime() - frzr.Value.timeLastElectricity), statusStyle, GUILayout.Width(DFvslLstUpd));
+                                GUILayout.Label(Utilities.FormatDateString(Planetarium.GetUniversalTime() - frzr.Value.timeLastElectricity), StatusOKStyle, GUILayout.Width(DFvslLstUpd));
                             }
                         }
                     }
@@ -519,7 +522,7 @@ namespace DF
                         }
                         else
                         {
-                            GUILayout.Label(Utilities.FormatDateString(Planetarium.GetUniversalTime() - frzr.Value.timeLastElectricity), statusStyle, GUILayout.Width(DFvslLstUpd));
+                            GUILayout.Label(Utilities.FormatDateString(Planetarium.GetUniversalTime() - frzr.Value.timeLastElectricity), StatusOKStyle, GUILayout.Width(DFvslLstUpd));
                         }
                     }
                 }
@@ -783,8 +786,13 @@ namespace DF
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            GUILayout.Box(new GUIContent("Use Application Launcher (restart required)", "If on uses AppLauncher, If Off Uses Toolbar"), statusStyle, GUILayout.Width(280));
+            GUILayout.Box(new GUIContent("Use Stock Launcher Icon (restart required)", "If on uses AppLauncher, If Off Uses Toolbar"), statusStyle, GUILayout.Width(280));
             InputAppL = GUILayout.Toggle(InputAppL, "", GUILayout.MinWidth(30.0F)); //you can play with the width of the text box
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Box(new GUIContent("Freezer Strip Lights On", "Turn off if you do not want the internal freezer strip lights to function"), statusStyle, GUILayout.Width(280));
+            InputStripLightsOn = GUILayout.Toggle(InputStripLightsOn, "", GUILayout.MinWidth(30.0F)); //you can play with the width of the text box
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
@@ -808,6 +816,7 @@ namespace DF
                 heatamtMonitoringFrznKerbals = InputVheatamtMonitoringFrznKerbals;
                 heatamtThawFreezeKerbal = InputVheatamtThawFreezeKerbal;
                 TempinKelvin = InputVTempinKelvin;
+                StripLightsOn = InputStripLightsOn;
                 showConfigGUI = false;
                 LoadConfig = true;
                 ConfigNode tmpNode = new ConfigNode();
@@ -1224,6 +1233,7 @@ namespace DF
             heatamtMonitoringFrznKerbals = DFsettings.heatamtMonitoringFrznKerbals;
             heatamtThawFreezeKerbal = DFsettings.heatamtThawFreezeKerbal;
             TempinKelvin = DFsettings.TempinKelvin;
+            StripLightsOn = DFsettings.StripLightsActive;
             this.Log_Debug("DeepFreezeGUI Load end");
         }
 
@@ -1249,6 +1259,7 @@ namespace DF
             DFsettings.heatamtThawFreezeKerbal = heatamtThawFreezeKerbal;
             DFsettings.heatamtMonitoringFrznKerbals = heatamtMonitoringFrznKerbals;
             DFsettings.TempinKelvin = TempinKelvin;
+            DFsettings.StripLightsActive = StripLightsOn;
             this.Log_Debug("DeepFreezeGUI Save end");
         }
 

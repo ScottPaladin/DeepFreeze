@@ -15,9 +15,7 @@
  *
  */
 
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace DF
@@ -38,18 +36,27 @@ namespace DF
 
         private void Awake()
         {
+            Debug.Log("DFEditorFilter Awake");
             GameEvents.onGUIEditorToolbarReady.Add(SubCategories);
+            //ModuleManager.MMPatchLoader.addPostPatchCallback(DFMMCallBack);
+            DFMMCallBack();
+            Debug.Log("DFEditorFilter Awake Complete");
+        }
 
+        public void DFMMCallBack()
+        {
+            Debug.Log("DFEDitorFilter DFMMCallBack");
             avPartItems.Clear();
             foreach (AvailablePart avPart in PartLoader.LoadedPartsList)
             {
                 if (!avPart.partPrefab) continue;
                 DeepFreezer moduleItem = avPart.partPrefab.GetComponent<DeepFreezer>();
-                if (avPart.name == "GlykerolTankRadial" || moduleItem)
+                if (avPart.name == "GlykerolTankRadial" || avPart.name == "DF.Glykerol.Tank" || moduleItem)
                 {
                     avPartItems.Add(avPart);
                 }
             }
+            Debug.Log("DFEDitorFilter DFMMCallBack end");
         }
 
         private bool EditorItemsFilter(AvailablePart avPart)
