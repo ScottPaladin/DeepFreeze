@@ -24,9 +24,11 @@ KomradeJack - https://www.freesound.org/people/KomradeJack/sounds/213578/
 AlaskaRobotics - https://www.freesound.org/people/AlaskaRobotics/sounds/221566/  
 JohnsonBrandediting - https://www.freesound.org/people/JohnsonBrandEditing/sounds/173932/  
 Oddworld - https://www.freesound.org/people/Odd...sounds/171246/
-user nli2work on KSP forum - Internal door handle model and light switch model.
+Benboncan - http://www.freesound.org/people/Benboncan/sounds/61792/
+Halleck -http://www.freesound.org/people/Halleck/sounds/19485/
+user nli2work on KSP forum - Internal Props - door handle, light switch, EC monitoring button, Glykerol monitoring button.
 
 Mod Contributors:
 ===========
-JPLRepo - Coding, implementation of models and distribution.  
-MerlinsMaster - Internal Models and Textures.
+JPLRepo - Plugin design and development, C# coding, Implementation and releases. 
+MerlinsMaster - Graphic design, 3D Models, textures.
