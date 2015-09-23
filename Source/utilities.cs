@@ -224,7 +224,6 @@ namespace DF
         //Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files(the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
         //The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
         private static Mesh[] helmetMesh = { null, null };
-
         private static Mesh[] visorMesh = { null, null };
         private static bool helmetMeshstored = false;
 
@@ -454,6 +453,98 @@ namespace DF
             {
                 yield return null;
             } while (animation.IsPlaying(name));
+        }
+
+        internal static RuntimeAnimatorController kerbalIVAController;
+
+        internal static void subdueIVAKerbalAnimations(Kerbal kerbal)
+        {
+            //Transform Joints01Transform;
+            //Joints01Transform = kerbal.transform.Find("globalMove01");
+
+            //Joints01Transform = FindInChildren(kerbal.transform, "joints01");
+            /*
+            foreach (kerbalExpressionSystem kes in kerbal.gameObject.GetComponentsInChildren<kerbalExpressionSystem>())
+            {
+                Log_Debug("KES " + kes.name);
+                int exparm = Animator.StringToHash(kes.expressionParameterName);
+                int varparm = Animator.StringToHash(kes.varianceParameterName);
+                int secvarparm = Animator.StringToHash(kes.secondaryVarianceParameterName);
+                int idlebool = Animator.StringToHash(kes.idleBoolName);
+                int idlefloat = Animator.StringToHash(kes.idleFloatName);
+                int hashelmet = Animator.StringToHash(kes.hasHelmetName);
+                Animator anim = kes.animator;
+            }
+                        
+            var go = kerbal.transform.gameObject;
+            Log_Debug("Kerbal Transforms " + go.name);
+            
+
+            foreach (Transform t in go.GetComponentsInChildren<Transform>(true)) //include inactive
+            {
+                Log_Debug(t.name);
+            }
+
+            foreach (KerbalExpressionAI kesAI in kerbal.gameObject.GetComponentsInChildren<KerbalExpressionAI>())
+            {
+                Log_Debug("KESAI " + kesAI.name);
+            }
+            */
+            foreach (Animator anim in kerbal.gameObject.GetComponentsInChildren<Animator>())
+            {
+                if (anim.name == kerbal.name)
+                {                    
+                    kerbalIVAController = anim.runtimeAnimatorController;
+                    RuntimeAnimatorController myController = anim.runtimeAnimatorController;
+                    AnimatorOverrideController myOverrideController = new AnimatorOverrideController();
+                    myOverrideController.runtimeAnimatorController = myController;
+                    myOverrideController["idle_animA_upWord"] = myOverrideController["idle_animH_notDoingAnything"];
+                    myOverrideController["idle_animB"] = myOverrideController["idle_animH_notDoingAnything"];
+                    myOverrideController["idle_animC"] = myOverrideController["idle_animH_notDoingAnything"];
+                    myOverrideController["idle_animD_dance"] = myOverrideController["idle_animH_notDoingAnything"];
+                    myOverrideController["idle_animE_drummingHelmet"] = myOverrideController["idle_animH_notDoingAnything"];
+                    myOverrideController["idle_animI_drummingControls"] = myOverrideController["idle_animH_notDoingAnything"];
+                    myOverrideController["idle_animJ_yo"] = myOverrideController["idle_animH_notDoingAnything"];
+                    myOverrideController["idle_animJ_IdleLoopShort"] = myOverrideController["idle_animH_notDoingAnything"];
+                    myOverrideController["idle_animK_footStretch"] = myOverrideController["idle_animH_notDoingAnything"];
+                    myOverrideController["head_rotation_staringUp"] = myOverrideController["idle_animH_notDoingAnything"];
+                    myOverrideController["head_rotation_longLookUp"] = myOverrideController["idle_animH_notDoingAnything"];
+                    myOverrideController["head_faceExp_fun_ohAh"] = myOverrideController["idle_animH_notDoingAnything"];
+                    // Put this line at the end because when you assign a controller on an Animator, unity rebinds all the animated properties 
+                    anim.runtimeAnimatorController = myOverrideController;
+                    Log_Debug("Animator " + anim.name + " for " + kerbal.name + " subdued");
+                }
+            }
+        }
+
+        internal static void reinvigerateIVAKerbalAnimations(Kerbal kerbal)
+        {
+            foreach (Animator anim in kerbal.gameObject.GetComponentsInChildren<Animator>())
+            {
+                if (anim.name == kerbal.name)
+                {                    
+                    RuntimeAnimatorController myController = kerbalIVAController;
+                    AnimatorOverrideController myOverrideController = new AnimatorOverrideController();
+                    myOverrideController.runtimeAnimatorController = myController;                    
+                    // Put this line at the end because when you assign a controller on an Animator, unity rebinds all the animated properties 
+                    anim.runtimeAnimatorController = myOverrideController;
+                    Log_Debug("Animator " + anim.name + " for " + kerbal.name + " reinvigerated");
+                }
+            }
+        }
+
+        // The following method is taken from Kerbal Alarm Clock as-is. Which is covered by MIT license.
+        internal static int getVesselIdx(Vessel vtarget)
+        {
+            for (int i = 0; i < FlightGlobals.Vessels.Count; i++)
+            {
+                if (FlightGlobals.Vessels[i].id == vtarget.id)
+                {
+                    Log_Debug("Found Target idx=" + i + " (" + vtarget.id.ToString() + ")");
+                    return i;
+                }
+            }
+            return -1;
         }
 
         //Temperature

@@ -33,13 +33,18 @@ namespace DF
         private float DFWINDOW_WIDTH = 420;
         private float CFWINDOW_WIDTH = 340;
         private float KACWINDOW_WIDTH = 485;
+        private float VSWINDOW_WIDTH = 340;
         private float WINDOW_BASE_HEIGHT = 350;
         private Rect DFwindowPos;
         private Rect CFwindowPos;
         private Rect DFKACwindowPos;
+        private Rect DFVSwindowPos;
+        private Rect DFVSFwindowPos;
         private static int windowID = 199999;
         private static int CFwindowID = 200000;
         private static int KACwindowID = 2000001;
+        private static int VSwindowID = 2000002;
+        private static int VSFwindowID = 2000003;
         private GUIStyle statusStyle, frozenStyle, sectionTitleStyle, resizeStyle, StatusOKStyle, StatusWarnStyle, StatusRedStyle, StatusGrayStyle, ButtonStyle;
         private Vector2 GUIscrollViewVector, GUIscrollViewVector2, GUIscrollViewVectorKAC, GUIscrollViewVectorKACKerbals = Vector2.zero;
         private bool mouseDownDF = false;
@@ -95,6 +100,7 @@ namespace DF
         private double InputVheatamtThawFreezeKerbal = 0f;
         private bool InputVTempinKelvin = true;
         private bool InputStripLightsOn = true;
+        private bool InputfatalOption = false;
 
         //Settings vars
         private bool ECreqdForFreezer;
@@ -103,6 +109,7 @@ namespace DF
         private bool AutoRecoverFznKerbals;
         private float KSCcostToThawKerbal;
         private int ECReqdToFreezeThaw;
+        private bool fatalOption;
         private int GlykerolReqdToFreeze;
         private bool RegTempReqd;
         private double RegTempFreeze;
@@ -111,6 +118,14 @@ namespace DF
         private double heatamtThawFreezeKerbal;
         private bool TempinKelvin;
         private bool StripLightsOn;
+
+        //SwitchVessel vars
+        private bool showUnabletoSwitchVessel = false;
+        private bool showSwitchVessel = false;
+        private bool switchVesselManual = false;
+        private string showSwitchVesselStr = string.Empty;
+        private Vessel switchVessel;
+        private double switchVesselManualTimer = 0d;
 
         //GuiVisibility
         private bool _Visible = false;
@@ -204,10 +219,14 @@ namespace DF
             windowID = new System.Random().Next();
             CFwindowID = windowID + 1;
             KACwindowID = CFwindowID + 1;
+            VSwindowID = KACwindowID + 1;
+            VSFwindowID = VSFwindowID + 1;
 
             DFwindowPos = new Rect(40, Screen.height / 2 - 100, DFWINDOW_WIDTH, WINDOW_BASE_HEIGHT);
             CFwindowPos = new Rect(450, Screen.height / 2 - 100, CFWINDOW_WIDTH, 250);
             DFKACwindowPos = new Rect(600, Screen.height / 2 - 100, KACWINDOW_WIDTH, WINDOW_BASE_HEIGHT);
+            DFVSwindowPos = new Rect(Screen.width / 2 - (VSWINDOW_WIDTH / 2), Screen.height / 2 - 100, VSWINDOW_WIDTH, WINDOW_BASE_HEIGHT);
+            DFVSFwindowPos = new Rect(Screen.width / 2 - (VSWINDOW_WIDTH / 2), Screen.height / 2 - 100, VSWINDOW_WIDTH, WINDOW_BASE_HEIGHT);
             DFtxtWdthName = Mathf.Round((DFWINDOW_WIDTH - 28f) / 3.5f);
             DFtxtWdthProf = Mathf.Round((DFWINDOW_WIDTH - 28f) / 4.8f);
             DFtxtWdthVslN = Mathf.Round((DFWINDOW_WIDTH - 28f) / 3.5f);
@@ -288,6 +307,7 @@ namespace DF
                         InputVautoRecover = AutoRecoverFznKerbals;
                         InputScostThawKerbal = KSCcostToThawKerbal.ToString();
                         InputSecReqdToFreezeThaw = ECReqdToFreezeThaw.ToString();
+                        InputfatalOption = fatalOption;
                         InputSglykerolReqdToFreeze = GlykerolReqdToFreeze.ToString();
                         InputVRegTempReqd = RegTempReqd;
                         InputSRegTempFreeze = RegTempFreeze.ToString();
@@ -310,6 +330,28 @@ namespace DF
                     DFKACwindowPos = GUILayout.Window(KACwindowID, DFKACwindowPos, windowKAC, "DeepFreeze Alarms", GUILayout.ExpandWidth(true),
                         GUILayout.ExpandHeight(true), GUILayout.MinWidth(360), GUILayout.MinHeight(150));
                 }
+                if (showSwitchVessel)
+                {
+                    if (!Utilities.WindowVisibile(DFVSwindowPos))
+                        Utilities.MakeWindowVisible(DFVSwindowPos);
+                    DFVSwindowPos = GUILayout.Window(VSwindowID, DFVSwindowPos, windowVS, "DeepFreeze Vessel Switch", GUILayout.ExpandWidth(false),
+                        GUILayout.ExpandHeight(true), GUILayout.Width(320), GUILayout.MinHeight(100));
+                }
+                if (showUnabletoSwitchVessel && !switchVesselManual)
+                {
+                    if (!Utilities.WindowVisibile(DFVSFwindowPos))
+                        Utilities.MakeWindowVisible(DFVSFwindowPos);
+                    DFVSFwindowPos = GUILayout.Window(VSFwindowID, DFVSFwindowPos, windowVSF, "DeepFreeze Vessel Switch Failed", GUILayout.ExpandWidth(false),
+                        GUILayout.ExpandHeight(true), GUILayout.Width(320), GUILayout.MinHeight(100));
+                }     
+                if (switchVesselManual)
+                {
+                    if (Planetarium.GetUniversalTime() - switchVesselManualTimer > 30)
+                    {
+                        switchVesselManualTimer = 0;
+                        switchVesselManual = false;
+                    }                    
+                }                          
             }
         }
 
@@ -408,7 +450,10 @@ namespace DF
                             }
                         case FrzrTmpStatus.RED:
                             {
-                                GUILayout.Label(TempVar, StatusRedStyle, GUILayout.Width(DFvslPrtTmp));
+                                GUILayout.Label(TempVar, StatusRedStyle, GUILayout.Width(DFvslPrtTmp));                                
+                                switchVessel = FlightGlobals.Vessels.Find(a => a.id == frzr.Value.vesselID);
+                                showSwitchVesselStr = "Vessel " + switchVessel.vesselName + " is Over-Heating.";
+                                showSwitchVessel = true;
                                 break;
                             }
                     }
@@ -428,13 +473,19 @@ namespace DF
                     {
                         if (frzr.Value.outofEC)
                         {
-                            GUILayout.Label("OUT", StatusRedStyle, GUILayout.Width(DFvslPrtElec));
+                            GUILayout.Label("OUT", StatusRedStyle, GUILayout.Width(DFvslPrtElec));                            
+                            switchVessel = FlightGlobals.Vessels.Find(a => a.id == frzr.Value.vesselID);
+                            showSwitchVesselStr = "Vessel " + switchVessel.vesselName + " is out of ElectricCharge./n Situation Critical.";
+                            showSwitchVessel = true;
                         }
                         else
                         {
                             if (vsl.predictedECOut < DFsettings.EClowCriticalTime)
                             {
                                 GUILayout.Label("ALRT", StatusRedStyle, GUILayout.Width(DFvslPrtElec));
+                                switchVessel = FlightGlobals.Vessels.Find(a => a.id == frzr.Value.vesselID);
+                                showSwitchVesselStr = "Vessel " + switchVessel.vesselName + " is almost out of ElectricCharge.";
+                                showSwitchVessel = true;
                             }
                             else
                             {
@@ -699,6 +750,11 @@ namespace DF
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
+            GUILayout.Box(new GUIContent("Fatal EC/Heat Option", "If on Kerbals will die if EC runs out or it gets too hot"), statusStyle, GUILayout.Width(280));
+            InputfatalOption = GUILayout.Toggle(InputfatalOption, "", GUILayout.MinWidth(30.0F)); //you can play with the width of the text box
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
             GUILayout.Box(new GUIContent("AutoRecover Frozen Kerbals at KSC", "If on, will AutoRecover Frozen Kerbals at the KSC and deduct the Cost from your funds"), statusStyle, GUILayout.Width(280));
             InputVautoRecover = GUILayout.Toggle(InputVautoRecover, "", GUILayout.MinWidth(30.0F)); //you can play with the width of the text box
             GUILayout.EndHorizontal();
@@ -809,6 +865,7 @@ namespace DF
                 AutoRecoverFznKerbals = InputVautoRecover;
                 KSCcostToThawKerbal = InputVcostThawKerbal;
                 ECReqdToFreezeThaw = InputVecReqdToFreezeThaw;
+                fatalOption = InputfatalOption;
                 GlykerolReqdToFreeze = InputVglykerolReqdToFreeze;
                 RegTempReqd = InputVRegTempReqd;
                 RegTempFreeze = InputVRegTempFreeze;
@@ -1123,6 +1180,88 @@ namespace DF
             GUI.DragWindow();
         }
 
+        private void windowVS(int id)
+        {
+            //Init styles
+            sectionTitleStyle = new GUIStyle(GUI.skin.label);
+            sectionTitleStyle.alignment = TextAnchor.MiddleCenter;
+            sectionTitleStyle.stretchWidth = true;
+            sectionTitleStyle.fontStyle = FontStyle.Bold;
+
+            statusStyle = new GUIStyle(GUI.skin.label);
+            statusStyle.alignment = TextAnchor.MiddleLeft;
+            statusStyle.stretchWidth = true;
+            statusStyle.normal.textColor = Color.white;
+                        
+            GUILayout.BeginVertical();
+            GUILayout.BeginHorizontal();
+            //GUILayout.Box(new GUIContent("ElectricCharge is running out on vessel, you must switch to the vessel now.", "Switch to DeepFreeze vessel required"), statusStyle, GUILayout.Width(280));
+            GUILayout.Box(new GUIContent(showSwitchVesselStr, showSwitchVesselStr), statusStyle, GUILayout.Width(280));
+            GUILayout.EndHorizontal();
+                        
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button(new GUIContent("Switch to Vessel", "Switch to Vessel"), GUILayout.Width(155f)))
+            {
+                showSwitchVessel = false;
+                //Jump to vessel code here.
+                int intVesselidx = Utilities.getVesselIdx(switchVessel);
+                if (intVesselidx < 0)
+                {
+                    this.Log("Couldn't find the index for the vessel " + switchVessel.vesselName + "(" + switchVessel.id.ToString() +")");
+                    showUnabletoSwitchVessel = true;                    
+                }
+                else
+                {
+                    if (HighLogic.LoadedSceneIsFlight)
+                    {
+                        FlightGlobals.SetActiveVessel(switchVessel);
+                    }
+                    else
+                    {
+                        String strret = GamePersistence.SaveGame("DFJumpToShip", HighLogic.SaveFolder, SaveMode.OVERWRITE);
+                        Game tmpGame = GamePersistence.LoadGame(strret, HighLogic.SaveFolder, false, false);
+                        FlightDriver.StartAndFocusVessel(tmpGame, intVesselidx);
+                    }
+                    
+                }                
+            }            
+            GUILayout.EndHorizontal();
+            GUILayout.EndVertical();
+            GUI.DragWindow();
+        }
+
+        private void windowVSF(int id)
+        {
+            //Init styles
+            sectionTitleStyle = new GUIStyle(GUI.skin.label);
+            sectionTitleStyle.alignment = TextAnchor.MiddleCenter;
+            sectionTitleStyle.stretchWidth = true;
+            sectionTitleStyle.fontStyle = FontStyle.Bold;
+
+            statusStyle = new GUIStyle(GUI.skin.label);
+            statusStyle.alignment = TextAnchor.MiddleLeft;
+            statusStyle.stretchWidth = true;
+            statusStyle.normal.textColor = Color.white;
+
+            GUILayout.BeginVertical();
+            GUILayout.BeginHorizontal();
+            GUILayout.Box(new GUIContent("Automatic Switch to vessel failed.\nPlease switch manually to vessel Immediately", "Switch to DeepFreeze vessel required"), statusStyle, GUILayout.Width(280));
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button(new GUIContent("OK", "OK"), GUILayout.Width(155f)))
+            {
+                showSwitchVessel = false;
+                showUnabletoSwitchVessel = false;
+                switchVesselManual = true;
+                switchVesselManualTimer = Planetarium.GetUniversalTime();
+                
+            }
+            GUILayout.EndHorizontal();
+            GUILayout.EndVertical();
+            GUI.DragWindow();
+        }
+
         private void HandleResizeEventsDF(Rect resizeRect)
         {
             var theEvent = Event.current;
@@ -1224,6 +1363,7 @@ namespace DF
             AutoRecoverFznKerbals = DFsettings.AutoRecoverFznKerbals;
             debugging = DFsettings.debugging;
             ECreqdForFreezer = DFsettings.ECreqdForFreezer;
+            fatalOption = DFsettings.fatalOption;
             KSCcostToThawKerbal = DFsettings.KSCcostToThawKerbal;
             ECReqdToFreezeThaw = DFsettings.ECReqdToFreezeThaw;
             GlykerolReqdToFreeze = DFsettings.GlykerolReqdToFreeze;
@@ -1250,6 +1390,7 @@ namespace DF
             DFsettings.AutoRecoverFznKerbals = AutoRecoverFznKerbals;
             DFsettings.debugging = debugging;
             DFsettings.ECreqdForFreezer = ECreqdForFreezer;
+            DFsettings.fatalOption = fatalOption;
             DFsettings.KSCcostToThawKerbal = KSCcostToThawKerbal;
             DFsettings.ECReqdToFreezeThaw = ECReqdToFreezeThaw;
             DFsettings.GlykerolReqdToFreeze = GlykerolReqdToFreeze;

@@ -75,7 +75,7 @@ namespace DF
             BGPinstalled = DFInstalledMods.IsBGPInstalled;  //Background Processing Mod
             GameEvents.onVesselRename.Add(onVesselRename);
             GameEvents.onVesselChange.Add(onVesselChange);
-            GameEvents.onVesselLoaded.Add(onVesselChange);
+            GameEvents.onVesselLoaded.Add(onVesselLoad);
             try
             {
                 keyFrzrCam = (KeyCode)DeepFreeze.Instance.DFsettings.internalFrzrCamCode;
@@ -103,16 +103,18 @@ namespace DF
             DeepFreeze.Instance.DFgameSettings.DmpKnownFznKerbals();
             this.Log_Debug("DFIMemory startup dump all kerballs");
             Utilities.dmpAllKerbals();
-        }
+            resetFreezerCams();
+        }            
 
         private void OnDestroy()
         {
             this.Log_Debug("DFIntMemory OnDestroy");
             //destroy the event hook for KAC
-            KACWrapper.KAC.onAlarmStateChanged -= KAC_onAlarmStateChanged;
+            if (KACWrapper.APIReady)
+                KACWrapper.KAC.onAlarmStateChanged -= KAC_onAlarmStateChanged;
             GameEvents.onVesselRename.Remove(onVesselRename);
             GameEvents.onVesselChange.Remove(onVesselChange);
-            GameEvents.onVesselLoaded.Remove(onVesselChange);
+            GameEvents.onVesselLoaded.Remove(onVesselLoad);
             this.Log_Debug("DFIntMemory end OnDestroy");
         }
 
@@ -135,7 +137,7 @@ namespace DF
             }
 
             if (HighLogic.LoadedSceneIsFlight && ActVslHasDpFrezr)
-            {
+            {                                
                 //If user hits Modifier Key - D switch to freezer cams.
                 if (GameSettings.MODIFIER_KEY.GetKey() && Input.GetKeyDown(keyFrzrCam) && ActFrzrCams.Count > 0)
                 {
@@ -418,6 +420,14 @@ namespace DF
             }
         }
 
+        internal void onVesselLoad(Vessel vessel)
+        {
+            this.Log_Debug("OnVesselLoad activevessel " + FlightGlobals.ActiveVessel.id + " parametervesselid " + vessel.id);
+            resetFreezerCams();
+            onVesselChange(vessel);
+        }
+
+
         internal void onVesselChange(Vessel vessel)
         {
             this.Log_Debug("OnVesselChange activevessel " + FlightGlobals.ActiveVessel.id + " parametervesselid " + vessel.id);
@@ -433,20 +443,25 @@ namespace DF
                     else
                     {
                         ActVslHasDpFrezr = true;
-                        DpFrzrActVsl = FlightGlobals.ActiveVessel.FindPartModulesImplementing<DeepFreezer>();
+                        //DpFrzrActVsl = FlightGlobals.ActiveVessel.FindPartModulesImplementing<DeepFreezer>();
+                        DpFrzrActVsl = vessel.FindPartModulesImplementing<DeepFreezer>();
                         //Check if vessel id has changed or last freezer cam transforms is now null, reset the freezer cams.
 
                         this.Log_Debug("About to test actfrzrcams.count=" + ActFrzrCams.Count());
                         if (ActVslID != vessel.id || ActFrzrCams.Count() > 0)
                         {
-                            if (ActFrzrCams.Count() > 0)
+                            foreach (DeepFreezer frzr in DpFrzrActVsl)
                             {
-                                if (ActFrzrCams[lastFrzrCam].FrzrCamTransform == null)
+                                if (frzr.partHasInternals)
                                 {
-                                    this.Log_Debug("about to reset");
-                                    resetFreezerCams();
+                                    if (ActFrzrCams[lastFrzrCam].FrzrCamTransform == null)
+                                    {
+                                        this.Log_Debug("about to reset");
+                                        resetFreezerCams();
+                                    } 
+                                    break;
                                 }
-                            }
+                            }                            
                         }
                     }
                     ActVslID = FlightGlobals.ActiveVessel.id;
@@ -456,7 +471,7 @@ namespace DF
                 {
                     this.Log("Failed to set active vessel and Check Freezers");
                     this.Log("Err: " + ex);
-                    ActVslHasDpFrezr = false;
+                    //ActVslHasDpFrezr = false;
                 }
             }
             else
@@ -467,34 +482,43 @@ namespace DF
 
         private void resetFreezerCams()
         {
-            ActFrzrCams.Clear();
-            lastFrzrCam = 0;
-            this.Log_Debug("ActVslHasDpFrezer " + ActVslHasDpFrezr + " #ofFrzrs " + DpFrzrActVsl.Count());
-            foreach (DeepFreezer Frzr in DpFrzrActVsl)
+            try
             {
-                if (Frzr.part.internalModel != null)
+                ActFrzrCams.Clear();
+                lastFrzrCam = 0;
+                this.Log_Debug("ActVslHasDpFrezer " + ActVslHasDpFrezr + " #ofFrzrs " + DpFrzrActVsl.Count());
+                foreach (DeepFreezer Frzr in DpFrzrActVsl)
                 {
-                    for (int i = 0; i < Frzr.FreezerSize; i++)
+                    if (Frzr.part.internalModel != null)
                     {
-                        string frzrcamname = "FrzCam" + (i + 1).ToString();
-                        Transform frzrcam = Frzr.part.internalModel.FindModelComponent<Transform>(frzrcamname);
-                        if (frzrcam != null)
+                        for (int i = 0; i < Frzr.FreezerSize; i++)
                         {
-                            VslFrzrCams vslfrzrcam = new VslFrzrCams(frzrcam, Frzr.part.internalModel, (i + 1), Frzr.part.name.Substring(0, 8), Frzr);
-                            ActFrzrCams.Add(vslfrzrcam);
-                            this.Log_Debug("Adding ActFrzrCams " + vslfrzrcam.FrzrCamModel.internalName + " " + vslfrzrcam.FrzrCamTransform.name);
-                        }
-                        else
-                        {
-                            this.Log_Debug("Unable to find FrzCam transform " + frzrcamname);
+                            string frzrcamname = "FrzCam" + (i + 1).ToString();
+                            Transform frzrcam = Frzr.part.internalModel.FindModelComponent<Transform>(frzrcamname);
+                            if (frzrcam != null)
+                            {
+                                VslFrzrCams vslfrzrcam = new VslFrzrCams(frzrcam, Frzr.part.internalModel, (i + 1), Frzr.part.name.Substring(0, 8), Frzr);
+                                ActFrzrCams.Add(vslfrzrcam);
+                                this.Log_Debug("Adding ActFrzrCams " + vslfrzrcam.FrzrCamModel.internalName + " " + vslfrzrcam.FrzrCamTransform.name);
+                            }
+                            else
+                            {
+                                this.Log_Debug("Unable to find FrzCam transform " + frzrcamname);
+                            }
                         }
                     }
-                }
-                else
-                {
-                    this.Log_Debug("Frzr " + Frzr.name + " internalmodel is null");
+                    else
+                    {
+                        this.Log_Debug("Frzr " + Frzr.name + " internalmodel is null");
+                    }
                 }
             }
+            catch (Exception ex)
+            {
+                this.Log("Failed to resetFreezerCams");
+                //this.Log("Err: " + ex);
+            }
+
         }
 
         #region UpdateVesselDictionary

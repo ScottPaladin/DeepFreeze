@@ -110,11 +110,20 @@ namespace DF
 
         internal static bool RTVesselConnected(Guid id)
         {
+            
             bool RTVslConnected = false;
-            if (IsRTInstalled)
+            try
             {
-                RTVslConnected = (RemoteTech.API.API.HasLocalControl(id) || RemoteTech.API.API.HasAnyConnection(id));
-                //Utilities.Log_Debug("vessel " + id + "haslocal " + RemoteTech.API.API.HasLocalControl(id) + " has any " + RemoteTech.API.API.HasAnyConnection(id));
+                if (IsRTInstalled)
+                {
+                    RTVslConnected = (RemoteTech.API.API.HasLocalControl(id) || RemoteTech.API.API.HasAnyConnection(id));
+                    //Utilities.Log_Debug("vessel " + id + "haslocal " + RemoteTech.API.API.HasLocalControl(id) + " has any " + RemoteTech.API.API.HasAnyConnection(id));
+                }
+            }
+            catch (Exception ex)
+            {
+                Utilities.Log("DeepFreeze", "Exception attempting to check RemoteTech connections. Report this error on the Forum Thread.");
+                Utilities.Log("DeepFreeze", "Err: " + ex);
             }
             return RTVslConnected;
         }
@@ -123,8 +132,17 @@ namespace DF
         {
             get
             {
+                
                 double RTVslDelay = 0f;
-                RTVslDelay = RemoteTech.API.API.GetShortestSignalDelay(FlightGlobals.ActiveVessel.id);
+                try
+                {
+                    RTVslDelay = RemoteTech.API.API.GetShortestSignalDelay(FlightGlobals.ActiveVessel.id);
+                }
+                catch (Exception ex)
+                {
+                    Utilities.Log("DeepFreeze", "Exception attempting to check RemoteTech VesselDelay. Report this error on the Forum Thread.");
+                    Utilities.Log("DeepFreeze", "Err: " + ex);
+                }
                 return RTVslDelay;
             }
         }

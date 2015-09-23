@@ -39,6 +39,9 @@
     <Reference Include="DFInterface">
       <HintPath>..\DFInterface\bin\Debug\DFInterface.dll</HintPath>
     </Reference>
+    <Reference Include="RasterPropMonitor">
+      <HintPath>..\..\RasterPropMonitor\RasterPropMonitor\obj\Debug\RasterPropMonitor.dll</HintPath>
+    </Reference>
     <Reference Include="RemoteTech">
       <HintPath>.\RemoteTech.dll</HintPath>
     </Reference>
@@ -52,6 +55,10 @@
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
+    <Reference Include="TextureReplacer, Version=2.4.10.13957, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>.\TextureReplacer.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\UnityEngine.dll</HintPath>
@@ -82,13 +89,19 @@
     <None Include="ksp_dir.txt" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Changelog.txt" />
+    <None Include="Changelog.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>set /p KSP_DIR=&lt;"$(ProjectDir)ksp_dir.txt"
 
 xcopy "$(TargetPath)" "$(SolutionDir)..\GameData\REPOSoftTech\$(ProjectName)\Plugins\" /Y
+
+xcopy "$(TargetDir)$(ProjectName).pdb" "$(SolutionDir)..\GameData\REPOSoftTech\$(ProjectName)\Plugins\" /Y
+
+cd "$(TargetDir)"
+"C:\Program Files (x86)\mono\bin\mono.exe" "C:\Program Files (x86)\mono\lib\mono\4.5\pdb2mdb.exe" "$(TargetFileName)"
+xcopy "$(TargetDir)$(ProjectName).dll.mdb" "$(SolutionDir)..\GameData\REPOSoftTech\$(ProjectName)\Plugins\" /Y
 
 where /q "C:\7za\:7za.exe"
 if %25ERRORLEVEL%25 == 1 (
@@ -100,7 +113,6 @@ if exist "$(SolutionDir)..\$(ProjectName).zip" del "$(SolutionDir)..\$(ProjectNa
    
 c:\7za\7za a -tzip -r  "$(SolutionDir)..\$(ProjectName).zip" "$(SolutionDir)..\GameData"
 c:\7za\7za d -r  -x!REPOSoftTech.png -x!Glykerol.png -x!DFtoolbar.png -x!DeepFreezeOff.png -x!DeepFreezeOn.png -x!alphaonly.png "$(SolutionDir)..\$(ProjectName).zip" "*.ddsified" "*.pdb" "*.mdb" "*.png"
-c:\7za\7za d -r "$(SolutionDir)..\$(ProjectName).zip" "*\DFInterface*" *\DFInterface.zip"
 xcopy /E /Y "$(SolutionDir)..\GameData" "%25KSP_DIR%25\GameData"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
