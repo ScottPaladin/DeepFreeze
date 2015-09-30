@@ -483,7 +483,7 @@ namespace DF
                         if (_externaldoorstate != _prevexterndoorstate)
                         {
                             // if the previous state was closing and now it's closed we can take our helmets off.
-                            if (_prevexterndoorstate == DoorState.CLOSING && _externaldoorstate == DoorState.CLOSED)
+                            if (_prevexterndoorstate == DoorState.CLOSING || _externaldoorstate == DoorState.CLOSED)
                             {
                                 Utilities.setHelmets(this.part, false);
                             }
@@ -520,7 +520,7 @@ namespace DF
                     ScreenMessages.RemoveMessage(IVAkerbalPod);
                     if (Utilities.VesselIsInIVA(this.part.vessel))
                     {
-                        this.Log_Debug("Vessel is in IVA mode");
+                        //this.Log_Debug("Vessel is in IVA mode");
                         vesselisinIVA = true;
                         vesselisinInternal = false;
                         Kerbal actkerbal = Utilities.FindCurrentKerbal(this.part);
@@ -532,7 +532,7 @@ namespace DF
                             {
                                 SeatIndx = crew.seatIdx;
                             }
-                            this.Log_Debug("ActiveKerbalFound, seatidx=" + SeatIndx);
+                            //this.Log_Debug("ActiveKerbalFound, seatidx=" + SeatIndx);
                             if (SeatIndx != -1)
                             {
                                 SeatIndx++;
@@ -553,7 +553,7 @@ namespace DF
                         ScreenMessages.RemoveMessage(IVAkerbalPart);
                         ScreenMessages.RemoveMessage(IVAkerbalPod);
                         vesselisinIVA = false;
-                        this.Log_Debug("Vessel is NOT in IVA mode");
+                        //this.Log_Debug("Vessel is NOT in IVA mode");
                         if (Utilities.IsInInternal())
                         {
                             vesselisinInternal = true;
@@ -561,7 +561,7 @@ namespace DF
                             {
                                 mon_beep.Play();
                             }
-                            this.Log_Debug("Vessel is in Internal mode");
+                            //this.Log_Debug("Vessel is in Internal mode");
                         }
                         else
                         {
@@ -570,7 +570,7 @@ namespace DF
                             {
                                 mon_beep.Stop();
                             }
-                            this.Log_Debug("Vessel is NOT in Internal mode");
+                            //this.Log_Debug("Vessel is NOT in Internal mode");
                         }
                     }
 
@@ -598,21 +598,29 @@ namespace DF
                         switch (JSITransparentPod.transparentPodSetting)
                         {
                             case "ON":
-                                if (_externaldoorstate != DoorState.CLOSED || _externaldoorstate != DoorState.CLOSING)
+                                // If the doors are closed or closing set open doors event active
+                                if (_externaldoorstate != DoorState.CLOSED && _externaldoorstate != DoorState.CLOSING)
                                 {
-                                    Events["eventOpenDoors"].active = true;
-                                }
-                                if (_externaldoorstate != DoorState.OPEN || _externaldoorstate != DoorState.OPENING)
-                                {
+                                    Events["eventOpenDoors"].active = false;
                                     Events["eventCloseDoors"].active = true;
                                 }
-
+                                else
+                                {
+                                    //If the doors are open or opening set close doors event active
+                                    if (_externaldoorstate != DoorState.OPEN && _externaldoorstate != DoorState.OPENING)
+                                    {
+                                        Events["eventOpenDoors"].active = true;
+                                        Events["eventCloseDoors"].active = false;
+                                    }
+                                }                               
                                 break;
 
                             default:
                                 this.Log_Debug("RPM set to OFF or AUTO for transparent pod");
                                 //hasExternalDoor = false;
-                                if (_externaldoorstate != DoorState.CLOSED || _externaldoorstate != DoorState.CLOSING)
+                                // We must close the doors if they are not or we see an empty internal.
+                                DoorState actualDoorState = getdoorState();                                
+                                if (actualDoorState != DoorState.CLOSED)
                                 {
                                     try
                                     {
@@ -632,7 +640,15 @@ namespace DF
                                         Debug.Log("Exception trying to run the Doorhandle animation");
                                         Debug.Log("Err: " + ex);
                                     }
-                                    StartCoroutine(closeDoors(float.MinValue));
+                                    if (animationName != null)
+                                    {
+                                        externalDoorAnim[animationName].normalizedTime = 1;
+                                        externalDoorAnim[animationName].speed = float.MinValue;
+                                        externalDoorAnim.Play("Open");
+                                    }
+                                    _prevexterndoorstate = _externaldoorstate;
+                                    _externaldoorstate = DoorState.CLOSED;
+
                                 }
                                 Events["eventOpenDoors"].active = false;
                                 Events["eventCloseDoors"].active = false;
@@ -714,8 +730,7 @@ namespace DF
 
             //If we have an external door (CRY-0300) enabled set the current door state and the helmet states
             if (hasExternalDoor)
-            {
-                //_externaldoorstate = setdoorState();
+            {                
                 setHelmetstoDoorState();
             }
             if (partHasInternals)
@@ -743,8 +758,8 @@ namespace DF
                             anim.Stop();
                         }
                     }
-                }
-            }
+                }                
+            }   
 
             this.Log_Debug("DeepFreezer part dump all kerbals on startup");
             Utilities.dmpAllKerbals();
@@ -769,7 +784,7 @@ namespace DF
             }
 
             //If an emergency thaw has been called, thaw the first kerbal in the stored frozen kerbal list until none remain.
-            if (!IsFreezeActive && !IsThawActive && emergencyThawInProgress)  
+            if (!IsFreezeActive && !IsThawActive && emergencyThawInProgress && vessel.isActiveVessel)  
             {
                 if (_StoredCrewList.Count > 0)
                 {
@@ -963,6 +978,7 @@ namespace DF
                 }
                 else  // no frozen kerbals, so just update last time EC checked
                 {
+                    ScreenMessages.PostScreenMessage("Over Temperature - Emergency Thaw in Progress.", 10.0f, ScreenMessageStyle.UPPER_CENTER);
                     this.Log_Debug("No frozen kerbals for EC consumption in part " + this.part.name);
                     timeSinceLastECtaken = (float)currenttime;
                     FrznChargeUsage = 0f;
@@ -1019,7 +1035,7 @@ namespace DF
                         if (!partInfo.TempWarning)
                         {
                             if (TimeWarp.CurrentRateIndex > 1) Utilities.stopWarp();
-                            ScreenMessages.PostScreenMessage("Temperature too hot for kerbals to remain frozen.", 10.0f, ScreenMessageStyle.UPPER_CENTER);
+                            ScreenMessages.PostScreenMessage("Temperature getting too hot for kerbals to remain frozen.", 10.0f, ScreenMessageStyle.UPPER_CENTER);
                             partInfo.TempWarning = true;
                         }
                         _FrzrTmp = FrzrTmpStatus.RED;
@@ -1049,6 +1065,7 @@ namespace DF
                             }
                             else  //NON-fatal option set. Thaw them all.
                             {
+                                ScreenMessages.PostScreenMessage("Over Temperature - Emergency Thaw in Progress.", 10.0f, ScreenMessageStyle.UPPER_CENTER);
                                 Utilities.Log_Debug("DeepFreezer", "deathRoll reached, Kerbals all don't die... They just Thaw out...");                                
                                 //all kerbals thaw out
                                 emergencyThawInProgress = true;  //This will trigger FixedUpdate to thaw all frozen kerbals in the part, one by one. 
@@ -1171,20 +1188,14 @@ namespace DF
                     this.Log_Debug("Part has external animation, check if RPM is installed and process");
                     if (DFInstalledMods.IsRPMInstalled)
                     {
-                        this.Log_Debug("RPM installed, set doorstate");
-
-                        hasExternalDoor = true;
-                        //_externaldoorstate = setdoorState();
+                        this.Log_Debug("RPM installed, set doorstate");                        
+                        hasExternalDoor = true;                        
                         if (_externaldoorstate == DoorState.OPEN)
-                        {
-                            Events["eventCloseDoors"].active = true;
-                            Events["eventOpenDoors"].active = false;
+                        {                            
                             StartCoroutine(openDoors(float.MaxValue));
                         }
                         else
-                        {
-                            Events["eventOpenDoors"].active = true;
-                            Events["eventCloseDoors"].active = false;
+                        {                            
                             StartCoroutine(closeDoors(float.MinValue));
                         }
                     }
@@ -1250,7 +1261,7 @@ namespace DF
                     //Debug.Log("Checking Events item " + itemX.name);
                     string[] subStrings = itemX.name.Split(' ');
                     if (subStrings.Length == 3)
-                    {
+                    { 
                         if (subStrings[0] == "Freeze") // If it's a Freeze Event
                         {
                             string crewname = "";
@@ -2287,7 +2298,7 @@ namespace DF
             skipThawStep1 = false;
             ScreenMessages.PostScreenMessage(frozenkerbal + " thawed out", 5.0f, ScreenMessageStyle.UPPER_CENTER);
             if (emergencyThawInProgress)
-            {
+            { 
                 ScreenMessages.PostScreenMessage(frozenkerbal + " was thawed out due to lack of Electrical Charge to run cryogenics", 10.0f, ScreenMessageStyle.UPPER_CENTER);
                 Debug.Log("DeepFreezer - kerbal " + frozenkerbal + " was thawed out due to lack of Electrical charge to run cryogenics");
             }
@@ -3710,6 +3721,8 @@ namespace DF
         {
             _prevexterndoorstate = _externaldoorstate;
             _externaldoorstate = DoorState.OPENING;
+            Events["eventOpenDoors"].active = false;
+            Events["eventCloseDoors"].active = false;
             if (animationName != null)
             {
                 externalDoorAnim[animationName].normalizedTime = 0;
@@ -3727,6 +3740,8 @@ namespace DF
         {
             _prevexterndoorstate = _externaldoorstate;
             _externaldoorstate = DoorState.CLOSING;
+            Events["eventOpenDoors"].active = false;
+            Events["eventCloseDoors"].active = false;
             if (animationName != null)
             {
                 externalDoorAnim[animationName].normalizedTime = 1;
@@ -3795,7 +3810,7 @@ namespace DF
                 else
                 {
                     _prevexterndoorstate = DoorState.CLOSED;
-                }
+                }                
             }
             catch (Exception ex)
             {
@@ -3830,7 +3845,32 @@ namespace DF
                 externaldoorstate = "CLOSED";
                 prevexterndoorstate = "CLOSED";
             }
-        }               
+        }
+
+        private DoorState getdoorState()
+        {
+            //return _externaldoorstate;                    
+            if (externalDoorAnim != null)
+            {
+                if (externalDoorAnim[animationName].normalizedTime == 1f) //closed
+                {
+                    Utilities.Log_Debug("getdoorState closed");                    
+                    return DoorState.CLOSED;
+                }
+                if (externalDoorAnim[animationName].normalizedTime == 0f) //open
+                {
+                    Utilities.Log_Debug("getdoorState open");
+                    return DoorState.OPEN;
+                }
+                Utilities.Log_Debug("getdoorState unknown");
+                return DoorState.UNKNOWN;
+            }
+            else
+            {
+                Utilities.Log_Debug("getdoorState Animation not found");
+                return DoorState.UNKNOWN;
+            }
+        }            
 
         #endregion ExternalDoor
 
@@ -3866,7 +3906,19 @@ namespace DF
         //It will consume ElectricCharge for Freezer that contain frozen kerbals for vessels that are unloaded, if the user has turned on the ECreqdForFreezer option in the settings menu.
         public static void FixedBackgroundUpdate(Vessel v, uint partFlightID, Func<Vessel, float, string, float> resourceRequest, ref System.Object data)
         {
-            bool debug = DeepFreeze.Instance.DFsettings.debugging;
+            if (Time.timeSinceLevelLoad < 2.0f) // Check not loading level
+            {
+                return;
+            }
+            bool debug = true;
+            try
+            {
+                debug = DeepFreeze.Instance.DFsettings.debugging;
+            }
+            catch
+            {
+                debug.Log("DeepFreeze FixedBackgroundUpdate failed to get debug setting");
+            }
             if (debug) Debug.Log("FixedBackgroundUpdate vesselID " + v.id + " partID " + partFlightID);
             // If the user does not have ECreqdForFreezer option ON, then we do nothing and return
             if (!DeepFreeze.Instance.DFsettings.ECreqdForFreezer)
@@ -3925,7 +3977,7 @@ namespace DF
                         if (debug) Debug.Log("FixedBackgroundUpdate DeepFreezer Ran out of EC to run the freezer");
                         if (!partInfo.ECWarning)
                         {
-                            ScreenMessages.PostScreenMessage("Insufficient electric charge to monitor frozen kerbals. They are going to die!!", 10.0f, ScreenMessageStyle.UPPER_CENTER);
+                            ScreenMessages.PostScreenMessage("Insufficient electric charge to monitor frozen kerbals.", 10.0f, ScreenMessageStyle.UPPER_CENTER);
                             partInfo.ECWarning = true;
                         }
                         ScreenMessages.RemoveMessage(OnGoingECMsg);
@@ -3961,19 +4013,18 @@ namespace DF
                                 // Cannot emergency thaw in background processing. It is expecte that DeepFreezeGUI will pick up that EC has run out and prompt the user to switch to the vessel.
                                 // When the user switches to the vessel the DeepFreezer partmodule will detect no EC is available and perform an emergency thaw procedure.
                                 if(debug) Debug.Log("FixedBackgroundUpdate DeepFreezer - EC has run out non-fatal option");
-                            }
-                            
+                            }                            
                         }
                     }
                 }
             }
             else  //Timewarp is too high
             {
-                if (debug) Debug.Log("FixedBackgroundUpdate Timewarp is too high to backgroundprocess");
-                partInfo.timeLastElectricity = (float)currenttime;
+                if (debug) Debug.Log("FixedBackgroundUpdate Timewarp is too high to backgroundprocess");                
                 partInfo.deathCounter = currenttime;
-                partInfo.outofEC = false;
-                partInfo.ECWarning = false;
+                //partInfo.timeLastElectricity = (float)currenttime;
+                //partInfo.outofEC = false;
+                //partInfo.ECWarning = false;
             }
         }
 

@@ -170,11 +170,7 @@ namespace DF
             foreach (Kerbal kerbal in Resources.FindObjectsOfTypeAll<Kerbal>())
             {
                 Log_Debug("Kerbal " + kerbal.name + " " + kerbal.crewMemberName + " instance " + kerbal.GetInstanceID() + " rosterstatus " + kerbal.rosterStatus.ToString());
-                Log_Debug(kerbal.protoCrewMember == null ? "ProtoCrewmember is null " : "ProtoCrewmember exists " + kerbal.protoCrewMember.name);
-                if (kerbal.animation != null)
-                {
-                    dmpAnimationNames(kerbal.animation);
-                }
+                Log_Debug(kerbal.protoCrewMember == null ? "ProtoCrewmember is null " : "ProtoCrewmember exists " + kerbal.protoCrewMember.name);                
             }
         }
 
@@ -459,62 +455,40 @@ namespace DF
 
         internal static void subdueIVAKerbalAnimations(Kerbal kerbal)
         {
-            //Transform Joints01Transform;
-            //Joints01Transform = kerbal.transform.Find("globalMove01");
-
-            //Joints01Transform = FindInChildren(kerbal.transform, "joints01");
-            /*
-            foreach (kerbalExpressionSystem kes in kerbal.gameObject.GetComponentsInChildren<kerbalExpressionSystem>())
+            try
             {
-                Log_Debug("KES " + kes.name);
-                int exparm = Animator.StringToHash(kes.expressionParameterName);
-                int varparm = Animator.StringToHash(kes.varianceParameterName);
-                int secvarparm = Animator.StringToHash(kes.secondaryVarianceParameterName);
-                int idlebool = Animator.StringToHash(kes.idleBoolName);
-                int idlefloat = Animator.StringToHash(kes.idleFloatName);
-                int hashelmet = Animator.StringToHash(kes.hasHelmetName);
-                Animator anim = kes.animator;
-            }
-                        
-            var go = kerbal.transform.gameObject;
-            Log_Debug("Kerbal Transforms " + go.name);
-            
-
-            foreach (Transform t in go.GetComponentsInChildren<Transform>(true)) //include inactive
-            {
-                Log_Debug(t.name);
-            }
-
-            foreach (KerbalExpressionAI kesAI in kerbal.gameObject.GetComponentsInChildren<KerbalExpressionAI>())
-            {
-                Log_Debug("KESAI " + kesAI.name);
-            }
-            */
-            foreach (Animator anim in kerbal.gameObject.GetComponentsInChildren<Animator>())
-            {
-                if (anim.name == kerbal.name)
-                {                    
-                    kerbalIVAController = anim.runtimeAnimatorController;
-                    RuntimeAnimatorController myController = anim.runtimeAnimatorController;
-                    AnimatorOverrideController myOverrideController = new AnimatorOverrideController();
-                    myOverrideController.runtimeAnimatorController = myController;
-                    myOverrideController["idle_animA_upWord"] = myOverrideController["idle_animH_notDoingAnything"];
-                    myOverrideController["idle_animB"] = myOverrideController["idle_animH_notDoingAnything"];
-                    myOverrideController["idle_animC"] = myOverrideController["idle_animH_notDoingAnything"];
-                    myOverrideController["idle_animD_dance"] = myOverrideController["idle_animH_notDoingAnything"];
-                    myOverrideController["idle_animE_drummingHelmet"] = myOverrideController["idle_animH_notDoingAnything"];
-                    myOverrideController["idle_animI_drummingControls"] = myOverrideController["idle_animH_notDoingAnything"];
-                    myOverrideController["idle_animJ_yo"] = myOverrideController["idle_animH_notDoingAnything"];
-                    myOverrideController["idle_animJ_IdleLoopShort"] = myOverrideController["idle_animH_notDoingAnything"];
-                    myOverrideController["idle_animK_footStretch"] = myOverrideController["idle_animH_notDoingAnything"];
-                    myOverrideController["head_rotation_staringUp"] = myOverrideController["idle_animH_notDoingAnything"];
-                    myOverrideController["head_rotation_longLookUp"] = myOverrideController["idle_animH_notDoingAnything"];
-                    myOverrideController["head_faceExp_fun_ohAh"] = myOverrideController["idle_animH_notDoingAnything"];
-                    // Put this line at the end because when you assign a controller on an Animator, unity rebinds all the animated properties 
-                    anim.runtimeAnimatorController = myOverrideController;
-                    Log_Debug("Animator " + anim.name + " for " + kerbal.name + " subdued");
+                foreach (Animator anim in kerbal.gameObject.GetComponentsInChildren<Animator>())
+                {
+                    if (anim.name == kerbal.name)
+                    {
+                        kerbalIVAController = anim.runtimeAnimatorController;
+                        RuntimeAnimatorController myController = anim.runtimeAnimatorController;
+                        AnimatorOverrideController myOverrideController = new AnimatorOverrideController();
+                        myOverrideController.runtimeAnimatorController = myController;
+                        myOverrideController["idle_animA_upWord"] = myOverrideController["idle_animH_notDoingAnything"];
+                        myOverrideController["idle_animB"] = myOverrideController["idle_animH_notDoingAnything"];
+                        myOverrideController["idle_animC"] = myOverrideController["idle_animH_notDoingAnything"];
+                        myOverrideController["idle_animD_dance"] = myOverrideController["idle_animH_notDoingAnything"];
+                        myOverrideController["idle_animE_drummingHelmet"] = myOverrideController["idle_animH_notDoingAnything"];
+                        myOverrideController["idle_animI_drummingControls"] = myOverrideController["idle_animH_notDoingAnything"];
+                        myOverrideController["idle_animJ_yo"] = myOverrideController["idle_animH_notDoingAnything"];
+                        myOverrideController["idle_animJ_IdleLoopShort"] = myOverrideController["idle_animH_notDoingAnything"];
+                        myOverrideController["idle_animK_footStretch"] = myOverrideController["idle_animH_notDoingAnything"];
+                        myOverrideController["head_rotation_staringUp"] = myOverrideController["idle_animH_notDoingAnything"];
+                        myOverrideController["head_rotation_longLookUp"] = myOverrideController["idle_animH_notDoingAnything"];
+                        myOverrideController["head_faceExp_fun_ohAh"] = myOverrideController["idle_animH_notDoingAnything"];
+                        // Put this line at the end because when you assign a controller on an Animator, unity rebinds all the animated properties 
+                        anim.runtimeAnimatorController = myOverrideController;
+                        Log_Debug("Animator " + anim.name + " for " + kerbal.name + " subdued");
+                    }
                 }
             }
+            catch(Exception ex)
+            {
+                Log("DeepFreeze", " failed to subdue IVA animations for " + kerbal.name);
+                Debug.LogException(ex);
+            }
+            
         }
 
         internal static void reinvigerateIVAKerbalAnimations(Kerbal kerbal)

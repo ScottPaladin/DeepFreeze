@@ -126,6 +126,8 @@ namespace DF
         private string showSwitchVesselStr = string.Empty;
         private Vessel switchVessel;
         private double switchVesselManualTimer = 0d;
+        private bool chgECHeatsettings = false;
+        private double chgECHeatsettingsTimer = 0d;
 
         //GuiVisibility
         private bool _Visible = false;
@@ -282,6 +284,24 @@ namespace DF
             gamePaused = false;
         }
 
+        private void FixedUpdate()
+        {
+            if (Time.timeSinceLevelLoad < 2f) return; //Wait 2 seconds on level load before executing
+
+            if (chgECHeatsettings)
+            {
+                double time = Planetarium.GetUniversalTime();
+                if (time - chgECHeatsettingsTimer > 5)
+                {
+                    chgECHeatsettings = false;
+                }
+                else
+                {
+                    chgECHeatsettingsTimer = time;
+                }
+            }
+        }
+
         #region GUI
 
         private void onDraw()
@@ -434,7 +454,7 @@ namespace DF
                     TempVar = Utilities.KelvintoCelsius((float)frzr.Value.cabinTemp).ToString("###0") + "C";
                 }
 
-                if (DFsettings.RegTempReqd)
+                if (DFsettings.RegTempReqd && !chgECHeatsettings)
                 {
                     switch (frzr.Value.TmpStatus)
                     {
@@ -463,7 +483,7 @@ namespace DF
                     GUILayout.Label("OFF", StatusGrayStyle, GUILayout.Width(DFvslPrtTmp));
                 }
 
-                if (DFsettings.ECreqdForFreezer)
+                if (DFsettings.ECreqdForFreezer && !chgECHeatsettings)
                 {
                     if (frzr.Value.numFrznCrew == 0)
                     {
@@ -475,7 +495,7 @@ namespace DF
                         {
                             GUILayout.Label("OUT", StatusRedStyle, GUILayout.Width(DFvslPrtElec));                            
                             switchVessel = FlightGlobals.Vessels.Find(a => a.id == frzr.Value.vesselID);
-                            showSwitchVesselStr = "Vessel " + switchVessel.vesselName + " is out of ElectricCharge./n Situation Critical.";
+                            showSwitchVesselStr = "Vessel " + switchVessel.vesselName + " is out of ElectricCharge.\n Situation Critical.";
                             showSwitchVessel = true;
                         }
                         else
@@ -749,10 +769,12 @@ namespace DF
             InputVECReqd = GUILayout.Toggle(InputVECReqd, "", GUILayout.MinWidth(30.0F)); //you can play with the width of the text box
             GUILayout.EndHorizontal();
 
+            if (!InputVECReqd) GUI.enabled = false;
             GUILayout.BeginHorizontal();
             GUILayout.Box(new GUIContent("Fatal EC/Heat Option", "If on Kerbals will die if EC runs out or it gets too hot"), statusStyle, GUILayout.Width(280));
             InputfatalOption = GUILayout.Toggle(InputfatalOption, "", GUILayout.MinWidth(30.0F)); //you can play with the width of the text box
             GUILayout.EndHorizontal();
+            GUI.enabled = true;
 
             GUILayout.BeginHorizontal();
             GUILayout.Box(new GUIContent("AutoRecover Frozen Kerbals at KSC", "If on, will AutoRecover Frozen Kerbals at the KSC and deduct the Cost from your funds"), statusStyle, GUILayout.Width(280));
@@ -860,6 +882,12 @@ namespace DF
             if (GUILayout.Button(new GUIContent("Save & Exit Settings", "Save & Exit Settings"), GUILayout.Width(155f)))
             {
                 Useapplauncher = InputAppL;
+                if (ECreqdForFreezer != InputVECReqd)
+                {
+                    chgECHeatsettings = true;
+                    chgECHeatsettingsTimer = Planetarium.GetUniversalTime();
+                }
+                    
                 ECreqdForFreezer = InputVECReqd;
                 debugging = InputVdebug;
                 AutoRecoverFznKerbals = InputVautoRecover;
@@ -868,6 +896,11 @@ namespace DF
                 fatalOption = InputfatalOption;
                 GlykerolReqdToFreeze = InputVglykerolReqdToFreeze;
                 RegTempReqd = InputVRegTempReqd;
+                if (RegTempReqd != InputVRegTempReqd)
+                {
+                    chgECHeatsettings = true;
+                    chgECHeatsettingsTimer = Planetarium.GetUniversalTime();
+                }
                 RegTempFreeze = InputVRegTempFreeze;
                 RegtempMonitor = InputVRegTempMonitor;
                 heatamtMonitoringFrznKerbals = InputVheatamtMonitoringFrznKerbals;
@@ -1189,10 +1222,15 @@ namespace DF
             sectionTitleStyle.fontStyle = FontStyle.Bold;
 
             statusStyle = new GUIStyle(GUI.skin.label);
-            statusStyle.alignment = TextAnchor.MiddleLeft;
+            statusStyle.alignment = TextAnchor.MiddleCenter;
             statusStyle.stretchWidth = true;
             statusStyle.normal.textColor = Color.white;
-                        
+
+            //Pause the game
+            TimeWarp.SetRate(0, true);
+            if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ready)
+                FlightDriver.SetPause(true);
+
             GUILayout.BeginVertical();
             GUILayout.BeginHorizontal();
             //GUILayout.Box(new GUIContent("ElectricCharge is running out on vessel, you must switch to the vessel now.", "Switch to DeepFreeze vessel required"), statusStyle, GUILayout.Width(280));
@@ -1200,9 +1238,11 @@ namespace DF
             GUILayout.EndHorizontal();
                         
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button(new GUIContent("Switch to Vessel", "Switch to Vessel"), GUILayout.Width(155f)))
+            if (GUILayout.Button(new GUIContent("Switch to Vessel", "Switch to Vessel"), GUILayout.Width(280)))
             {
                 showSwitchVessel = false;
+                if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ready)
+                    FlightDriver.SetPause(false);
                 //Jump to vessel code here.
                 int intVesselidx = Utilities.getVesselIdx(switchVessel);
                 if (intVesselidx < 0)
@@ -1239,9 +1279,13 @@ namespace DF
             sectionTitleStyle.fontStyle = FontStyle.Bold;
 
             statusStyle = new GUIStyle(GUI.skin.label);
-            statusStyle.alignment = TextAnchor.MiddleLeft;
+            statusStyle.alignment = TextAnchor.MiddleCenter;
             statusStyle.stretchWidth = true;
             statusStyle.normal.textColor = Color.white;
+
+            TimeWarp.SetRate(0, true);
+            if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ready)
+                FlightDriver.SetPause(true);
 
             GUILayout.BeginVertical();
             GUILayout.BeginHorizontal();
@@ -1249,13 +1293,15 @@ namespace DF
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button(new GUIContent("OK", "OK"), GUILayout.Width(155f)))
+            if (GUILayout.Button(new GUIContent("OK", "OK")))
             {
                 showSwitchVessel = false;
                 showUnabletoSwitchVessel = false;
                 switchVesselManual = true;
                 switchVesselManualTimer = Planetarium.GetUniversalTime();
-                
+                if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ready)
+                    FlightDriver.SetPause(false);
+
             }
             GUILayout.EndHorizontal();
             GUILayout.EndVertical();

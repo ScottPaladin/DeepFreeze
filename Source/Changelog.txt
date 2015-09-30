@@ -5,6 +5,7 @@ Fixed issue where a freeze/thaw is in progress and the player switches vessels. 
 Added flatline sound effect if kerbals die due to lack of EC or over temperature condition.
 Fixed NullReference bug in DFIntMemory with the internal cameras function.
 Support for Texture Replacer V2.4.10, you MUST have this version of Texture Replacer installed. Thawed kerbals will no longer lose their customised texture settings.
+Support for RasterPropMonitor V0.23.0, you MUST have this version of RPM installed.
 
 [B]V0.18.2.1 "Bug Fixes & Enhancements"[/B]
 Fixed distribution file to include missing DFInterface.dll

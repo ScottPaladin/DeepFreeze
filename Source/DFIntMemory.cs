@@ -79,11 +79,11 @@ namespace DF
             try
             {
                 keyFrzrCam = (KeyCode)DeepFreeze.Instance.DFsettings.internalFrzrCamCode;
-                this.Log_Debug("Freeze Cam Code set to " + keyFrzrCam.ToString());
+                //this.Log_Debug("Freeze Cam Code set to " + keyFrzrCam.ToString());
                 keyNxtFrzrCam = (KeyCode)DeepFreeze.Instance.DFsettings.internalNxtFrzrCamCode;
-                this.Log_Debug("Next Freeze Cam Code set to " + keyNxtFrzrCam.ToString());
+                //this.Log_Debug("Next Freeze Cam Code set to " + keyNxtFrzrCam.ToString());
                 keyPrvFrzrCam = (KeyCode)DeepFreeze.Instance.DFsettings.internalPrvFrzrCamCode;
-                this.Log_Debug("Previous Freeze Cam Code set to " + keyPrvFrzrCam.ToString());
+                //this.Log_Debug("Previous Freeze Cam Code set to " + keyPrvFrzrCam.ToString());
                 if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ActiveVessel != null)
                     onVesselChange(FlightGlobals.ActiveVessel);
             }
@@ -100,9 +100,7 @@ namespace DF
             this.Log_Debug("DFIntMemory startup");
             ChkUnknownFrozenKerbals();
             ChkActiveFrozenKerbals();
-            DeepFreeze.Instance.DFgameSettings.DmpKnownFznKerbals();
-            this.Log_Debug("DFIMemory startup dump all kerballs");
-            Utilities.dmpAllKerbals();
+            DeepFreeze.Instance.DFgameSettings.DmpKnownFznKerbals();            
             resetFreezerCams();
         }            
 
@@ -189,6 +187,7 @@ namespace DF
                         this.Log_Debug("lastFrzrCam is null");
                     }
                 }
+
                 //If user hits n while we are in internal camera mode switch to the next freezer camera.
                 if (Input.GetKeyDown(keyNxtFrzrCam) && Utilities.IsInInternal())
                 {
@@ -224,6 +223,7 @@ namespace DF
                         CameraManager.Instance.SetCameraFlight();
                     }
                 }
+
                 //If user hits b while we are in internal camera mode switch to the previous freezer camera.
                 if (Input.GetKeyDown(keyPrvFrzrCam) && Utilities.IsInInternal())
                 {
@@ -287,7 +287,7 @@ namespace DF
 
         private void FixedUpdate()
         {
-            if (Time.timeSinceLevelLoad < 2f) return; //Wait 2 seconds on level load before executing
+            if (HighLogic.LoadedSceneIsEditor || Time.timeSinceLevelLoad < 2f) return; //Wait 2 seconds on level load before executing                        
 
             //We check/update Vessel and Part Dictionary in EVERY Game Scene.
             try
@@ -445,9 +445,7 @@ namespace DF
                         ActVslHasDpFrezr = true;
                         //DpFrzrActVsl = FlightGlobals.ActiveVessel.FindPartModulesImplementing<DeepFreezer>();
                         DpFrzrActVsl = vessel.FindPartModulesImplementing<DeepFreezer>();
-                        //Check if vessel id has changed or last freezer cam transforms is now null, reset the freezer cams.
-
-                        this.Log_Debug("About to test actfrzrcams.count=" + ActFrzrCams.Count());
+                        //Check if vessel id has changed or last freezer cam transforms is now null, reset the freezer cams.                        
                         if (ActVslID != vessel.id || ActFrzrCams.Count() > 0)
                         {
                             foreach (DeepFreezer frzr in DpFrzrActVsl)
@@ -455,8 +453,7 @@ namespace DF
                                 if (frzr.partHasInternals)
                                 {
                                     if (ActFrzrCams[lastFrzrCam].FrzrCamTransform == null)
-                                    {
-                                        this.Log_Debug("about to reset");
+                                    {                                        
                                         resetFreezerCams();
                                     } 
                                     break;
@@ -590,7 +587,7 @@ namespace DF
                 }
                 else //vessel not loaded
                 {
-                    if (!DFInstalledMods.IsBGPInstalled)
+                    if (!DFInstalledMods.IsBGPInstalled || !Utilities.timewarpIsValid(5))
                     {
                         UpdatePredictedVesselEC(vesselInfo, vessel, currentTime);
                     }
@@ -629,11 +626,12 @@ namespace DF
                 double timeperiod = Planetarium.GetUniversalTime() - (double)frzr.Value.timeLastElectricity;
                 frznChargeRequired = (int)frzr.Value.frznChargeRequired;
                 ECreqdsincelastupdate += ((frznChargeRequired / 60.0f) * timeperiod * frzr.Value.numFrznCrew);
+                frzr.Value.deathCounter = currentTime;
                 this.Log_Debug("predicted EC part " + frzr.Value.vesselID + " " + frzr.Value.PartName + " FrznChargeRequired " + frznChargeRequired + " timeperiod " + timeperiod + " #frzncrew " + frzr.Value.numFrznCrew);
             }
             double ECafterlastupdate = vesselInfo.storedEC - ECreqdsincelastupdate;
             double predictedMinutes = ECafterlastupdate / frznChargeRequired;  // This probably should be per PART, but for simplicity we will do for the whole vessel
-            vesselInfo.predictedECOut = predictedMinutes * 60;
+            vesselInfo.predictedECOut = predictedMinutes * 60;            
             this.Log_Debug("UpdatePredictedVesselEC vessel " + vessel.id + " " + vessel.name + " StoredEC=" + vesselInfo.storedEC + " ECreqd=" + ECreqdsincelastupdate + " Prediction Secs=" + vesselInfo.predictedECOut);
             this.Log_Debug("ECafterlastupdate " + ECafterlastupdate + " FrznChargeRequired " + frznChargeRequired + " predictedMinutes " + predictedMinutes);
         }

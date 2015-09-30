@@ -39,8 +39,9 @@
     <Reference Include="DFInterface">
       <HintPath>..\DFInterface\bin\Debug\DFInterface.dll</HintPath>
     </Reference>
-    <Reference Include="RasterPropMonitor">
-      <HintPath>..\..\RasterPropMonitor\RasterPropMonitor\obj\Debug\RasterPropMonitor.dll</HintPath>
+    <Reference Include="RasterPropMonitor, Version=0.17.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>.\RasterPropMonitor.dll</HintPath>
     </Reference>
     <Reference Include="RemoteTech">
       <HintPath>.\RemoteTech.dll</HintPath>
