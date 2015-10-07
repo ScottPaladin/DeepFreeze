@@ -110,7 +110,6 @@ namespace DF
 
         internal static bool RTVesselConnected(Guid id)
         {
-            
             bool RTVslConnected = false;
             try
             {
@@ -133,7 +132,6 @@ namespace DF
         {
             get
             {
-                
                 double RTVslDelay = 0f;
                 try
                 {

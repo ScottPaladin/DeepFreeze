@@ -66,7 +66,7 @@ namespace DF
         private float DFvslPrtTmp;
         private float DFvslPrtElec;
         private float DFvslAlarms;
-        private float DFvslLstUpd;        
+        private float DFvslLstUpd;
         private float DFvslRT;
 
         private bool showKACGUI = false;
@@ -121,6 +121,7 @@ namespace DF
 
         //SwitchVessel vars
         private bool showUnabletoSwitchVessel = false;
+
         private bool showSwitchVessel = false;
         private bool switchVesselManual = false;
         private string showSwitchVesselStr = string.Empty;
@@ -148,9 +149,9 @@ namespace DF
                 }
             }
         }
-        
+
         public bool Useapplauncher = false;
-                
+
         #region AppLauncher
 
         private void OnGUIAppLauncherReady()
@@ -235,10 +236,10 @@ namespace DF
 
             DFvslWdthName = Mathf.Round((DFWINDOW_WIDTH - 28f) / 4.2f);
             DFvslPrtName = Mathf.Round((DFWINDOW_WIDTH - 28f) / 6.3f);
-            DFvslPrtTmp = Mathf.Round((DFWINDOW_WIDTH - 28f) / 10f);
+            DFvslPrtTmp = Mathf.Round((DFWINDOW_WIDTH - 28f) / 11f);
             DFvslPrtElec = Mathf.Round((DFWINDOW_WIDTH - 28f) / 12.3f);
             DFvslAlarms = Mathf.Round((DFWINDOW_WIDTH - 28f) / 8f);
-            DFvslLstUpd = Mathf.Round((DFWINDOW_WIDTH - 28f) / 7f);
+            DFvslLstUpd = Mathf.Round((DFWINDOW_WIDTH - 28f) / 7.5f);
             DFvslRT = Mathf.Round((DFWINDOW_WIDTH - 28f) / 12.3f);
             // create toolbar button
 
@@ -286,7 +287,7 @@ namespace DF
                 if (time - chgECHeatsettingsTimer > 2)
                 {
                     chgECHeatsettings = false;
-                }                
+                }
             }
         }
 
@@ -360,7 +361,6 @@ namespace DF
                     DFKACwindowPos = GUILayout.Window(KACwindowID, DFKACwindowPos, windowKAC, "DeepFreeze Alarms", GUILayout.ExpandWidth(true),
                         GUILayout.ExpandHeight(true), GUILayout.MinWidth(360), GUILayout.MinHeight(150));
                 }
-                                     
             }
         }
 
@@ -459,9 +459,9 @@ namespace DF
                                 GUILayout.Label(TempVar, StatusWarnStyle, GUILayout.Width(DFvslPrtTmp));
                                 break;
                             }
-                        case FrzrTmpStatus.RED: 
+                        case FrzrTmpStatus.RED:
                             {
-                                GUILayout.Label(TempVar, StatusRedStyle, GUILayout.Width(DFvslPrtTmp));                                
+                                GUILayout.Label(TempVar, StatusRedStyle, GUILayout.Width(DFvslPrtTmp));
                                 switchVessel = FlightGlobals.Vessels.Find(a => a.id == frzr.Value.vesselID);
                                 showSwitchVesselStr = "Vessel " + switchVessel.vesselName + " is Over-Heating.";
                                 showSwitchVessel = true;
@@ -484,7 +484,7 @@ namespace DF
                     {
                         if (frzr.Value.outofEC)
                         {
-                            GUILayout.Label("OUT", StatusRedStyle, GUILayout.Width(DFvslPrtElec));                            
+                            GUILayout.Label("OUT", StatusRedStyle, GUILayout.Width(DFvslPrtElec));
                             switchVessel = FlightGlobals.Vessels.Find(a => a.id == frzr.Value.vesselID);
                             showSwitchVesselStr = "Vessel " + switchVessel.vesselName + " is out of ElectricCharge.\n Situation Critical.";
                             showSwitchVessel = true;
@@ -575,12 +575,10 @@ namespace DF
                         {
                             GUILayout.Label(Utilities.FormatDateString(Planetarium.GetUniversalTime() - frzr.Value.timeLastElectricity), StatusGrayStyle, GUILayout.Width(DFvslLstUpd));
                         }
-                        
-                    }                    
+                    }
                 }
                 else
                 {
-
                     if (DeepFreeze.Instance.DFsettings.ECreqdForFreezer && !chgECHeatsettings)
                     {
                         if (vsl.predictedECOut < DeepFreeze.Instance.DFsettings.EClowCriticalTime)
@@ -914,7 +912,7 @@ namespace DF
                     chgECHeatsettings = true;
                     chgECHeatsettingsTimer = Planetarium.GetUniversalTime();
                 }
-                    
+
                 ECreqdForFreezer = InputVECReqd;
                 debugging = InputVdebug;
                 AutoRecoverFznKerbals = InputVautoRecover;
@@ -1263,7 +1261,7 @@ namespace DF
             //GUILayout.Box(new GUIContent("ElectricCharge is running out on vessel, you must switch to the vessel now.", "Switch to DeepFreeze vessel required"), statusStyle, GUILayout.Width(280));
             GUILayout.Box(new GUIContent(showSwitchVesselStr, showSwitchVesselStr), statusStyle, GUILayout.Width(320));
             GUILayout.EndHorizontal();
-                        
+
             GUILayout.BeginHorizontal();
             if (GUILayout.Button(new GUIContent("Switch to Vessel", "Switch to Vessel"), GUILayout.Width(320)))
             {
@@ -1274,8 +1272,8 @@ namespace DF
                 int intVesselidx = Utilities.getVesselIdx(switchVessel);
                 if (intVesselidx < 0)
                 {
-                    this.Log("Couldn't find the index for the vessel " + switchVessel.vesselName + "(" + switchVessel.id.ToString() +")");
-                    showUnabletoSwitchVessel = true;                    
+                    this.Log("Couldn't find the index for the vessel " + switchVessel.vesselName + "(" + switchVessel.id.ToString() + ")");
+                    showUnabletoSwitchVessel = true;
                 }
                 else
                 {
@@ -1289,9 +1287,8 @@ namespace DF
                         Game tmpGame = GamePersistence.LoadGame(strret, HighLogic.SaveFolder, false, false);
                         FlightDriver.StartAndFocusVessel(tmpGame, intVesselidx);
                     }
-                    
-                }                
-            }            
+                }
+            }
             GUILayout.EndHorizontal();
             GUILayout.EndVertical();
             GUI.DragWindow();
@@ -1328,7 +1325,6 @@ namespace DF
                 switchVesselManualTimer = Planetarium.GetUniversalTime();
                 if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ready)
                     FlightDriver.SetPause(false);
-
             }
             GUILayout.EndHorizontal();
             GUILayout.EndVertical();

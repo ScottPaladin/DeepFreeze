@@ -1,4 +1,4 @@
-﻿[B]V0.18.3.0 "Bug fixes & Enhancements"[/B]
+﻿[B]V0.19.0.0 "Bug fixes & Enhancements"[/B]
 Added Fatal EC/Heat option. If this is ON kerbals will die if EC runs out or it gets too hot (if you are using the EC and Heat options). If this is OFF
 the Kerbals will be emergency thawed and become available again, and start consuming LS resources again. (to-do - expand this to perhaps make them unusable for a period of time due to
 emergency thaw effects, but not in this version) Default setting (for compatibility) is set to ON. - IE: running out of EC or over-heating will Kill kerbals.
