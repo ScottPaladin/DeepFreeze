@@ -59,6 +59,8 @@ namespace DF
         private KeyCode keyNxtFrzrCam = (KeyCode)110;                       //Keycode for next frzrcam. Loaded from settings. Default is n
         private KeyCode keyPrvFrzrCam = (KeyCode)98;                       //Keycode for previous frzrcam. Loaded from settings. Default is b
         internal ScreenMessage IVAKerbalName, IVAkerbalPart, IVAkerbalPod;  // used for the bottom right screen messages
+        private bool refreshPortraits = false;                              // set to true after a vessel coupling has occurred, a timer waits 3 secnds then refreshes the portraits cams.
+        private double refreshPortraitsTimer = 0d;                          // the timer for the previous var
 
         protected DFIntMemory()
         {
@@ -75,15 +77,16 @@ namespace DF
             BGPinstalled = DFInstalledMods.IsBGPInstalled;  //Background Processing Mod
             GameEvents.onVesselRename.Add(onVesselRename);
             GameEvents.onVesselChange.Add(onVesselChange);
-            GameEvents.onVesselLoaded.Add(onVesselChange);
+            GameEvents.onVesselLoaded.Add(onVesselLoad);
+            GameEvents.onVesselCreate.Add(onVesselCreate);
+            GameEvents.onPartCouple.Add(onPartCouple);
+            GameEvents.onGUIEngineersReportReady.Add(AddTests);
+
             try
             {
                 keyFrzrCam = (KeyCode)DeepFreeze.Instance.DFsettings.internalFrzrCamCode;
-                this.Log_Debug("Freeze Cam Code set to " + keyFrzrCam.ToString());
                 keyNxtFrzrCam = (KeyCode)DeepFreeze.Instance.DFsettings.internalNxtFrzrCamCode;
-                this.Log_Debug("Next Freeze Cam Code set to " + keyNxtFrzrCam.ToString());
                 keyPrvFrzrCam = (KeyCode)DeepFreeze.Instance.DFsettings.internalPrvFrzrCamCode;
-                this.Log_Debug("Previous Freeze Cam Code set to " + keyPrvFrzrCam.ToString());
                 if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ActiveVessel != null)
                     onVesselChange(FlightGlobals.ActiveVessel);
             }
@@ -101,18 +104,33 @@ namespace DF
             ChkUnknownFrozenKerbals();
             ChkActiveFrozenKerbals();
             DeepFreeze.Instance.DFgameSettings.DmpKnownFznKerbals();
-            this.Log_Debug("DFIMemory startup dump all kerballs");
-            Utilities.dmpAllKerbals();
+            resetFreezerCams();
+            if (DFInstalledMods.IsTexReplacerInstalled)
+            {
+                TRWrapper.InitTRWrapper();
+            }
+            if (DFInstalledMods.IsUSILSInstalled)
+            {
+                USIWrapper.InitUSIWrapper();
+            }
+            if (DFInstalledMods.IsRTInstalled)
+            {
+                RTWrapper.InitTRWrapper();
+            }
         }
 
         private void OnDestroy()
         {
             this.Log_Debug("DFIntMemory OnDestroy");
             //destroy the event hook for KAC
-            KACWrapper.KAC.onAlarmStateChanged -= KAC_onAlarmStateChanged;
+            if (KACWrapper.APIReady)
+                KACWrapper.KAC.onAlarmStateChanged -= KAC_onAlarmStateChanged;
             GameEvents.onVesselRename.Remove(onVesselRename);
             GameEvents.onVesselChange.Remove(onVesselChange);
-            GameEvents.onVesselLoaded.Remove(onVesselChange);
+            GameEvents.onVesselLoaded.Remove(onVesselLoad);
+            GameEvents.onVesselCreate.Remove(onVesselCreate);
+            GameEvents.onPartCouple.Remove(onPartCouple);
+            GameEvents.onGUIEngineersReportReady.Remove(AddTests);
             this.Log_Debug("DFIntMemory end OnDestroy");
         }
 
@@ -136,6 +154,16 @@ namespace DF
 
             if (HighLogic.LoadedSceneIsFlight && ActVslHasDpFrezr)
             {
+                //Check if Refresh Portraits Cam is required after two vessels are docked
+                if (refreshPortraits)
+                {
+                    if (Planetarium.GetUniversalTime() - refreshPortraitsTimer > 3)
+                    {
+                        Utilities.CheckPortraitCams(FlightGlobals.ActiveVessel);
+                        refreshPortraits = false;
+                    }
+                }
+
                 //If user hits Modifier Key - D switch to freezer cams.
                 if (GameSettings.MODIFIER_KEY.GetKey() && Input.GetKeyDown(keyFrzrCam) && ActFrzrCams.Count > 0)
                 {
@@ -187,6 +215,7 @@ namespace DF
                         this.Log_Debug("lastFrzrCam is null");
                     }
                 }
+
                 //If user hits n while we are in internal camera mode switch to the next freezer camera.
                 if (Input.GetKeyDown(keyNxtFrzrCam) && Utilities.IsInInternal())
                 {
@@ -222,6 +251,7 @@ namespace DF
                         CameraManager.Instance.SetCameraFlight();
                     }
                 }
+
                 //If user hits b while we are in internal camera mode switch to the previous freezer camera.
                 if (Input.GetKeyDown(keyPrvFrzrCam) && Utilities.IsInInternal())
                 {
@@ -285,7 +315,7 @@ namespace DF
 
         private void FixedUpdate()
         {
-            if (Time.timeSinceLevelLoad < 2f) return; //Wait 2 seconds on level load before executing
+            if (HighLogic.LoadedSceneIsEditor || Time.timeSinceLevelLoad < 5f) return; //Wait 5 seconds on level load before executing
 
             //We check/update Vessel and Part Dictionary in EVERY Game Scene.
             try
@@ -418,11 +448,90 @@ namespace DF
             }
         }
 
-        internal void onVesselChange(Vessel vessel)
+        internal void onVesselLoad(Vessel vessel)
         {
-            this.Log_Debug("OnVesselChange activevessel " + FlightGlobals.ActiveVessel.id + " parametervesselid " + vessel.id);
             if (HighLogic.LoadedSceneIsFlight)
             {
+                this.Log_Debug("OnVesselLoad activevessel " + FlightGlobals.ActiveVessel.id + " parametervesselid " + vessel.id);
+                resetFreezerCams();
+                onVesselChange(vessel);
+            }
+        }
+
+        internal void onVesselCreate(Vessel vessel)
+        {
+            if (HighLogic.LoadedSceneIsFlight)
+            {
+                this.Log_Debug("OnVesselCreate activevessel " + FlightGlobals.ActiveVessel.id + " parametervesselid " + vessel.id);
+                List<DeepFreezer> TmpDpFrzrActVsl = vessel.FindPartModulesImplementing<DeepFreezer>();
+                foreach (DeepFreezer frzr in TmpDpFrzrActVsl)
+                {
+                    //Find the part in KnownFreezerParts and update the GUID
+                    PartInfo partInfo;
+                    if (DeepFreeze.Instance.DFgameSettings.knownFreezerParts.TryGetValue(frzr.part.flightID, out partInfo))
+                    {
+                        partInfo.vesselID = vessel.id;
+                    }
+                    //Iterate frozen kerbals in KnownFrozenKerbals and update the GUID
+                    foreach (KeyValuePair<string, KerbalInfo> frznKerbals in DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals)
+                    {
+                        if (frznKerbals.Value.partID == frzr.part.flightID)
+                        {
+                            frznKerbals.Value.vesselID = vessel.id;
+                        }
+                    }
+                    //Update the Frzr Parts internal frozenkerbals list GUID
+                    foreach (FrznCrewMbr storedCrew in frzr.DFIStoredCrewList)
+                    {
+                        storedCrew.VesselID = vessel.id;
+                    }
+                }
+            }            
+        }
+
+        internal void onPartCouple(GameEvents.FromToAction<Part, Part> fromToAction)
+        {
+            if (HighLogic.LoadedSceneIsFlight)
+            {
+                this.Log_Debug("OnPartCouple activevessel " + FlightGlobals.ActiveVessel.id + " fromPart " + fromToAction.from.flightID + "(" + fromToAction.from.vessel.id + ") toPart " + fromToAction.to.flightID + "(" + fromToAction.to.vessel.id + ")");
+                List<DeepFreezer> TmpDpFrzrActVsl = fromToAction.from.vessel.FindPartModulesImplementing<DeepFreezer>();
+                foreach (DeepFreezer frzr in TmpDpFrzrActVsl)
+                {
+                    //Find the part in KnownFreezerParts and update the GUID
+                    PartInfo partInfo;
+                    if (DeepFreeze.Instance.DFgameSettings.knownFreezerParts.TryGetValue(frzr.part.flightID, out partInfo))
+                    {
+                        partInfo.vesselID = fromToAction.to.vessel.id;
+                    }
+                    //Iterate frozen kerbals in KnownFrozenKerbals and update the GUID
+                    foreach (KeyValuePair<string, KerbalInfo> frznKerbals in DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals)
+                    {
+                        if (frznKerbals.Value.partID == frzr.part.flightID)
+                        {
+                            frznKerbals.Value.vesselID = fromToAction.to.vessel.id;
+                        }
+                    }
+                    //Update the Frzr Parts internal frozenkerbals list GUID
+                    foreach (FrznCrewMbr storedCrew in frzr.DFIStoredCrewList)
+                    {
+                        storedCrew.VesselID = fromToAction.to.vessel.id;
+                    }
+                }
+                //Now resetFrozenKerbals in the parts
+                foreach (DeepFreezer frzr in TmpDpFrzrActVsl)
+                {
+                    frzr.resetFrozenKerbals();
+                }
+                refreshPortraits = true;
+                refreshPortraitsTimer = Planetarium.GetUniversalTime();
+            }
+        }
+
+        internal void onVesselChange(Vessel vessel)
+        {            
+            if (HighLogic.LoadedSceneIsFlight)
+            {
+                this.Log_Debug("OnVesselChange activevessel " + FlightGlobals.ActiveVessel.name + "(" + FlightGlobals.ActiveVessel.id + ") parametervessel " + vessel.name + "(" + vessel.id + ")");
                 //chk if current active vessel Has one or more DeepFreezer modules attached
                 try
                 {
@@ -433,18 +542,16 @@ namespace DF
                     else
                     {
                         ActVslHasDpFrezr = true;
-                        DpFrzrActVsl = FlightGlobals.ActiveVessel.FindPartModulesImplementing<DeepFreezer>();
+                        DpFrzrActVsl = vessel.FindPartModulesImplementing<DeepFreezer>();
                         //Check if vessel id has changed or last freezer cam transforms is now null, reset the freezer cams.
-
-                        this.Log_Debug("About to test actfrzrcams.count=" + ActFrzrCams.Count());
                         if (ActVslID != vessel.id || ActFrzrCams.Count() > 0)
                         {
-                            if (ActFrzrCams.Count() > 0)
+                            foreach (DeepFreezer frzr in DpFrzrActVsl)
                             {
-                                if (ActFrzrCams[lastFrzrCam].FrzrCamTransform == null)
+                                if (frzr.partHasInternals)
                                 {
-                                    this.Log_Debug("about to reset");
                                     resetFreezerCams();
+                                    break;
                                 }
                             }
                         }
@@ -456,7 +563,7 @@ namespace DF
                 {
                     this.Log("Failed to set active vessel and Check Freezers");
                     this.Log("Err: " + ex);
-                    ActVslHasDpFrezr = false;
+                    //ActVslHasDpFrezr = false;
                 }
             }
             else
@@ -465,35 +572,50 @@ namespace DF
             }
         }
 
+        internal void AddTests()
+        {
+            this.Log_Debug("Adding DF Engineer Test");
+            PreFlightTests.IDesignConcern DFtest = new DFEngReport();
+            EngineersReport.Instance.AddTest(DFtest);
+        }
+
         private void resetFreezerCams()
         {
-            ActFrzrCams.Clear();
-            lastFrzrCam = 0;
-            this.Log_Debug("ActVslHasDpFrezer " + ActVslHasDpFrezr + " #ofFrzrs " + DpFrzrActVsl.Count());
-            foreach (DeepFreezer Frzr in DpFrzrActVsl)
+            try
             {
-                if (Frzr.part.internalModel != null)
+                ActFrzrCams.Clear();
+                lastFrzrCam = 0;
+                this.Log_Debug("ActVslHasDpFrezer " + ActVslHasDpFrezr + " #ofFrzrs " + DpFrzrActVsl.Count());
+                foreach (DeepFreezer Frzr in DpFrzrActVsl)
                 {
-                    for (int i = 0; i < Frzr.FreezerSize; i++)
+                    if (Frzr.part.internalModel != null)
                     {
-                        string frzrcamname = "FrzCam" + (i + 1).ToString();
-                        Transform frzrcam = Frzr.part.internalModel.FindModelComponent<Transform>(frzrcamname);
-                        if (frzrcam != null)
+                        for (int i = 0; i < Frzr.FreezerSize; i++)
                         {
-                            VslFrzrCams vslfrzrcam = new VslFrzrCams(frzrcam, Frzr.part.internalModel, (i + 1), Frzr.part.name.Substring(0, 8), Frzr);
-                            ActFrzrCams.Add(vslfrzrcam);
-                            this.Log_Debug("Adding ActFrzrCams " + vslfrzrcam.FrzrCamModel.internalName + " " + vslfrzrcam.FrzrCamTransform.name);
-                        }
-                        else
-                        {
-                            this.Log_Debug("Unable to find FrzCam transform " + frzrcamname);
+                            string frzrcamname = "FrzCam" + (i + 1).ToString();
+                            Transform frzrcam = Frzr.part.internalModel.FindModelComponent<Transform>(frzrcamname);
+                            if (frzrcam != null)
+                            {
+                                VslFrzrCams vslfrzrcam = new VslFrzrCams(frzrcam, Frzr.part.internalModel, (i + 1), Frzr.part.name.Substring(0, 8), Frzr);
+                                ActFrzrCams.Add(vslfrzrcam);
+                                this.Log_Debug("Adding ActFrzrCams " + vslfrzrcam.FrzrCamModel.internalName + " " + vslfrzrcam.FrzrCamTransform.name);
+                            }
+                            else
+                            {
+                                this.Log_Debug("Unable to find FrzCam transform " + frzrcamname);
+                            }
                         }
                     }
+                    else
+                    {
+                        this.Log_Debug("Frzr " + Frzr.name + " internalmodel is null");
+                    }
                 }
-                else
-                {
-                    this.Log_Debug("Frzr " + Frzr.name + " internalmodel is null");
-                }
+            }
+            catch (Exception ex)
+            {
+                this.Log("Failed to resetFreezerCams");
+                //this.Log("Err: " + ex);
             }
         }
 
@@ -528,10 +650,6 @@ namespace DF
                 {
                     UpdateVesselInfo(vesselInfo, vessel, currentTime);
                     int crewCapacity = UpdateVesselCounts(vesselInfo, vessel, currentTime);
-                    //if (DeepFreeze.Instance.DFsettings.ECreqdForFreezer && vesselInfo.numFrznCrew > 0)
-                    //{
-                    //    UpdatePredictedVesselEC(vesselInfo, vessel, currentTime);
-                    //}
                     if (vessel.FindPartModulesImplementing<DeepFreezer>().Count() == 0)
                     {
                         this.Log_Debug("Deleting vessel " + vesselInfo.vesselName + " - no freezer parts anymore");
@@ -566,10 +684,10 @@ namespace DF
                 }
                 else //vessel not loaded
                 {
-                    if (!DFInstalledMods.IsBGPInstalled)
-                    {
-                        UpdatePredictedVesselEC(vesselInfo, vessel, currentTime);
-                    }
+                    //if (!DFInstalledMods.IsBGPInstalled || !Utilities.timewarpIsValid(5))
+                    //{
+                    UpdatePredictedVesselEC(vesselInfo, vessel, currentTime);
+                    //}
                     vesselInfo.hibernating = true;
                 }
             }
@@ -605,6 +723,7 @@ namespace DF
                 double timeperiod = Planetarium.GetUniversalTime() - (double)frzr.Value.timeLastElectricity;
                 frznChargeRequired = (int)frzr.Value.frznChargeRequired;
                 ECreqdsincelastupdate += ((frznChargeRequired / 60.0f) * timeperiod * frzr.Value.numFrznCrew);
+                frzr.Value.deathCounter = currentTime;
                 this.Log_Debug("predicted EC part " + frzr.Value.vesselID + " " + frzr.Value.PartName + " FrznChargeRequired " + frznChargeRequired + " timeperiod " + timeperiod + " #frzncrew " + frzr.Value.numFrznCrew);
             }
             double ECafterlastupdate = vesselInfo.storedEC - ECreqdsincelastupdate;

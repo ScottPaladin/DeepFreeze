@@ -1,4 +1,25 @@
-﻿[B]V0.18.2.0 "Bug Fixes & Enhancements"[/B]
+﻿[B]V0.19.0.0 "Bug fixes & Enhancements"[/B]
+Added Fatal EC/Heat option. If this is ON kerbals will die if EC runs out or it gets too hot (if you are using the EC and Heat options). If this is OFF
+the Kerbals will be emergency thawed and become available again, and start consuming LS resources again. (to-do - expand this to perhaps make them unusable for a period of time due to
+emergency thaw effects, but not in this version) Default setting (for compatibility) is set to ON. - IE: running out of EC or over-heating will Kill kerbals.
+Added pop-up window when EC is critical for vessels that are not the active vessel and you can automatically switch to that vessel.
+Added flatline sound effect if kerbals die due to lack of EC or over temperature condition.
+Support for Texture Replacer V2.4.10, you MUST have this version (or above) of Texture Replacer installed. Thawed kerbals will no longer lose their customised texture settings.
+Support for RasterPropMonitor V0.23.0, you MUST have this version (or above) of RPM installed.
+Changed the Editor Icon for DeepFreeze parts category to use Snowflake/Freeze icon instead of EVA Kerbal (stock) icon.
+Added Engineer Info report check where there is a DeepFreeze Freezer attached that the vessel has 5 or more units of Glykerol available.
+
+Fixed Engineer report in editor so that DeepFreeze Freezers are now considered parts that use Glykerol and ElectricCharge.
+Fixed bug where ships docking/un-docking with frozen kerbals results in unable to thaw frozen kerbals.
+Fixed bug in new Internal Camera system when swapping to other DeepFreeze vessels that are in range the cameras do not move/update to the correct vessel.
+Fixed bug if you have multiple vessels in loaded range on initially switching to flight mode on one vessel, if you swap to a DeepFreeze equipped vessel (with DeepFreeze part) and you attempt to thaw a previously frozen
+kerbal, the thaw may not work or it will work but the kerbal is not visible on thawing.
+Fixed issue where a freeze/thaw is in progress and the player switches vessels. DeepFreeze will now abort any in-progress thaw/freeze in this case.
+Fixed NullReference bug in DFIntMemory with the internal cameras function.
+
+[B]V0.18.2.1 "Bug Fixes & Enhancements"[/B]
+Fixed distribution file to include missing DFInterface.dll
+[B]V0.18.2.0 "Bug Fixes & Enhancements"[/B]
 Fix Radial attachment points for CRY-0300 exclusion zones around the external doors. The CRY-0300 now correctly allows you to attach radial parts to the outside of it except for where the external doors are.
 There is a EVA Access point at the bottom of the external doors. If you block this with radial parts your EVA access will be blocked by KSP and you will get the "Hatch Obstructed" mesage.
 It is recommended you do not attach parts to the doors or the lower front section of the CRY-0300.

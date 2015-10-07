@@ -31,6 +31,7 @@ namespace DF
         internal bool UseAppLauncher { get; set; }
         internal bool debugging { get; set; }
         internal bool ECreqdForFreezer { get; set; }
+        internal bool fatalOption { get; set; }
         internal bool AutoRecoverFznKerbals { get; set; }
         internal float KSCcostToThawKerbal { get; set; }
         internal int ECReqdToFreezeThaw { get; set; }
@@ -65,6 +66,7 @@ namespace DF
             UseAppLauncher = true;
             debugging = true;
             ECreqdForFreezer = true;
+            fatalOption = true;
             AutoRecoverFznKerbals = true;
             KSCcostToThawKerbal = 10000f;
             ECReqdToFreezeThaw = 3000;
@@ -103,6 +105,7 @@ namespace DF
                 DFKACwindowPosX = Utilities.GetNodeValue(DFsettingsNode, "DFKACwindowPosX", DFKACwindowPosX);
                 DFKACwindowPosY = Utilities.GetNodeValue(DFsettingsNode, "DFKACwindowPosY", DFKACwindowPosY);
                 ECreqdForFreezer = Utilities.GetNodeValue(DFsettingsNode, "ECreqdForFreezer", ECreqdForFreezer);
+                fatalOption = Utilities.GetNodeValue(DFsettingsNode, "fatalOption", fatalOption);
                 UseAppLauncher = Utilities.GetNodeValue(DFsettingsNode, "UseAppLauncher", UseAppLauncher);
                 debugging = Utilities.GetNodeValue(DFsettingsNode, "debugging", debugging);
                 AutoRecoverFznKerbals = Utilities.GetNodeValue(DFsettingsNode, "AutoRecoverFznKerbals", AutoRecoverFznKerbals);
@@ -150,6 +153,7 @@ namespace DF
             settingsNode.AddValue("DFKACwindowPosX", DFKACwindowPosX);
             settingsNode.AddValue("DFKACwindowPosY", DFKACwindowPosY);
             settingsNode.AddValue("ECreqdForFreezer", ECreqdForFreezer);
+            settingsNode.AddValue("fatalOption", fatalOption);
             settingsNode.AddValue("UseAppLauncher", UseAppLauncher);
             settingsNode.AddValue("debugging", debugging);
             settingsNode.AddValue("AutoRecoverFznKerbals", AutoRecoverFznKerbals);

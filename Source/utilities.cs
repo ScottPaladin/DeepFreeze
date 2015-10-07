@@ -50,6 +50,33 @@ namespace DF
             Debug.Log("--------------------------------------");
         }
 
+        // Use Reflection to get a field from an object
+        internal static object GetObjectField(object o, string fieldName)
+        {
+            object outputObj = new object();
+            bool foundObj = false;
+            foreach (FieldInfo field in o.GetType().GetFields())
+            {
+                if (!field.IsStatic)
+                {
+                    if (field.Name == fieldName)
+                    {
+                        foundObj = true;
+                        outputObj = field.GetValue(o);
+                        break;
+                    }
+                }
+            }
+            if (foundObj)
+            {
+                return outputObj;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
         // Dump all Unity Cameras
         internal static void DumpCameras()
         {
@@ -171,10 +198,6 @@ namespace DF
             {
                 Log_Debug("Kerbal " + kerbal.name + " " + kerbal.crewMemberName + " instance " + kerbal.GetInstanceID() + " rosterstatus " + kerbal.rosterStatus.ToString());
                 Log_Debug(kerbal.protoCrewMember == null ? "ProtoCrewmember is null " : "ProtoCrewmember exists " + kerbal.protoCrewMember.name);
-                if (kerbal.animation != null)
-                {
-                    dmpAnimationNames(kerbal.animation);
-                }
             }
         }
 
@@ -342,7 +365,7 @@ namespace DF
                         Log_Debug("Layers already set");
                         break;
                     }
-                    Log_Debug("Renderer: " + renderer.name + " set to layer " + layer);
+                    //Log_Debug("Renderer: " + renderer.name + " set to layer " + layer);
                     renderer.gameObject.layer = layer;
                     if (setVisible) renderer.enabled = true;
                     else renderer.enabled = false;
@@ -353,30 +376,35 @@ namespace DF
         internal static void CheckPortraitCams(Vessel vessel)
         {
             // Only the pods in the active vessel should be doing it since the list refers to them.
-            Log_Debug("CheckPortraitCams");
-            if (vessel.isActiveVessel)
+            Log_Debug("DeepFreeze CheckPortraitCams vessel " + vessel.name + "(" + vessel.id + ") activevessel " + FlightGlobals.ActiveVessel.name + "(" + FlightGlobals.ActiveVessel.id + ")");
+
+            // First, We check through the list of portaits and remove everyone who is from some other vessel, or NO vessel.
+            var stowaways = new List<Kerbal>();
+            foreach (Kerbal thatKerbal in KerbalGUIManager.ActiveCrew)
             {
-                // First, every pod should check through the list of portaits and remove everyone who is from some other vessel, or NO vessel.
-                var stowaways = new List<Kerbal>();
-                foreach (Kerbal thatKerbal in KerbalGUIManager.ActiveCrew)
+                if (thatKerbal.InPart == null)
                 {
-                    if (thatKerbal.InPart == null)
+                    Log_Debug("kerbal " + thatKerbal.name + " Invessel = null add stowaway");
+                    stowaways.Add(thatKerbal);
+                }
+                else
+                {
+                    Log_Debug("kerbal " + thatKerbal.name + " Invessel = " + thatKerbal.InVessel + " InvesselID = " + thatKerbal.InVessel.id);
+                    if (thatKerbal.InVessel.id != FlightGlobals.ActiveVessel.id)
                     {
+                        Log_Debug("Adding stowaway");
                         stowaways.Add(thatKerbal);
                     }
-                    else
-                    {
-                        if (thatKerbal.InVessel != vessel)
-                        {
-                            stowaways.Add(thatKerbal);
-                        }
-                    }
                 }
-                foreach (Kerbal thatKerbal in stowaways)
-                {
-                    KerbalGUIManager.RemoveActiveCrew(thatKerbal);
-                }
-                // Then, every pod should check the list of seats in itself and see if anyone is missing who should be present.
+            }
+            foreach (Kerbal thatKerbal in stowaways)
+            {
+                KerbalGUIManager.RemoveActiveCrew(thatKerbal);
+            }
+
+            if (FlightGlobals.ActiveVessel.id == vessel.id)
+            {
+                // Then, Check the list of seats in every crewable part in the vessel and see if anyone is missing who should be present.
                 List<Part> crewparts = (from p in vessel.parts where (p.CrewCapacity > 0 && p.internalModel != null) select p).ToList();
                 foreach (Part part in crewparts)
                 {
@@ -454,6 +482,75 @@ namespace DF
             {
                 yield return null;
             } while (animation.IsPlaying(name));
+        }
+
+        internal static RuntimeAnimatorController kerbalIVAController;
+
+        internal static void subdueIVAKerbalAnimations(Kerbal kerbal)
+        {
+            try
+            {
+                foreach (Animator anim in kerbal.gameObject.GetComponentsInChildren<Animator>())
+                {
+                    if (anim.name == kerbal.name)
+                    {
+                        kerbalIVAController = anim.runtimeAnimatorController;
+                        RuntimeAnimatorController myController = anim.runtimeAnimatorController;
+                        AnimatorOverrideController myOverrideController = new AnimatorOverrideController();
+                        myOverrideController.runtimeAnimatorController = myController;
+                        myOverrideController["idle_animA_upWord"] = myOverrideController["idle_animH_notDoingAnything"];
+                        myOverrideController["idle_animB"] = myOverrideController["idle_animH_notDoingAnything"];
+                        myOverrideController["idle_animC"] = myOverrideController["idle_animH_notDoingAnything"];
+                        myOverrideController["idle_animD_dance"] = myOverrideController["idle_animH_notDoingAnything"];
+                        myOverrideController["idle_animE_drummingHelmet"] = myOverrideController["idle_animH_notDoingAnything"];
+                        myOverrideController["idle_animI_drummingControls"] = myOverrideController["idle_animH_notDoingAnything"];
+                        myOverrideController["idle_animJ_yo"] = myOverrideController["idle_animH_notDoingAnything"];
+                        myOverrideController["idle_animJ_IdleLoopShort"] = myOverrideController["idle_animH_notDoingAnything"];
+                        myOverrideController["idle_animK_footStretch"] = myOverrideController["idle_animH_notDoingAnything"];
+                        myOverrideController["head_rotation_staringUp"] = myOverrideController["idle_animH_notDoingAnything"];
+                        myOverrideController["head_rotation_longLookUp"] = myOverrideController["idle_animH_notDoingAnything"];
+                        myOverrideController["head_faceExp_fun_ohAh"] = myOverrideController["idle_animH_notDoingAnything"];
+                        // Put this line at the end because when you assign a controller on an Animator, unity rebinds all the animated properties
+                        anim.runtimeAnimatorController = myOverrideController;
+                        Log_Debug("Animator " + anim.name + " for " + kerbal.name + " subdued");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log("DeepFreeze", " failed to subdue IVA animations for " + kerbal.name);
+                Debug.LogException(ex);
+            }
+        }
+
+        internal static void reinvigerateIVAKerbalAnimations(Kerbal kerbal)
+        {
+            foreach (Animator anim in kerbal.gameObject.GetComponentsInChildren<Animator>())
+            {
+                if (anim.name == kerbal.name)
+                {
+                    RuntimeAnimatorController myController = kerbalIVAController;
+                    AnimatorOverrideController myOverrideController = new AnimatorOverrideController();
+                    myOverrideController.runtimeAnimatorController = myController;
+                    // Put this line at the end because when you assign a controller on an Animator, unity rebinds all the animated properties
+                    anim.runtimeAnimatorController = myOverrideController;
+                    Log_Debug("Animator " + anim.name + " for " + kerbal.name + " reinvigerated");
+                }
+            }
+        }
+
+        // The following method is taken from Kerbal Alarm Clock as-is. Which is covered by MIT license.
+        internal static int getVesselIdx(Vessel vtarget)
+        {
+            for (int i = 0; i < FlightGlobals.Vessels.Count; i++)
+            {
+                if (FlightGlobals.Vessels[i].id == vtarget.id)
+                {
+                    Log_Debug("Found Target idx=" + i + " (" + vtarget.id.ToString() + ")");
+                    return i;
+                }
+            }
+            return -1;
         }
 
         //Temperature

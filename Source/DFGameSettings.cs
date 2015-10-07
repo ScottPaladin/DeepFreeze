@@ -50,6 +50,7 @@ namespace DF
         {
             KnownFrozenKerbals.Clear();
             knownVessels.Clear();
+            knownFreezerParts.Clear();
             knownKACAlarms.Clear();
 
             if (node.HasNode(configNodeName))
