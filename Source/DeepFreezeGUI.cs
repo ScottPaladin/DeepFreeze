@@ -66,7 +66,7 @@ namespace DF
         private float DFvslPrtTmp;
         private float DFvslPrtElec;
         private float DFvslAlarms;
-        private float DFvslLstUpd;
+        private float DFvslLstUpd;        
         private float DFvslRT;
 
         private bool showKACGUI = false;
@@ -148,17 +148,9 @@ namespace DF
                 }
             }
         }
-
-        //DeepFreeze Savable settings
-        private DFSettings DFsettings;
-
+        
         public bool Useapplauncher = false;
-
-        internal void Awake()
-        {
-            DFsettings = DeepFreeze.Instance.DFsettings;
-        }
-
+                
         #region AppLauncher
 
         private void OnGUIAppLauncherReady()
@@ -241,13 +233,13 @@ namespace DF
             KACtxtWdthKTg1 = Mathf.Round((KACWINDOW_WIDTH - 48f) / 6f);
             KACtxtWdthKTg2 = Mathf.Round((KACWINDOW_WIDTH - 48f) / 6f);
 
-            DFvslWdthName = Mathf.Round((DFWINDOW_WIDTH - 28f) / 4f);
-            DFvslPrtName = Mathf.Round((DFWINDOW_WIDTH - 28f) / 6f);
-            DFvslPrtTmp = Mathf.Round((DFWINDOW_WIDTH - 28f) / 9.8f);
-            DFvslPrtElec = Mathf.Round((DFWINDOW_WIDTH - 28f) / 12f);
+            DFvslWdthName = Mathf.Round((DFWINDOW_WIDTH - 28f) / 4.2f);
+            DFvslPrtName = Mathf.Round((DFWINDOW_WIDTH - 28f) / 6.3f);
+            DFvslPrtTmp = Mathf.Round((DFWINDOW_WIDTH - 28f) / 10f);
+            DFvslPrtElec = Mathf.Round((DFWINDOW_WIDTH - 28f) / 12.3f);
             DFvslAlarms = Mathf.Round((DFWINDOW_WIDTH - 28f) / 8f);
-            DFvslLstUpd = Mathf.Round((DFWINDOW_WIDTH - 28f) / 5f);
-            DFvslRT = Mathf.Round((DFWINDOW_WIDTH - 28f) / 12f);
+            DFvslLstUpd = Mathf.Round((DFWINDOW_WIDTH - 28f) / 7f);
+            DFvslRT = Mathf.Round((DFWINDOW_WIDTH - 28f) / 12.3f);
             // create toolbar button
 
             if (ToolbarManager.ToolbarAvailable && Useapplauncher == false)
@@ -291,14 +283,10 @@ namespace DF
             if (chgECHeatsettings)
             {
                 double time = Planetarium.GetUniversalTime();
-                if (time - chgECHeatsettingsTimer > 5)
+                if (time - chgECHeatsettingsTimer > 2)
                 {
                     chgECHeatsettings = false;
-                }
-                else
-                {
-                    chgECHeatsettingsTimer = time;
-                }
+                }                
             }
         }
 
@@ -306,7 +294,29 @@ namespace DF
 
         private void onDraw()
         {
-            if (!GuiVisible || gamePaused)
+            if (showSwitchVessel)
+            {
+                if (!Utilities.WindowVisibile(DFVSwindowPos))
+                    Utilities.MakeWindowVisible(DFVSwindowPos);
+                DFVSwindowPos = GUILayout.Window(VSwindowID, DFVSwindowPos, windowVS, "DeepFreeze Vessel Switch", GUILayout.ExpandWidth(false),
+                    GUILayout.ExpandHeight(true), GUILayout.Width(320), GUILayout.MinHeight(100));
+            }
+            if (showUnabletoSwitchVessel && !switchVesselManual)
+            {
+                if (!Utilities.WindowVisibile(DFVSFwindowPos))
+                    Utilities.MakeWindowVisible(DFVSFwindowPos);
+                DFVSFwindowPos = GUILayout.Window(VSFwindowID, DFVSFwindowPos, windowVSF, "DeepFreeze Vessel Switch Failed", GUILayout.ExpandWidth(false),
+                    GUILayout.ExpandHeight(true), GUILayout.Width(320), GUILayout.MinHeight(100));
+            }
+            if (switchVesselManual)
+            {
+                if (Planetarium.GetUniversalTime() - switchVesselManualTimer > 30)
+                {
+                    switchVesselManualTimer = 0;
+                    switchVesselManual = false;
+                }
+            }
+            if (!GuiVisible || gamePaused || FlightDriver.Pause)
             {
                 return;
             }
@@ -350,28 +360,7 @@ namespace DF
                     DFKACwindowPos = GUILayout.Window(KACwindowID, DFKACwindowPos, windowKAC, "DeepFreeze Alarms", GUILayout.ExpandWidth(true),
                         GUILayout.ExpandHeight(true), GUILayout.MinWidth(360), GUILayout.MinHeight(150));
                 }
-                if (showSwitchVessel)
-                {
-                    if (!Utilities.WindowVisibile(DFVSwindowPos))
-                        Utilities.MakeWindowVisible(DFVSwindowPos);
-                    DFVSwindowPos = GUILayout.Window(VSwindowID, DFVSwindowPos, windowVS, "DeepFreeze Vessel Switch", GUILayout.ExpandWidth(false),
-                        GUILayout.ExpandHeight(true), GUILayout.Width(320), GUILayout.MinHeight(100));
-                }
-                if (showUnabletoSwitchVessel && !switchVesselManual)
-                {
-                    if (!Utilities.WindowVisibile(DFVSFwindowPos))
-                        Utilities.MakeWindowVisible(DFVSFwindowPos);
-                    DFVSFwindowPos = GUILayout.Window(VSFwindowID, DFVSFwindowPos, windowVSF, "DeepFreeze Vessel Switch Failed", GUILayout.ExpandWidth(false),
-                        GUILayout.ExpandHeight(true), GUILayout.Width(320), GUILayout.MinHeight(100));
-                }     
-                if (switchVesselManual)
-                {
-                    if (Planetarium.GetUniversalTime() - switchVesselManualTimer > 30)
-                    {
-                        switchVesselManualTimer = 0;
-                        switchVesselManual = false;
-                    }                    
-                }                          
+                                     
             }
         }
 
@@ -437,6 +426,8 @@ namespace DF
                 GUILayout.Label("R.T", sectionTitleStyle, GUILayout.Width(DFvslRT));
             GUILayout.Label("Alarms", sectionTitleStyle, GUILayout.Width(DFvslAlarms));
             GUILayout.Label("LastUpd", sectionTitleStyle, GUILayout.Width(DFvslLstUpd));
+            if (DeepFreeze.Instance.DFsettings.ECreqdForFreezer)
+                GUILayout.Label("TimeRem", sectionTitleStyle, GUILayout.Width(DFvslLstUpd));
             GUILayout.EndHorizontal();
             foreach (KeyValuePair<uint, PartInfo> frzr in DeepFreeze.Instance.DFgameSettings.knownFreezerParts)
             {
@@ -445,7 +436,7 @@ namespace DF
                 GUILayout.Label(vsl.vesselName, statusStyle, GUILayout.Width(DFvslWdthName));
                 GUILayout.Label(frzr.Value.PartName.Substring(0, 8), statusStyle, GUILayout.Width(DFvslPrtName));
                 string TempVar;
-                if (DFsettings.TempinKelvin)
+                if (DeepFreeze.Instance.DFsettings.TempinKelvin)
                 {
                     TempVar = frzr.Value.cabinTemp.ToString("###0") + "K";
                 }
@@ -454,7 +445,7 @@ namespace DF
                     TempVar = Utilities.KelvintoCelsius((float)frzr.Value.cabinTemp).ToString("###0") + "C";
                 }
 
-                if (DFsettings.RegTempReqd && !chgECHeatsettings)
+                if (DeepFreeze.Instance.DFsettings.RegTempReqd && !chgECHeatsettings)
                 {
                     switch (frzr.Value.TmpStatus)
                     {
@@ -468,7 +459,7 @@ namespace DF
                                 GUILayout.Label(TempVar, StatusWarnStyle, GUILayout.Width(DFvslPrtTmp));
                                 break;
                             }
-                        case FrzrTmpStatus.RED:
+                        case FrzrTmpStatus.RED: 
                             {
                                 GUILayout.Label(TempVar, StatusRedStyle, GUILayout.Width(DFvslPrtTmp));                                
                                 switchVessel = FlightGlobals.Vessels.Find(a => a.id == frzr.Value.vesselID);
@@ -483,7 +474,7 @@ namespace DF
                     GUILayout.Label("OFF", StatusGrayStyle, GUILayout.Width(DFvslPrtTmp));
                 }
 
-                if (DFsettings.ECreqdForFreezer && !chgECHeatsettings)
+                if (DeepFreeze.Instance.DFsettings.ECreqdForFreezer && !chgECHeatsettings)
                 {
                     if (frzr.Value.numFrznCrew == 0)
                     {
@@ -500,7 +491,7 @@ namespace DF
                         }
                         else
                         {
-                            if (vsl.predictedECOut < DFsettings.EClowCriticalTime)
+                            if (vsl.predictedECOut < DeepFreeze.Instance.DFsettings.EClowCriticalTime)
                             {
                                 GUILayout.Label("ALRT", StatusRedStyle, GUILayout.Width(DFvslPrtElec));
                                 switchVessel = FlightGlobals.Vessels.Find(a => a.id == frzr.Value.vesselID);
@@ -509,7 +500,7 @@ namespace DF
                             }
                             else
                             {
-                                if (vsl.predictedECOut < DFsettings.ECLowWarningTime)  // ONE HOUR OF EC WARNING
+                                if (vsl.predictedECOut < DeepFreeze.Instance.DFsettings.ECLowWarningTime)  // ONE HOUR OF EC WARNING
                                 {
                                     //this.Log_Debug("Remaining EC time " + vsl.predictedECOut);
                                     GUILayout.Label("LOW", StatusWarnStyle, GUILayout.Width(DFvslPrtElec));
@@ -562,13 +553,43 @@ namespace DF
                     }
                     else
                     {
-                        if (vsl.predictedECOut < DFsettings.EClowCriticalTime)
+                        if (DeepFreeze.Instance.DFsettings.ECreqdForFreezer && !chgECHeatsettings)
+                        {
+                            if (vsl.predictedECOut < DeepFreeze.Instance.DFsettings.EClowCriticalTime)
+                            {
+                                GUILayout.Label(Utilities.FormatDateString(Planetarium.GetUniversalTime() - frzr.Value.timeLastElectricity), StatusRedStyle, GUILayout.Width(DFvslLstUpd));
+                            }
+                            else
+                            {
+                                if (vsl.predictedECOut < DeepFreeze.Instance.DFsettings.ECLowWarningTime)
+                                {
+                                    GUILayout.Label(Utilities.FormatDateString(Planetarium.GetUniversalTime() - frzr.Value.timeLastElectricity), StatusWarnStyle, GUILayout.Width(DFvslLstUpd));
+                                }
+                                else
+                                {
+                                    GUILayout.Label(Utilities.FormatDateString(Planetarium.GetUniversalTime() - frzr.Value.timeLastElectricity), StatusOKStyle, GUILayout.Width(DFvslLstUpd));
+                                }
+                            }
+                        }
+                        else
+                        {
+                            GUILayout.Label(Utilities.FormatDateString(Planetarium.GetUniversalTime() - frzr.Value.timeLastElectricity), StatusGrayStyle, GUILayout.Width(DFvslLstUpd));
+                        }
+                        
+                    }                    
+                }
+                else
+                {
+
+                    if (DeepFreeze.Instance.DFsettings.ECreqdForFreezer && !chgECHeatsettings)
+                    {
+                        if (vsl.predictedECOut < DeepFreeze.Instance.DFsettings.EClowCriticalTime)
                         {
                             GUILayout.Label(Utilities.FormatDateString(Planetarium.GetUniversalTime() - frzr.Value.timeLastElectricity), StatusRedStyle, GUILayout.Width(DFvslLstUpd));
                         }
                         else
                         {
-                            if (vsl.predictedECOut < DFsettings.ECLowWarningTime)
+                            if (vsl.predictedECOut < DeepFreeze.Instance.DFsettings.ECLowWarningTime)
                             {
                                 GUILayout.Label(Utilities.FormatDateString(Planetarium.GetUniversalTime() - frzr.Value.timeLastElectricity), StatusWarnStyle, GUILayout.Width(DFvslLstUpd));
                             }
@@ -578,25 +599,31 @@ namespace DF
                             }
                         }
                     }
-                }
-                else
-                {
-                    if (vsl.predictedECOut < DFsettings.EClowCriticalTime)
+                    else
                     {
-                        GUILayout.Label(Utilities.FormatDateString(Planetarium.GetUniversalTime() - frzr.Value.timeLastElectricity), StatusRedStyle, GUILayout.Width(DFvslLstUpd));
+                        GUILayout.Label(Utilities.FormatDateString(Planetarium.GetUniversalTime() - frzr.Value.timeLastElectricity), StatusGrayStyle, GUILayout.Width(DFvslLstUpd));
+                    }
+                }
+
+                if (DeepFreeze.Instance.DFsettings.ECreqdForFreezer && !chgECHeatsettings)
+                {
+                    if (vsl.predictedECOut < DeepFreeze.Instance.DFsettings.EClowCriticalTime)
+                    {
+                        GUILayout.Label(Utilities.FormatDateString(vsl.predictedECOut), StatusRedStyle, GUILayout.Width(DFvslLstUpd));
                     }
                     else
                     {
-                        if (vsl.predictedECOut < DFsettings.ECLowWarningTime)
+                        if (vsl.predictedECOut < DeepFreeze.Instance.DFsettings.ECLowWarningTime)
                         {
-                            GUILayout.Label(Utilities.FormatDateString(Planetarium.GetUniversalTime() - frzr.Value.timeLastElectricity), StatusWarnStyle, GUILayout.Width(DFvslLstUpd));
+                            GUILayout.Label(Utilities.FormatDateString(vsl.predictedECOut), StatusWarnStyle, GUILayout.Width(DFvslLstUpd));
                         }
                         else
                         {
-                            GUILayout.Label(Utilities.FormatDateString(Planetarium.GetUniversalTime() - frzr.Value.timeLastElectricity), StatusOKStyle, GUILayout.Width(DFvslLstUpd));
+                            GUILayout.Label(Utilities.FormatDateString(vsl.predictedECOut), StatusOKStyle, GUILayout.Width(DFvslLstUpd));
                         }
                     }
                 }
+
                 GUILayout.EndHorizontal();
             }
 
@@ -1234,11 +1261,11 @@ namespace DF
             GUILayout.BeginVertical();
             GUILayout.BeginHorizontal();
             //GUILayout.Box(new GUIContent("ElectricCharge is running out on vessel, you must switch to the vessel now.", "Switch to DeepFreeze vessel required"), statusStyle, GUILayout.Width(280));
-            GUILayout.Box(new GUIContent(showSwitchVesselStr, showSwitchVesselStr), statusStyle, GUILayout.Width(280));
+            GUILayout.Box(new GUIContent(showSwitchVesselStr, showSwitchVesselStr), statusStyle, GUILayout.Width(320));
             GUILayout.EndHorizontal();
                         
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button(new GUIContent("Switch to Vessel", "Switch to Vessel"), GUILayout.Width(280)))
+            if (GUILayout.Button(new GUIContent("Switch to Vessel", "Switch to Vessel"), GUILayout.Width(320)))
             {
                 showSwitchVessel = false;
                 if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ready)
@@ -1395,58 +1422,58 @@ namespace DF
         public void Load(ConfigNode globalNode)
         {
             this.Log_Debug("DeepFreezeGUI Load");
-            DFwindowPos.x = DFsettings.DFwindowPosX;
-            DFwindowPos.y = DFsettings.DFwindowPosY;
-            CFwindowPos.x = DFsettings.CFwindowPosX;
-            CFwindowPos.y = DFsettings.CFwindowPosY;
-            DFKACwindowPos.x = DFsettings.DFKACwindowPosX;
-            DFKACwindowPos.y = DFsettings.DFKACwindowPosY;
-            DFWINDOW_WIDTH = DFsettings.DFWindowWidth;
-            CFWINDOW_WIDTH = DFsettings.CFWindowWidth;
-            KACWINDOW_WIDTH = DFsettings.KACWindowWidth;
-            WINDOW_BASE_HEIGHT = DFsettings.WindowbaseHeight;
-            Useapplauncher = DFsettings.UseAppLauncher;
-            AutoRecoverFznKerbals = DFsettings.AutoRecoverFznKerbals;
-            debugging = DFsettings.debugging;
-            ECreqdForFreezer = DFsettings.ECreqdForFreezer;
-            fatalOption = DFsettings.fatalOption;
-            KSCcostToThawKerbal = DFsettings.KSCcostToThawKerbal;
-            ECReqdToFreezeThaw = DFsettings.ECReqdToFreezeThaw;
-            GlykerolReqdToFreeze = DFsettings.GlykerolReqdToFreeze;
-            RegTempReqd = DFsettings.RegTempReqd;
-            RegTempFreeze = DFsettings.RegTempFreeze;
-            RegtempMonitor = DFsettings.RegTempMonitor;
-            heatamtMonitoringFrznKerbals = DFsettings.heatamtMonitoringFrznKerbals;
-            heatamtThawFreezeKerbal = DFsettings.heatamtThawFreezeKerbal;
-            TempinKelvin = DFsettings.TempinKelvin;
-            StripLightsOn = DFsettings.StripLightsActive;
+            DFwindowPos.x = DeepFreeze.Instance.DFsettings.DFwindowPosX;
+            DFwindowPos.y = DeepFreeze.Instance.DFsettings.DFwindowPosY;
+            CFwindowPos.x = DeepFreeze.Instance.DFsettings.CFwindowPosX;
+            CFwindowPos.y = DeepFreeze.Instance.DFsettings.CFwindowPosY;
+            DFKACwindowPos.x = DeepFreeze.Instance.DFsettings.DFKACwindowPosX;
+            DFKACwindowPos.y = DeepFreeze.Instance.DFsettings.DFKACwindowPosY;
+            DFWINDOW_WIDTH = DeepFreeze.Instance.DFsettings.DFWindowWidth;
+            CFWINDOW_WIDTH = DeepFreeze.Instance.DFsettings.CFWindowWidth;
+            KACWINDOW_WIDTH = DeepFreeze.Instance.DFsettings.KACWindowWidth;
+            WINDOW_BASE_HEIGHT = DeepFreeze.Instance.DFsettings.WindowbaseHeight;
+            Useapplauncher = DeepFreeze.Instance.DFsettings.UseAppLauncher;
+            AutoRecoverFznKerbals = DeepFreeze.Instance.DFsettings.AutoRecoverFznKerbals;
+            debugging = DeepFreeze.Instance.DFsettings.debugging;
+            ECreqdForFreezer = DeepFreeze.Instance.DFsettings.ECreqdForFreezer;
+            fatalOption = DeepFreeze.Instance.DFsettings.fatalOption;
+            KSCcostToThawKerbal = DeepFreeze.Instance.DFsettings.KSCcostToThawKerbal;
+            ECReqdToFreezeThaw = DeepFreeze.Instance.DFsettings.ECReqdToFreezeThaw;
+            GlykerolReqdToFreeze = DeepFreeze.Instance.DFsettings.GlykerolReqdToFreeze;
+            RegTempReqd = DeepFreeze.Instance.DFsettings.RegTempReqd;
+            RegTempFreeze = DeepFreeze.Instance.DFsettings.RegTempFreeze;
+            RegtempMonitor = DeepFreeze.Instance.DFsettings.RegTempMonitor;
+            heatamtMonitoringFrznKerbals = DeepFreeze.Instance.DFsettings.heatamtMonitoringFrznKerbals;
+            heatamtThawFreezeKerbal = DeepFreeze.Instance.DFsettings.heatamtThawFreezeKerbal;
+            TempinKelvin = DeepFreeze.Instance.DFsettings.TempinKelvin;
+            StripLightsOn = DeepFreeze.Instance.DFsettings.StripLightsActive;
             this.Log_Debug("DeepFreezeGUI Load end");
         }
 
         public void Save(ConfigNode globalNode)
         {
             this.Log_Debug("DeepFreezeGUI Save");
-            DFsettings.DFwindowPosX = DFwindowPos.x;
-            DFsettings.DFwindowPosY = DFwindowPos.y;
-            DFsettings.CFwindowPosX = CFwindowPos.x;
-            DFsettings.CFwindowPosY = CFwindowPos.y;
-            DFsettings.DFKACwindowPosX = DFKACwindowPos.x;
-            DFsettings.DFKACwindowPosY = DFKACwindowPos.y;
-            DFsettings.UseAppLauncher = Useapplauncher;
-            DFsettings.AutoRecoverFznKerbals = AutoRecoverFznKerbals;
-            DFsettings.debugging = debugging;
-            DFsettings.ECreqdForFreezer = ECreqdForFreezer;
-            DFsettings.fatalOption = fatalOption;
-            DFsettings.KSCcostToThawKerbal = KSCcostToThawKerbal;
-            DFsettings.ECReqdToFreezeThaw = ECReqdToFreezeThaw;
-            DFsettings.GlykerolReqdToFreeze = GlykerolReqdToFreeze;
-            DFsettings.RegTempReqd = RegTempReqd;
-            DFsettings.RegTempFreeze = RegTempFreeze;
-            DFsettings.RegTempMonitor = RegtempMonitor;
-            DFsettings.heatamtThawFreezeKerbal = heatamtThawFreezeKerbal;
-            DFsettings.heatamtMonitoringFrznKerbals = heatamtMonitoringFrznKerbals;
-            DFsettings.TempinKelvin = TempinKelvin;
-            DFsettings.StripLightsActive = StripLightsOn;
+            DeepFreeze.Instance.DFsettings.DFwindowPosX = DFwindowPos.x;
+            DeepFreeze.Instance.DFsettings.DFwindowPosY = DFwindowPos.y;
+            DeepFreeze.Instance.DFsettings.CFwindowPosX = CFwindowPos.x;
+            DeepFreeze.Instance.DFsettings.CFwindowPosY = CFwindowPos.y;
+            DeepFreeze.Instance.DFsettings.DFKACwindowPosX = DFKACwindowPos.x;
+            DeepFreeze.Instance.DFsettings.DFKACwindowPosY = DFKACwindowPos.y;
+            DeepFreeze.Instance.DFsettings.UseAppLauncher = Useapplauncher;
+            DeepFreeze.Instance.DFsettings.AutoRecoverFznKerbals = AutoRecoverFznKerbals;
+            DeepFreeze.Instance.DFsettings.debugging = debugging;
+            DeepFreeze.Instance.DFsettings.ECreqdForFreezer = ECreqdForFreezer;
+            DeepFreeze.Instance.DFsettings.fatalOption = fatalOption;
+            DeepFreeze.Instance.DFsettings.KSCcostToThawKerbal = KSCcostToThawKerbal;
+            DeepFreeze.Instance.DFsettings.ECReqdToFreezeThaw = ECReqdToFreezeThaw;
+            DeepFreeze.Instance.DFsettings.GlykerolReqdToFreeze = GlykerolReqdToFreeze;
+            DeepFreeze.Instance.DFsettings.RegTempReqd = RegTempReqd;
+            DeepFreeze.Instance.DFsettings.RegTempFreeze = RegTempFreeze;
+            DeepFreeze.Instance.DFsettings.RegTempMonitor = RegtempMonitor;
+            DeepFreeze.Instance.DFsettings.heatamtThawFreezeKerbal = heatamtThawFreezeKerbal;
+            DeepFreeze.Instance.DFsettings.heatamtMonitoringFrznKerbals = heatamtMonitoringFrznKerbals;
+            DeepFreeze.Instance.DFsettings.TempinKelvin = TempinKelvin;
+            DeepFreeze.Instance.DFsettings.StripLightsActive = StripLightsOn;
             this.Log_Debug("DeepFreezeGUI Save end");
         }
 

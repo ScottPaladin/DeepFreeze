@@ -50,6 +50,33 @@ namespace DF
             Debug.Log("--------------------------------------");
         }
 
+        // Use Reflection to get a field from an object
+        internal static object GetObjectField(object o, string fieldName)
+        {
+            object outputObj = new object();
+            bool foundObj = false;
+            foreach (FieldInfo field in o.GetType().GetFields())
+            {
+                if (!field.IsStatic)
+                {
+                    if (field.Name == fieldName)
+                    {
+                        foundObj = true;
+                        outputObj = field.GetValue(o);
+                        break;
+                    }
+                }
+            }
+            if (foundObj)
+            {
+                return outputObj;
+            }
+            else
+            {
+                return null;
+            }            
+        }
+
         // Dump all Unity Cameras
         internal static void DumpCameras()
         {
@@ -337,7 +364,7 @@ namespace DF
                         Log_Debug("Layers already set");
                         break;
                     }
-                    Log_Debug("Renderer: " + renderer.name + " set to layer " + layer);
+                    //Log_Debug("Renderer: " + renderer.name + " set to layer " + layer);
                     renderer.gameObject.layer = layer;
                     if (setVisible) renderer.enabled = true;
                     else renderer.enabled = false;
@@ -348,30 +375,35 @@ namespace DF
         internal static void CheckPortraitCams(Vessel vessel)
         {
             // Only the pods in the active vessel should be doing it since the list refers to them.
-            Log_Debug("CheckPortraitCams");
-            if (vessel.isActiveVessel)
-            {
-                // First, every pod should check through the list of portaits and remove everyone who is from some other vessel, or NO vessel.
-                var stowaways = new List<Kerbal>();
-                foreach (Kerbal thatKerbal in KerbalGUIManager.ActiveCrew)
+            Log_Debug("DeepFreeze CheckPortraitCams vessel " + vessel.name + "(" + vessel.id + ") activevessel " + FlightGlobals.ActiveVessel.name + "(" + FlightGlobals.ActiveVessel.id + ")");
+            
+            // First, We check through the list of portaits and remove everyone who is from some other vessel, or NO vessel.
+            var stowaways = new List<Kerbal>();
+            foreach (Kerbal thatKerbal in KerbalGUIManager.ActiveCrew)
+            {                
+                if (thatKerbal.InPart == null)
                 {
-                    if (thatKerbal.InPart == null)
+                    Log_Debug("kerbal " + thatKerbal.name + " Invessel = null add stowaway");
+                    stowaways.Add(thatKerbal);
+                }
+                else
+                {
+                    Log_Debug("kerbal " + thatKerbal.name + " Invessel = " + thatKerbal.InVessel + " InvesselID = " + thatKerbal.InVessel.id);
+                    if (thatKerbal.InVessel.id != FlightGlobals.ActiveVessel.id) 
                     {
+                        Log_Debug("Adding stowaway");
                         stowaways.Add(thatKerbal);
                     }
-                    else
-                    {
-                        if (thatKerbal.InVessel != vessel)
-                        {
-                            stowaways.Add(thatKerbal);
-                        }
-                    }
                 }
-                foreach (Kerbal thatKerbal in stowaways)
-                {
-                    KerbalGUIManager.RemoveActiveCrew(thatKerbal);
-                }
-                // Then, every pod should check the list of seats in itself and see if anyone is missing who should be present.
+            }
+            foreach (Kerbal thatKerbal in stowaways)
+            {
+                KerbalGUIManager.RemoveActiveCrew(thatKerbal);
+            }
+
+            if (FlightGlobals.ActiveVessel.id == vessel.id)
+            {
+                // Then, Check the list of seats in every crewable part in the vessel and see if anyone is missing who should be present.
                 List<Part> crewparts = (from p in vessel.parts where (p.CrewCapacity > 0 && p.internalModel != null) select p).ToList();
                 foreach (Part part in crewparts)
                 {

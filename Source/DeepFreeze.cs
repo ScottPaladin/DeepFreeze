@@ -79,6 +79,7 @@ namespace DF
                 this.Log("Adding EditorController");
                 var DFMem = gameObject.AddComponent<DFIntMemory>();
                 children.Add(DFMem);
+                
                 //var child = gameObject.AddComponent<DeepFreezeGUI>();
                 //children.Add(child);
             }

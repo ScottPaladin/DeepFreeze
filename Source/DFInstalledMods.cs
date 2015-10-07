@@ -114,9 +114,10 @@ namespace DF
             bool RTVslConnected = false;
             try
             {
-                if (IsRTInstalled)
+                if (IsRTInstalled && RTWrapper.APIReady)
                 {
-                    RTVslConnected = (RemoteTech.API.API.HasLocalControl(id) || RemoteTech.API.API.HasAnyConnection(id));
+                    //RTVslConnected = (RemoteTech.API.API.HasLocalControl(id) || RemoteTech.API.API.HasAnyConnection(id));
+                    RTVslConnected = (RTWrapper.RTactualAPI.HasLocalControl(id) || RTWrapper.RTactualAPI.HasAnyConnection(id));
                     //Utilities.Log_Debug("vessel " + id + "haslocal " + RemoteTech.API.API.HasLocalControl(id) + " has any " + RemoteTech.API.API.HasAnyConnection(id));
                 }
             }
@@ -136,7 +137,8 @@ namespace DF
                 double RTVslDelay = 0f;
                 try
                 {
-                    RTVslDelay = RemoteTech.API.API.GetShortestSignalDelay(FlightGlobals.ActiveVessel.id);
+                    //RTVslDelay = RemoteTech.API.API.GetShortestSignalDelay(FlightGlobals.ActiveVessel.id);
+                    RTVslDelay = RTWrapper.RTactualAPI.GetShortestSignalDelay(FlightGlobals.ActiveVessel.id);
                 }
                 catch (Exception ex)
                 {
