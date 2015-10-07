@@ -85,11 +85,8 @@ namespace DF
             try
             {
                 keyFrzrCam = (KeyCode)DeepFreeze.Instance.DFsettings.internalFrzrCamCode;
-                //this.Log_Debug("Freeze Cam Code set to " + keyFrzrCam.ToString());
                 keyNxtFrzrCam = (KeyCode)DeepFreeze.Instance.DFsettings.internalNxtFrzrCamCode;
-                //this.Log_Debug("Next Freeze Cam Code set to " + keyNxtFrzrCam.ToString());
                 keyPrvFrzrCam = (KeyCode)DeepFreeze.Instance.DFsettings.internalPrvFrzrCamCode;
-                //this.Log_Debug("Previous Freeze Cam Code set to " + keyPrvFrzrCam.ToString());
                 if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ActiveVessel != null)
                     onVesselChange(FlightGlobals.ActiveVessel);
             }
@@ -453,79 +450,88 @@ namespace DF
 
         internal void onVesselLoad(Vessel vessel)
         {
-            this.Log_Debug("OnVesselLoad activevessel " + FlightGlobals.ActiveVessel.id + " parametervesselid " + vessel.id);
-            resetFreezerCams();
-            onVesselChange(vessel);
+            if (HighLogic.LoadedSceneIsFlight)
+            {
+                this.Log_Debug("OnVesselLoad activevessel " + FlightGlobals.ActiveVessel.id + " parametervesselid " + vessel.id);
+                resetFreezerCams();
+                onVesselChange(vessel);
+            }
         }
 
         internal void onVesselCreate(Vessel vessel)
         {
-            this.Log_Debug("OnVesselCreate activevessel " + FlightGlobals.ActiveVessel.id + " parametervesselid " + vessel.id);
-            List<DeepFreezer> TmpDpFrzrActVsl = vessel.FindPartModulesImplementing<DeepFreezer>();
-            foreach (DeepFreezer frzr in TmpDpFrzrActVsl)
+            if (HighLogic.LoadedSceneIsFlight)
             {
-                //Find the part in KnownFreezerParts and update the GUID
-                PartInfo partInfo;
-                if (DeepFreeze.Instance.DFgameSettings.knownFreezerParts.TryGetValue(frzr.part.flightID, out partInfo))
+                this.Log_Debug("OnVesselCreate activevessel " + FlightGlobals.ActiveVessel.id + " parametervesselid " + vessel.id);
+                List<DeepFreezer> TmpDpFrzrActVsl = vessel.FindPartModulesImplementing<DeepFreezer>();
+                foreach (DeepFreezer frzr in TmpDpFrzrActVsl)
                 {
-                    partInfo.vesselID = vessel.id;
-                }
-                //Iterate frozen kerbals in KnownFrozenKerbals and update the GUID
-                foreach (KeyValuePair<string, KerbalInfo> frznKerbals in DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals)
-                {
-                    if (frznKerbals.Value.partID == frzr.part.flightID)
+                    //Find the part in KnownFreezerParts and update the GUID
+                    PartInfo partInfo;
+                    if (DeepFreeze.Instance.DFgameSettings.knownFreezerParts.TryGetValue(frzr.part.flightID, out partInfo))
                     {
-                        frznKerbals.Value.vesselID = vessel.id;
+                        partInfo.vesselID = vessel.id;
+                    }
+                    //Iterate frozen kerbals in KnownFrozenKerbals and update the GUID
+                    foreach (KeyValuePair<string, KerbalInfo> frznKerbals in DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals)
+                    {
+                        if (frznKerbals.Value.partID == frzr.part.flightID)
+                        {
+                            frznKerbals.Value.vesselID = vessel.id;
+                        }
+                    }
+                    //Update the Frzr Parts internal frozenkerbals list GUID
+                    foreach (FrznCrewMbr storedCrew in frzr.DFIStoredCrewList)
+                    {
+                        storedCrew.VesselID = vessel.id;
                     }
                 }
-                //Update the Frzr Parts internal frozenkerbals list GUID
-                foreach (FrznCrewMbr storedCrew in frzr.DFIStoredCrewList)
-                {
-                    storedCrew.VesselID = vessel.id;
-                }
-            }
+            }            
         }
 
         internal void onPartCouple(GameEvents.FromToAction<Part, Part> fromToAction)
         {
-            this.Log_Debug("OnPartCouple activevessel " + FlightGlobals.ActiveVessel.id + " fromPart " + fromToAction.from.flightID + "(" + fromToAction.from.vessel.id + ") toPart " + fromToAction.to.flightID + "(" + fromToAction.to.vessel.id + ")");
-            List<DeepFreezer> TmpDpFrzrActVsl = fromToAction.from.vessel.FindPartModulesImplementing<DeepFreezer>();
-            foreach (DeepFreezer frzr in TmpDpFrzrActVsl)
+            if (HighLogic.LoadedSceneIsFlight)
             {
-                //Find the part in KnownFreezerParts and update the GUID
-                PartInfo partInfo;
-                if (DeepFreeze.Instance.DFgameSettings.knownFreezerParts.TryGetValue(frzr.part.flightID, out partInfo))
+                this.Log_Debug("OnPartCouple activevessel " + FlightGlobals.ActiveVessel.id + " fromPart " + fromToAction.from.flightID + "(" + fromToAction.from.vessel.id + ") toPart " + fromToAction.to.flightID + "(" + fromToAction.to.vessel.id + ")");
+                List<DeepFreezer> TmpDpFrzrActVsl = fromToAction.from.vessel.FindPartModulesImplementing<DeepFreezer>();
+                foreach (DeepFreezer frzr in TmpDpFrzrActVsl)
                 {
-                    partInfo.vesselID = fromToAction.to.vessel.id;
-                }
-                //Iterate frozen kerbals in KnownFrozenKerbals and update the GUID
-                foreach (KeyValuePair<string, KerbalInfo> frznKerbals in DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals)
-                {
-                    if (frznKerbals.Value.partID == frzr.part.flightID)
+                    //Find the part in KnownFreezerParts and update the GUID
+                    PartInfo partInfo;
+                    if (DeepFreeze.Instance.DFgameSettings.knownFreezerParts.TryGetValue(frzr.part.flightID, out partInfo))
                     {
-                        frznKerbals.Value.vesselID = fromToAction.to.vessel.id;
+                        partInfo.vesselID = fromToAction.to.vessel.id;
+                    }
+                    //Iterate frozen kerbals in KnownFrozenKerbals and update the GUID
+                    foreach (KeyValuePair<string, KerbalInfo> frznKerbals in DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals)
+                    {
+                        if (frznKerbals.Value.partID == frzr.part.flightID)
+                        {
+                            frznKerbals.Value.vesselID = fromToAction.to.vessel.id;
+                        }
+                    }
+                    //Update the Frzr Parts internal frozenkerbals list GUID
+                    foreach (FrznCrewMbr storedCrew in frzr.DFIStoredCrewList)
+                    {
+                        storedCrew.VesselID = fromToAction.to.vessel.id;
                     }
                 }
-                //Update the Frzr Parts internal frozenkerbals list GUID
-                foreach (FrznCrewMbr storedCrew in frzr.DFIStoredCrewList)
+                //Now resetFrozenKerbals in the parts
+                foreach (DeepFreezer frzr in TmpDpFrzrActVsl)
                 {
-                    storedCrew.VesselID = fromToAction.to.vessel.id;
+                    frzr.resetFrozenKerbals();
                 }
+                refreshPortraits = true;
+                refreshPortraitsTimer = Planetarium.GetUniversalTime();
             }
-            //Now resetFrozenKerbals in the parts
-            foreach (DeepFreezer frzr in TmpDpFrzrActVsl)
-            {
-                frzr.resetFrozenKerbals();
-            }
-            refreshPortraits = true;
-            refreshPortraitsTimer = Planetarium.GetUniversalTime();
         }
 
         internal void onVesselChange(Vessel vessel)
-        {
-            this.Log_Debug("OnVesselChange activevessel " + FlightGlobals.ActiveVessel.name + "(" + FlightGlobals.ActiveVessel.id + ") parametervessel " + vessel.name + "(" + vessel.id + ")");
+        {            
             if (HighLogic.LoadedSceneIsFlight)
             {
+                this.Log_Debug("OnVesselChange activevessel " + FlightGlobals.ActiveVessel.name + "(" + FlightGlobals.ActiveVessel.id + ") parametervessel " + vessel.name + "(" + vessel.id + ")");
                 //chk if current active vessel Has one or more DeepFreezer modules attached
                 try
                 {

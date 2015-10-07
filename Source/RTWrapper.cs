@@ -1,17 +1,32 @@
-﻿using System;
-using System.Collections.Generic;
+﻿/**
+ * DeepFreeze Continued...
+ * (C) Copyright 2015, Jamie Leighton
+ *
+ * Kerbal Space Program is Copyright (C) 2013 Squad. See http://kerbalspaceprogram.com/. This
+ * project is in no way associated with nor endorsed by Squad.
+ *
+ *  This file is part of JPLRepo's DeepFreeze (continued...) - a Fork of DeepFreeze. Original Author of DeepFreeze is 'scottpaladin' on the KSP Forums.
+ *  This File was not part of the original Deepfreeze but was written by Jamie Leighton based of code and concepts from the Kerbal Alarm Clock Mod. Which was licensed under the MIT license.
+ *  (C) Copyright 2015, Jamie Leighton
+ *
+ * Continues to be licensed under the Attribution-NonCommercial-ShareAlike 3.0 (CC BY-NC-SA 4.0)
+ * creative commons license. See <https://creativecommons.org/licenses/by-nc-sa/4.0/>
+ * for full details.
+ *
+ */
+using System;
 using System.Linq;
 using System.Reflection;
 
 namespace DF
 {
     /// <summary>
-    /// The Wrapper class to access Texture Replacer
+    /// The Wrapper class to access Remote Tech
     /// </summary>
     public class RTWrapper
     {
-        protected static System.Type RTAPIType;        
-        protected static Object actualRTAPI = null;        
+        protected static System.Type RTAPIType;
+        protected static Object actualRTAPI = null;
 
         /// <summary>
         /// This is the Remote Tech API object
@@ -42,12 +57,12 @@ namespace DF
         private static Boolean _RTWrapped = false;
 
         /// <summary>
-        /// Whether the object has been wrapped 
+        /// Whether the object has been wrapped
         /// </summary>
         public static Boolean APIReady { get { return _RTWrapped; } }
 
         /// <summary>
-        /// This method will set up the Texture Replacer object and wrap all the methods/functions
+        /// This method will set up the Remote Tech object and wrap all the methods/functions
         /// </summary>
         /// <param name="Force">This option will force the Init function to rebind everything</param>
         /// <returns></returns>
@@ -55,10 +70,9 @@ namespace DF
         {
             //reset the internal objects
             _RTWrapped = false;
-            actualRTAPI = null;            
-            LogFormatted("Attempting to Grab TextureReplacer Types...");
+            actualRTAPI = null;
+            LogFormatted("Attempting to Grab Remote Tech Types...");
 
-            
             //find the base type
             RTAPIType = AssemblyLoader.loadedAssemblies
                 .Select(a => a.assembly.GetExportedTypes())
@@ -71,7 +85,7 @@ namespace DF
             }
 
             LogFormatted("Remote Tech Version:{0}", RTAPIType.Assembly.GetName().Version.ToString());
-                        
+
             //now grab the running instance
             LogFormatted("Got Assembly Types, grabbing Instances");
             try
@@ -80,10 +94,10 @@ namespace DF
             }
             catch (Exception)
             {
-                LogFormatted("No Texture Replacer isInitialised found");
+                LogFormatted("No Remote Tech isInitialised found");
                 //throw;
             }
-            
+
             if (actualRTAPI == null)
             {
                 LogFormatted("Failed grabbing Instance");
@@ -99,7 +113,7 @@ namespace DF
         }
 
         /// <summary>
-        /// The Type that is an analogue of the real KAC. This lets you access all the API-able properties and Methods of the KAC
+        /// The Type that is an analogue of the real Remote Tech. This lets you access all the API-able properties and Methods of Remote Tech
         /// </summary>
         public class RTAPI
         {
@@ -110,7 +124,7 @@ namespace DF
 
                 //these sections get and store the reflection info and actual objects where required. Later in the properties we then read the values from the actual objects
                 //for events we also add a handler
-                
+
                 //WORK OUT THE STUFF WE NEED TO HOOK FOR PEOPLE HERE
                 //Methods
                 LogFormatted("Getting HasLocalControl Method");
@@ -124,7 +138,6 @@ namespace DF
                 LogFormatted("Getting GetShortestSignalDelay Method");
                 GetShortestSignalDelayMethod = RTAPIType.GetMethod("GetShortestSignalDelay", BindingFlags.Public | BindingFlags.Static);
                 LogFormatted_DebugOnly("Success: " + (GetShortestSignalDelayMethod != null).ToString());
-
             }
 
             private Object APIactualRT;
@@ -134,9 +147,9 @@ namespace DF
             private MethodInfo HasLocalControlMethod;
 
             /// <summary>
-            /// Personalise IVA textures of a kerbal
+            /// Whether the current vessel HasLocalControl
             /// </summary>
-            /// <param name="kerbal">The Kerbal reference</param>
+            /// <param name="id">The vessel id reference</param>
             /// <returns>Success of call</returns>
             internal bool HasLocalControl(Guid id)
             {
@@ -151,15 +164,14 @@ namespace DF
                     return false;
                     //throw;
                 }
-
             }
 
             private MethodInfo HasAnyConnectionMethod;
 
             /// <summary>
-            /// Personalise IVA textures of a kerbal
+            /// Whether the current vessel HasAnyConnection
             /// </summary>
-            /// <param name="kerbal">The Kerbal reference</param>
+            /// <param name="id">The vessel id reference</param>
             /// <returns>Success of call</returns>
             internal bool HasAnyConnection(Guid id)
             {
@@ -174,16 +186,15 @@ namespace DF
                     return false;
                     //throw;
                 }
-
             }
 
             private MethodInfo GetShortestSignalDelayMethod;
 
             /// <summary>
-            /// Personalise IVA textures of a kerbal
+            /// Gets the signal delay
             /// </summary>
-            /// <param name="kerbal">The Kerbal reference</param>
-            /// <returns>Success of call</returns>
+            /// <param name="id">The vessel id reference</param>
+            /// <returns>A double indicating the signaldelay time</returns>
             internal double GetShortestSignalDelay(Guid id)
             {
                 try
@@ -197,11 +208,9 @@ namespace DF
                     return 0;
                     //throw;
                 }
-
             }
 
             #endregion Methods
-
         }
 
         #region Logging Stuff

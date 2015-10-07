@@ -368,8 +368,6 @@ namespace DF
         private bool vesselisinIVA;
         private bool vesselisinInternal;
 
-        //private DFGameSettings DFgameSettings;
-        //private DFSettings DFsettings;
         private bool setGameSettings = false;
 
         internal bool partHasInternals = false;
@@ -433,25 +431,22 @@ namespace DF
                 this.part.SpawnCrew();
                 resetFrozenKerbals();
                 resetCryopods(true);
+                // If part does not have JSITransparentPod module we check the portrait cams. Otherwise JSITransparenPod will do it for us.
                 if (!hasJSITransparentPod)
+                {
                     Utilities.CheckPortraitCams(vessel);
+                }                    
             }
 
             if ((Time.time - lastUpdate) > updatetnterval && (Time.time - lastRemove) > updatetnterval) // We only update every updattnterval time interval.
             {
                 lastUpdate = Time.time;
                 if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ready && FlightGlobals.ActiveVessel != null)
-                {
-                    if (CrntVslID != this.vessel.id)
-                    {
-                        // VesselID changed
-                        processVesselIDchange();
-                    }
+                {                    
                     CrntVslID = this.vessel.id;
                     CrntVslName = this.vessel.vesselName;
 
                     //Set the Part temperature in the partmenu
-                    //Utilities.Log_Debug("DeepFreezer", "Set Temp");
                     if (DeepFreeze.Instance.DFsettings.TempinKelvin)
                     {
                         this.Fields["CabinTemp"].guiUnits = "K";
@@ -608,11 +603,7 @@ namespace DF
             }
             //UpdateCounts(); // Update the Kerbal counters and stored crew lists for the part - MOVED to FixedUpdate
         }
-
-        private void processVesselIDchange()
-        {
-        }
-
+                
         private void checkRPMPodTransparencySetting()
         {
             try
@@ -688,12 +679,7 @@ namespace DF
                             _prevRPMTransparentpodSetting = transparentPodSetting;
                         }
                     }
-                }
-
-                //List<JSI.JSITransparentPod> JSITransparentPods = vessel.FindPartModulesImplementing<JSI.JSITransparentPod>();
-                //foreach (JSI.JSITransparentPod JSITransparentPod in JSITransparentPods)
-                //{
-                //}
+                }                
             }
             catch (Exception ex)
             {
@@ -705,8 +691,6 @@ namespace DF
         private void onceoffSetup()
         {
             Utilities.Log_Debug("DeepFreezer", "OnUpdate SetGameSettings");
-            //DFgameSettings = DeepFreeze.Instance.DFgameSettings;
-            //DeepFreeze.Instance.DFsettings = DeepFreeze.Instance.DFsettings;
             _StoredCrewList.Clear();
             CrntVslID = this.vessel.id;
             CrntVslName = this.vessel.vesselName;
@@ -935,10 +919,11 @@ namespace DF
 
         private void ChkOngoingEC(PartInfo partInfo)
         {
-            // The follow section of code consumes EC when we have ECreqdForFreezer set to true in the part config.
+            // The following section of code consumes EC when we have ECreqdForFreezer set to true in the part config.
             // This consumes electric charge when we have frozen kerbals on board.
             // But due to bugs in KSP ith EC and SolarPanels at high timewarp if timewarp is > 4x we turn it off.
-            // If we run out of EC we roll the dice. There is a 1 in 3 chance a Kerbal will DIE!!!!
+            // If we run out of EC and Lethal setting is on, we roll the dice. There is a 1 in 3 chance a Kerbal will DIE!!!!
+            // If lethal setting is off an emergency thaw of all frozen crew occurs.
 
             Utilities.Log_Debug("ChkOngoingEC start");
             double currenttime = Planetarium.GetUniversalTime();
@@ -1034,7 +1019,8 @@ namespace DF
             // The follow section of code checks Temperatures when we have RegTempReqd set to true in the master config file.
             // This check is done when we have frozen kerbals on board.
             // But due to bugs in KSP with EC and SolarPanels at high timewarp if timewarp is > 4x we turn it off.
-            // If the temperature is too high we roll the dice. There is a 1 in 3 chance a Kerbal will DIE!!!!
+            // If the temperature is too high and fatal option is on, we roll the dice. There is a 1 in 3 chance a Kerbal will DIE!!!!
+            // If fatal option is off all frozen kerbals are thawed
             double currenttime = Planetarium.GetUniversalTime();
             double timeperiod = currenttime - (double)timeSinceLastTmpChk;
             Utilities.Log_Debug("ChkOngoingTemp start time=" + Time.time.ToString() + ",timeSinceLastTmpChk=" + timeSinceLastTmpChk.ToString() + ",Planetarium.UniversalTime=" + Planetarium.GetUniversalTime().ToString() + " timeperiod=" + timeperiod.ToString());
@@ -1318,7 +1304,6 @@ namespace DF
                 }
                 eventsToDelete.ForEach(id => Events.Remove(id));
                 // Events will only appear if RemoteTech is NOT installed OR it is installed and vessel is connected.
-                //if (!DFInstalledMods.IsRTInstalled || (DFInstalledMods.IsRTInstalled && DFInstalledMods.RTVesselConnected(this.part.vessel.id)))
                 if (!DFInstalledMods.IsRTInstalled || (DFInstalledMods.IsRTInstalled && isRTConnected))
                 {
                     if (_StoredCrewList.Count < FreezerSize) // If the Freezer isn't full
@@ -1852,11 +1837,6 @@ namespace DF
             {
                 Debug.Log("DeepFreeze has been unable to connect to Texture Replacer mod. API is not ready. Report this error on the Forum Thread.");
             }
-            //bool tracked = global::LifeSupport.LifeSupportManager.Instance.IsKerbalTracked(crewmember);
-            //this.Log_Debug("USI/LS Iskerbaltracked before call=" + tracked);
-            //global::LifeSupport.LifeSupportManager.Instance.UntrackKerbal(crewmember);
-            //tracked = global::LifeSupport.LifeSupportManager.Instance.IsKerbalTracked(crewmember);
-            //this.Log_Debug("USI/LS Iskerbaltracked after call=" + tracked);
         }
 
         #endregion FrzKerbals
@@ -3720,7 +3700,6 @@ namespace DF
         {
             setCryopodWindowTransparent(seatIndx);
             string windowname = "Animated-Cryopod-" + (seatIndx + 1).ToString() + "-Window";
-            //Animation[] animators = this.part.internalModel.FindModelAnimators("CryopodWindowClose");
             _windowAnimation = this.part.internalModel.FindModelComponent<Animation>(windowname);
             if (_windowAnimation == null)
             {
@@ -3940,7 +3919,6 @@ namespace DF
 
         private DoorState getdoorState()
         {
-            //return _externaldoorstate;
             if (externalDoorAnim != null)
             {
                 if (externalDoorAnim[animationName].normalizedTime == 1f) //closed
@@ -3969,30 +3947,7 @@ namespace DF
 
         private const String MAIN_POWER_NAME = "ElectricCharge";
 
-        /*
-        public static void BackgroundLoad(Vessel v, uint partFlightId, ref System.Object data)
-        {
-            // We need the FrzChargeRequired field from the part's config node.
-            bool debug = DeepFreeze.Instance.DFsettings.debugging;
-
-            try
-            {
-                ProtoPartSnapshot partsnapshot = v.protoVessel.protoPartSnapshots.Find(p => p.flightID == partFlightId);
-                ProtoPartModuleSnapshot modulesnapshot = partsnapshot.modules.Find(m => m.moduleName == "DeepFreezer");
-                string strFrznChargeRequired = modulesnapshot.moduleValues.GetValue("FrznChargeRequired");
-                int FrznChargeRequired = 0;
-                bool success = Int32.TryParse(strFrznChargeRequired, out FrznChargeRequired);
-                data = FrznChargeRequired;
-                if (debug) Debug.Log("BackgroundLoad vessel " + v + " partID " + partFlightId + " FrznChargeRequired = " + FrznChargeRequired + " data = " + data.ToString());
-            }
-            catch (Exception ex)
-            {
-                Debug.Log("Exception BackgroundLoad of DeepFreezer partmodule settings");
-                Debug.Log("Err: " + ex);
-            }
-        }
-        */
-
+        
         //This method is called by the BackgroundProcessing DLL, if the user has installed it. Otherwise it will never be called.
         //It will consume ElectricCharge for Freezer that contain frozen kerbals for vessels that are unloaded, if the user has turned on the ECreqdForFreezer option in the settings menu.
         public static void FixedBackgroundUpdate(Vessel v, uint partFlightID, Func<Vessel, float, string, float> resourceRequest, ref System.Object data)
@@ -4045,9 +4000,6 @@ namespace DF
                 double timeperiod = currenttime - (double)partInfo.timeLastElectricity;
                 if (timeperiod >= 1f && partInfo.numFrznCrew > 0) //We have frozen Kerbals, consume EC
                 {
-                    //int FrznChargeRequired = Convert.ToInt32(data);
-                    //Utilities.Log_Debug(" data frznchargerequired " + FrznChargeRequired + " partinfo frznchargereqed " + partInfo.frznChargeRequired);
-
                     double Ecreqd = ((partInfo.frznChargeRequired / 60.0f) * timeperiod * vslinfo.numFrznCrew);
                     if (debug) Debug.Log("FixedBackgroundUpdate timeperiod = " + timeperiod + " frozenkerbals onboard part = " + vslinfo.numFrznCrew + " ECreqd = " + Ecreqd);
                     float Ecrecvd = 0f;
@@ -4114,7 +4066,6 @@ namespace DF
             {
                 if (debug) Debug.Log("FixedBackgroundUpdate Timewarp is too high to backgroundprocess");
                 partInfo.deathCounter = currenttime;
-                //partInfo.timeLastElectricity = (float)currenttime;
                 partInfo.outofEC = false;
                 partInfo.ECWarning = false;
             }

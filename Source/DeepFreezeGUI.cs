@@ -30,7 +30,7 @@ namespace DF
 
         private IButton button1;
         private ApplicationLauncherButton stockToolbarButton = null; // Stock Toolbar Button
-        private float DFWINDOW_WIDTH = 420;
+        private float DFWINDOW_WIDTH = 480;
         private float CFWINDOW_WIDTH = 340;
         private float KACWINDOW_WIDTH = 485;
         private float VSWINDOW_WIDTH = 340;
@@ -239,7 +239,7 @@ namespace DF
             DFvslPrtTmp = Mathf.Round((DFWINDOW_WIDTH - 28f) / 11f);
             DFvslPrtElec = Mathf.Round((DFWINDOW_WIDTH - 28f) / 12.3f);
             DFvslAlarms = Mathf.Round((DFWINDOW_WIDTH - 28f) / 8f);
-            DFvslLstUpd = Mathf.Round((DFWINDOW_WIDTH - 28f) / 7.5f);
+            DFvslLstUpd = Mathf.Round((DFWINDOW_WIDTH - 28f) / 5.5f);
             DFvslRT = Mathf.Round((DFWINDOW_WIDTH - 28f) / 12.3f);
             // create toolbar button
 
@@ -1353,16 +1353,16 @@ namespace DF
 
                         DFwindowPos.width = Mathf.Clamp(Input.mousePosition.x - DFwindowPos.x + (resizeRect.width / 2), 50, Screen.width - DFwindowPos.x);
                         DFwindowPos.height = Mathf.Clamp(mouseY - DFwindowPos.y + (resizeRect.height / 2), 50, Screen.height - DFwindowPos.y);
-                        DFtxtWdthName = Mathf.Round((DFwindowPos.width - 28f) / 3.5f);
+                        DFtxtWdthName = Mathf.Round((DFwindowPos.width - 28f) / 4.2f);
                         DFtxtWdthProf = Mathf.Round((DFwindowPos.width - 28f) / 4.8f);
                         DFtxtWdthVslN = Mathf.Round((DFwindowPos.width - 28f) / 3.5f);
                         DFvslWdthName = Mathf.Round((DFwindowPos.width - 28f) / 4f);
-                        DFvslPrtName = Mathf.Round((DFwindowPos.width - 28f) / 6f);
-                        DFvslPrtTmp = Mathf.Round((DFwindowPos.width - 28f) / 9.8f);
-                        DFvslPrtElec = Mathf.Round((DFwindowPos.width - 28f) / 12f);
+                        DFvslPrtName = Mathf.Round((DFwindowPos.width - 28f) / 6.3f);
+                        DFvslPrtTmp = Mathf.Round((DFwindowPos.width - 28f) / 11f);
+                        DFvslPrtElec = Mathf.Round((DFwindowPos.width - 28f) / 12.3f);
                         DFvslAlarms = Mathf.Round((DFwindowPos.width - 28f) / 8f);
-                        DFvslLstUpd = Mathf.Round((DFwindowPos.width - 28f) / 5f);
-                        DFvslRT = Mathf.Round((DFwindowPos.width - 28f) / 12f);
+                        DFvslLstUpd = Mathf.Round((DFwindowPos.width - 28f) / 5.5f);
+                        DFvslRT = Mathf.Round((DFwindowPos.width - 28f) / 12.3f);                        
                     }
                     else
                     {

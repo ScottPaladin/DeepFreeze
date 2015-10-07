@@ -1,4 +1,20 @@
-﻿using System;
+﻿/**
+ * DeepFreeze Continued...
+ * (C) Copyright 2015, Jamie Leighton
+ *
+ * Kerbal Space Program is Copyright (C) 2013 Squad. See http://kerbalspaceprogram.com/. This
+ * project is in no way associated with nor endorsed by Squad.
+ *
+ *  This file is part of JPLRepo's DeepFreeze (continued...) - a Fork of DeepFreeze. Original Author of DeepFreeze is 'scottpaladin' on the KSP Forums.
+ *  This File was not part of the original Deepfreeze but was written by Jamie Leighton based of code and concepts from the Kerbal Alarm Clock Mod. Which was licensed under the MIT license.
+ *  (C) Copyright 2015, Jamie Leighton
+ *
+ * Continues to be licensed under the Attribution-NonCommercial-ShareAlike 3.0 (CC BY-NC-SA 4.0)
+ * creative commons license. See <https://creativecommons.org/licenses/by-nc-sa/4.0/>
+ * for full details.
+ *
+ */
+ using System;
 using System.Linq;
 using System.Reflection;
 
@@ -44,7 +60,7 @@ namespace DF
         private static Boolean _USIWrapped = false;
 
         /// <summary>
-        /// Whether the object has been wrapped 
+        /// Whether the object has been wrapped
         /// </summary>
         public static Boolean APIReady { get { return _USIWrapped; } }
 
@@ -87,8 +103,8 @@ namespace DF
 
             //now grab the running instance
             LogFormatted("Got Assembly Types, grabbing Instances");
-                                  
-            try 
+
+            try
             {
                 actualUSIUntrackKerbal = USIUntrackKerbalType.GetField("instance", BindingFlags.NonPublic | BindingFlags.Static).GetValue(null);
             }
@@ -113,8 +129,7 @@ namespace DF
         }
 
         /// <summary>
-        /// The Type that is an analogue of the real KAC. This lets you access all the API-able properties and Methods of the KAC
-        /// </summary>
+        /// The Type that is an analogue of the real USI LS. This lets you access all the API-able properties and Methods of USI LS
         public class USIUntrackKerbalAPI
         {
             internal USIUntrackKerbalAPI(Object USIUntrackKerbal)
@@ -133,7 +148,6 @@ namespace DF
                 LogFormatted("Getting UntrackKerbal Method");
                 USIUntrackKerbalMethod = USIUntrackKerbalType.GetMethod("UntrackKerbal", BindingFlags.Public | BindingFlags.Instance);
                 LogFormatted_DebugOnly("Success: " + (USIUntrackKerbalMethod != null).ToString());
-
             }
 
             private Object APIactualUSIUntrackKerbal;
@@ -145,8 +159,7 @@ namespace DF
             /// <summary>
             /// Untrack a kerbal in USI LS
             /// </summary>
-            /// <param name="kerbal">A string containing the kerbal's name</param>
-            /// <returns>Success of call</returns>
+            /// <param name="kerbal">A string containing the kerbal's name</param>            
             internal void UntrackKerbal(string kerbal)
             {
                 try
@@ -159,11 +172,9 @@ namespace DF
                     LogFormatted("Exception: {0}", ex);
                     //throw;
                 }
-
             }
 
             #endregion Methods
-
         }
 
         #region Logging Stuff
