@@ -681,7 +681,7 @@ namespace DF
                     }
                 }                
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 Utilities.Log("DeepFreezer", " Error checking RPM TransparentPod Setting");
                 //Utilities.Log("DeepFreezer ", ex.Message);
@@ -959,7 +959,7 @@ namespace DF
                                 FrznChargeUsage = (float)ResAvail;
                             }
                         }
-                        Debug.Log("DeepFreezer Ran out of EC to run the freezer");
+                        //Debug.Log("DeepFreezer Ran out of EC to run the freezer");
                         if (!partInfo.ECWarning)
                         {
                             if (TimeWarp.CurrentRateIndex > 1) Utilities.stopWarp();
@@ -1310,7 +1310,8 @@ namespace DF
                     {
                         foreach (var CrewMember in part.protoModuleCrew) // We Add Freeze Events for all active crew in the part
                         {
-                            addFreezeEvent(CrewMember);
+                            if (CrewMember.type != ProtoCrewMember.KerbalType.Tourist)
+                                addFreezeEvent(CrewMember);
                         }
                     }
                     if ((part.protoModuleCrew.Count < part.CrewCapacity) || part.CrewCapacity <= 0)  // If part is not full or zero (should always be true, think this is redundant line)
@@ -1688,7 +1689,7 @@ namespace DF
             {
                 ToFrzeKerbalSeat = CrewMember.seatIdx;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 Debug.Log("Unable to find internal seat index for " + CrewMember.name);
                 //Debug.Log("Err: " + ex);
@@ -1851,7 +1852,7 @@ namespace DF
             {
                 case 0:
                     //Begin
-                    this.Log_Debug("Thaw Step 0");
+                    //this.Log_Debug("Thaw Step 0");
                     ThawKerbalStep0(ToThawKerbal);
                     if (vesselisinInternal)
                     {
@@ -1865,7 +1866,7 @@ namespace DF
 
                 case 1:
                     //Get EC and Glykerol
-                    this.Log_Debug("Thaw Step 1");
+                    //this.Log_Debug("Thaw Step 1");
                     if (skipThawStep1)
                     {
                         this.Log_Debug("Skipping step 1 of Thaw process");
@@ -1901,7 +1902,7 @@ namespace DF
 
                 case 2:
                     //thaw the cryopod window
-                    this.Log_Debug("Thaw Step 2");
+                    //this.Log_Debug("Thaw Step 2");
                     if (partHasInternals && !isPartAnimated)
                     // Part has no animated cryopods but has internals. Set window to off and skip to step 4.
                     {
@@ -1930,7 +1931,7 @@ namespace DF
                                 {
                                     if (_windowAnimation.IsPlaying("CryopodWindowOpen"))
                                     {
-                                        this.Log_Debug("waiting for the pod animation to complete the thaw");
+                                        //this.Log_Debug("waiting for the pod animation to complete the thaw");
                                         ThawWindowAnimPlaying = true;
                                     }
                                     else
@@ -1960,7 +1961,7 @@ namespace DF
 
                 case 3:
                     //open the Pod door Hal
-                    this.Log_Debug("Thaw Step 3");
+                    //this.Log_Debug("Thaw Step 3");
                     if (partHasInternals && isPartAnimated)
                     {
                         if (!OpenPodAnimPlaying)  // If animation not already playing start it playing.
@@ -1979,7 +1980,7 @@ namespace DF
                             {
                                 if (_animation.IsPlaying("Open"))
                                 {
-                                    this.Log_Debug("waiting for the pod animation to complete the thaw");
+                                    //this.Log_Debug("waiting for the pod animation to complete the thaw");
                                     OpenPodAnimPlaying = true;
                                 }
                                 else
@@ -2008,7 +2009,7 @@ namespace DF
 
                 case 4:
                     //Finalise
-                    this.Log_Debug("Thaw Step 4");
+                    //this.Log_Debug("Thaw Step 4");
                     ThawKerbalStep4(ToThawKerbal);
                     break;
             }
@@ -2269,8 +2270,7 @@ namespace DF
             //This will re-personalise a kerbal who has been personalised using Texture replacer mod.
             try
             {
-                this.Log_Debug("Texture Replacer installed. Re-PersonliseKerbal");
-                //global::TextureReplacer.Personaliser.instance.personaliseIva(kerbal);
+                this.Log_Debug("Texture Replacer installed. Re-PersonliseKerbal");                
                 if (TRWrapper.APIReady && TRWrapper.InstanceExists)
                 {
                     TRWrapper.TexRepPersonaliser.personaliseIva(kerbal);
@@ -2362,8 +2362,44 @@ namespace DF
             ScreenMessages.PostScreenMessage(frozenkerbal + " thawed out", 5.0f, ScreenMessageStyle.UPPER_CENTER);
             if (emergencyThawInProgress)
             {
-                ScreenMessages.PostScreenMessage(frozenkerbal + " was thawed out due to lack of Electrical Charge to run cryogenics", 10.0f, ScreenMessageStyle.UPPER_CENTER);
+                ScreenMessages.PostScreenMessage(frozenkerbal + " was thawed out due to lack of Electrical Charge to run cryogenics", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                 Debug.Log("DeepFreezer - kerbal " + frozenkerbal + " was thawed out due to lack of Electrical charge to run cryogenics");
+                Utilities.setComatoseKerbal(kerbal, ProtoCrewMember.KerbalType.Tourist);
+
+                // Update the saved frozen kerbals dictionary
+                KerbalInfo kerbalInfo = new KerbalInfo(Planetarium.GetUniversalTime());
+                kerbalInfo.vesselID = CrntVslID;
+                kerbalInfo.vesselName = CrntVslName;
+                kerbalInfo.experienceTraitName = kerbal.experienceTrait.Title;
+                kerbalInfo.type = ProtoCrewMember.KerbalType.Tourist;
+                kerbalInfo.status = ProtoCrewMember.RosterStatus.Assigned;
+                if (partHasInternals)
+                {
+                    kerbalInfo.seatName = ToFrzeKerbalXformNme;
+                    kerbalInfo.seatIdx = ToFrzeKerbalSeat;
+                }
+                else
+                {
+                    kerbalInfo.seatName = "Unknown";
+                    kerbalInfo.seatIdx = -1;
+                }
+                kerbalInfo.partID = CrntPartID;                
+                this.Log_Debug("Adding New Comatose Crew to dictionary");
+                try
+                {
+                    if (!DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.ContainsKey(kerbal.name))
+                    {
+                        DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.Add(kerbal.name, kerbalInfo);
+                    }
+                    if (DeepFreeze.Instance.DFsettings.debugging) DeepFreeze.Instance.DFgameSettings.DmpKnownFznKerbals();
+                }
+                catch (Exception ex)
+                {
+                    this.Log("Unable to add to knownfrozenkerbals comatose crewmember " + kerbal.name);
+                    this.Log("Err: " + ex);
+                    ScreenMessages.PostScreenMessage("DeepFreezer mechanical failure", 5.0f, ScreenMessageStyle.UPPER_CENTER);                    
+                }
+
             }
             Debug.Log("Thawed out: " + frozenkerbal);
             UpdateCounts(); // Update the Crew counts
@@ -3148,9 +3184,8 @@ namespace DF
             // Iterate through the dictionary of all known frozen kerbals
             foreach (KeyValuePair<string, KerbalInfo> kerbal in DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals)
             {
-                // if the known kerbal is in this part in this vessel
-
-                if (kerbal.Value.vesselID == CrntVslID && kerbal.Value.partID == CrntPartID)
+                // if the known kerbal is in this part in this vessel & they are not comatose/tourist
+                if (kerbal.Value.vesselID == CrntVslID && kerbal.Value.partID == CrntPartID && kerbal.Value.type != ProtoCrewMember.KerbalType.Tourist)
                 {
                     FrznCrewMbr fzncrew = new FrznCrewMbr(kerbal.Key, kerbal.Value.seatIdx, CrntVslID, CrntVslName);
                     FrznCrewMbr tmpcrew = _StoredCrewList.Find(a => a.CrewName == kerbal.Key);
@@ -3158,7 +3193,6 @@ namespace DF
                     {
                         //add them to our storedcrewlist for this part.
                         Utilities.Log_Debug("DeepFreezer", "Adding frozen kerbal to this part storedcrewlist " + kerbal.Key);
-
                         _StoredCrewList.Add(fzncrew);
                     }
 
@@ -3186,7 +3220,7 @@ namespace DF
                                 crewmember.KerbalRef.showHelmet = false;
                                 crewmember.KerbalRef.ShowHelmet(false);
                             }
-                            this.Log_Debug("Kerbal kerbalref = " + crewmember.KerbalRef.GetInstanceID());
+                            //this.Log_Debug("Kerbal kerbalref = " + crewmember.KerbalRef.GetInstanceID());
                         }
                         else
                         {
@@ -3206,7 +3240,7 @@ namespace DF
                                 crewmember.KerbalRef.showHelmet = false;
                                 crewmember.KerbalRef.ShowHelmet(false);
                             }
-                            this.Log_Debug("Kerbal kerbalref = " + crewmember.KerbalRef.GetInstanceID());
+                            //this.Log_Debug("Kerbal kerbalref = " + crewmember.KerbalRef.GetInstanceID());
                         }
                         seatTakenbyFrznKerbal[crewmember.seatIdx] = true;
                         //setup seat and part settings for frozen kerbal.
@@ -3255,7 +3289,7 @@ namespace DF
                     FreezerSpace = (FreezerSize - _StoredCrewList.Count);
                     TotalFrozen = _StoredCrewList.Count;
                     PartFull = (TotalFrozen + this.part.protoModuleCrew.Count >= this.part.CrewCapacity);
-                    Utilities.Log_Debug("DeepFreezer", "UpdateCounts FreezerSpace=" + FreezerSpace + ",TotalFrozen=" + TotalFrozen + ",Partfull=" + PartFull);
+                    //Utilities.Log_Debug("DeepFreezer", "UpdateCounts FreezerSpace=" + FreezerSpace + ",TotalFrozen=" + TotalFrozen + ",Partfull=" + PartFull);
                     // Reset the seat status for frozen crew to taken - true, because it seems to reset by something?? So better safe than sorry.
                     if (partHasInternals)
                     {
@@ -3326,7 +3360,7 @@ namespace DF
                             //Utilities.Log_Debug("DeepFreezer", "Frozen Crew SeatIdx= " + lst.SeatIdx + ",Seattaken=" + this.part.internalModel.seats[lst.SeatIdx].taken + ",KerbalRef=" + kerblrefstring);
                         }
                     }
-                    Utilities.Log_Debug("DeepFreezer", "UpdateCounts end");
+                    //Utilities.Log_Debug("DeepFreezer", "UpdateCounts end");
                 }
             }
             catch (Exception ex)
@@ -3452,10 +3486,10 @@ namespace DF
 
                 //Create a temporary array and set entries to true where that seat index contains a frozen kerbal.
                 bool[] closedpods = new bool[FreezerSize];
-                for (int i = 0; i < FreezerSize; i++)
-                {
-                    this.Log_Debug("cryopodstate closed=" + cryopodstateclosed[i].ToString() + " checking pod " + i);
-                }
+                //for (int i = 0; i < FreezerSize; i++)
+                //{
+                //    this.Log_Debug("cryopodstate closed=" + cryopodstateclosed[i].ToString() + " checking pod " + i);
+                //}
                 foreach (FrznCrewMbr frzncrew in _StoredCrewList)
                 {
                     closedpods[frzncrew.SeatIdx] = true;
@@ -3476,9 +3510,9 @@ namespace DF
                                 this.Log_Debug("pod is open so close it");
                                 closeCryopod(i, float.MaxValue);
                                 cryopodstateclosed[i] = true;
-                                this.Log_Debug("Time freezewindow started " + Planetarium.GetUniversalTime());
+                                //this.Log_Debug("Time freezewindow started " + Planetarium.GetUniversalTime());
                                 freezeCryopodWindow(i, float.MaxValue);
-                                this.Log_Debug("Time freezewindow finished make them invisible " + Planetarium.GetUniversalTime());
+                                //this.Log_Debug("Time freezewindow finished make them invisible " + Planetarium.GetUniversalTime());
                             }
                             else
                             {
@@ -3528,17 +3562,17 @@ namespace DF
             string windowname = "Cryopod-" + (SeatIndx + 1).ToString() + "-Window";
             try
             {
-                Debug.Log("setCryoWindowOff for " + windowname + " on partid=" + this.part.flightID);
+                //Debug.Log("setCryoWindowOff for " + windowname + " on partid=" + this.part.flightID);
                 renderer = this.part.internalModel.FindModelComponent<Renderer>(windowname);
                 //renderer.enabled = false;
                 GameObject objfnd = renderer.gameObject;
                 objfnd.layer = 21;
-                Debug.Log("setcryoff set renderergo to layer 21 ok");
+                //Debug.Log("setcryoff set renderergo to layer 21 ok");
                 Component parobj = objfnd.GetComponentUpwards("Component");
                 parobj.gameObject.layer = 21;
-                Debug.Log("setcryoff set rendererparentgo to layer 21 ok");
+                //Debug.Log("setcryoff set rendererparentgo to layer 21 ok");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 Debug.Log("Unable to find Renderer in internal model for this part called " + windowname);
             }
@@ -3550,17 +3584,17 @@ namespace DF
             string windowname = "Cryopod-" + (SeatIndx + 1).ToString() + "-Window";
             try
             {
-                Debug.Log("setCryoWindowOn for " + windowname + " on partid=" + this.part.flightID);
+                //Debug.Log("setCryoWindowOn for " + windowname + " on partid=" + this.part.flightID);
                 renderer = this.part.internalModel.FindModelComponent<Renderer>(windowname);
                 //renderer.enabled = true;
                 GameObject objfnd = renderer.gameObject;
                 objfnd.layer = 16;
-                Debug.Log("setcryon set renderergo to layer 16 ok");
+                //Debug.Log("setcryon set renderergo to layer 16 ok");
                 Component parobj = objfnd.GetComponentUpwards("Component");
                 parobj.gameObject.layer = 16;
-                Debug.Log("setcryon set rendererparentgo to layer 16 ok");
+                //Debug.Log("setcryon set rendererparentgo to layer 16 ok");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 Debug.Log("Unable to find Renderer in internal model for this part called " + windowname);
             }
@@ -3601,7 +3635,6 @@ namespace DF
         {
             setCryopodWindowOpaque(seatIndx);
             string windowname = "Animated-Cryopod-" + (seatIndx + 1).ToString() + "-Window";
-            //Animation[] animators = this.part.internalModel.FindModelAnimators("CryopodWindowOpen");
             _windowAnimation = this.part.internalModel.FindModelComponent<Animation>(windowname);
             if (_windowAnimation == null)
             {
@@ -3641,7 +3674,7 @@ namespace DF
         private void startStripLightFlash(int seatIndx)
         {
             string stripname = "lightStrip-Animated-Cryopod-" + (seatIndx + 1).ToString();
-            this.Log_Debug("playing animation PodActive " + stripname);
+            //this.Log_Debug("playing animation PodActive " + stripname);
             try
             {
                 Animation strip_animation = this.part.internalModel.FindModelComponent<Animation>(stripname);
@@ -3728,7 +3761,7 @@ namespace DF
         private void stopStripLightFlash(int seatIndx)
         {
             string stripname = "lightStrip-Animated-Cryopod-" + (seatIndx + 1).ToString();
-            this.Log_Debug("playing animation LightStrip " + stripname);
+            //this.Log_Debug("playing animation LightStrip " + stripname);
             try
             {
                 Animation strip_animation = this.part.internalModel.FindModelComponent<Animation>(stripname);
@@ -3740,7 +3773,10 @@ namespace DF
                     strip_animation.wrapMode = WrapMode.Loop;
                     strip_animation.Play("LightStrip");
                 }
-                this.Log_Debug("animation LightStrip not found for " + stripname);
+                else
+                {
+                    this.Log_Debug("animation LightStrip not found for " + stripname);
+                }                
             }
             catch (Exception ex)
             {
@@ -3753,7 +3789,7 @@ namespace DF
         private void setIVAFrzrCam(int seatIndx)
         {
             string camname = "FrzCam" + (seatIndx + 1).ToString();
-            this.Log_Debug("Setting FrzrCam " + camname);
+            //this.Log_Debug("Setting FrzrCam " + camname);
             Camera cam = this.part.internalModel.FindModelComponent<Camera>(camname);
             if (cam != null)
             {
@@ -3969,7 +4005,7 @@ namespace DF
             // If the user does not have ECreqdForFreezer option ON, then we do nothing and return
             if (!DeepFreeze.Instance.DFsettings.ECreqdForFreezer)
             {
-                if (debug) Debug.Log("FixedBackgroundUpdate ECreqdForFreezer is OFF, nothing to do");
+                //if (debug) Debug.Log("FixedBackgroundUpdate ECreqdForFreezer is OFF, nothing to do");
                 return;
             }
             // If the vessel this module is attached to is NOT stored in the DeepFreeze dictionary of known deepfreeze vessels we can't do anything, But this should NEVER happen.
@@ -3982,7 +4018,7 @@ namespace DF
             //Except if there are no frozen crew on board we don't need to consume any EC
             if (vslinfo.numFrznCrew == 0)
             {
-                if (debug) Debug.Log("FixedBackgroundUpdate No Frozen Crew on-board, nothing to do");
+                //if (debug) Debug.Log("FixedBackgroundUpdate No Frozen Crew on-board, nothing to do");
                 return;
             }
             PartInfo partInfo;
@@ -4039,7 +4075,7 @@ namespace DF
                                 var kerbalsToDelete = new List<string>();
                                 foreach (KeyValuePair<string, KerbalInfo> kerbal in DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals)
                                 {
-                                    if (kerbal.Value.partID == partFlightID && kerbal.Value.vesselID == v.id)
+                                    if (kerbal.Value.partID == partFlightID && kerbal.Value.vesselID == v.id && kerbal.Value.type != ProtoCrewMember.KerbalType.Tourist)
                                     {
                                         kerbalsToDelete.Add(kerbal.Key);
                                     }
