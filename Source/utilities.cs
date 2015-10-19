@@ -20,6 +20,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using UnityEngine;
 
 namespace DF
@@ -349,7 +350,7 @@ namespace DF
         // If bodyOnly is true only the "body01" mesh is changed (to be replaced by placeholder mesh lying down as kerbals in IVA are always in sitting position).
         internal static void setFrznKerbalLayer(ProtoCrewMember kerbal, bool setVisible, bool bodyOnly)
         {
-            Log_Debug("setFrznKerbalLayer " + kerbal.name + " visible " + setVisible);
+            //Log_Debug("setFrznKerbalLayer " + kerbal.name + " visible " + setVisible);
             int layer = 16;
             if (!setVisible)
             {
@@ -362,7 +363,7 @@ namespace DF
                 {
                     if (renderer.gameObject.layer == layer)
                     {
-                        Log_Debug("Layers already set");
+                        //Log_Debug("Layers already set");
                         break;
                     }
                     //Log_Debug("Renderer: " + renderer.name + " set to layer " + layer);
@@ -376,7 +377,7 @@ namespace DF
         internal static void CheckPortraitCams(Vessel vessel)
         {
             // Only the pods in the active vessel should be doing it since the list refers to them.
-            Log_Debug("DeepFreeze CheckPortraitCams vessel " + vessel.name + "(" + vessel.id + ") activevessel " + FlightGlobals.ActiveVessel.name + "(" + FlightGlobals.ActiveVessel.id + ")");
+            //Log_Debug("DeepFreeze CheckPortraitCams vessel " + vessel.name + "(" + vessel.id + ") activevessel " + FlightGlobals.ActiveVessel.name + "(" + FlightGlobals.ActiveVessel.id + ")");
 
             // First, We check through the list of portaits and remove everyone who is from some other vessel, or NO vessel.
             var stowaways = new List<Kerbal>();
@@ -384,15 +385,15 @@ namespace DF
             {
                 if (thatKerbal.InPart == null)
                 {
-                    Log_Debug("kerbal " + thatKerbal.name + " Invessel = null add stowaway");
+                    //Log_Debug("kerbal " + thatKerbal.name + " Invessel = null add stowaway");
                     stowaways.Add(thatKerbal);
                 }
                 else
                 {
-                    Log_Debug("kerbal " + thatKerbal.name + " Invessel = " + thatKerbal.InVessel + " InvesselID = " + thatKerbal.InVessel.id);
+                    //Log_Debug("kerbal " + thatKerbal.name + " Invessel = " + thatKerbal.InVessel + " InvesselID = " + thatKerbal.InVessel.id);
                     if (thatKerbal.InVessel.id != FlightGlobals.ActiveVessel.id)
                     {
-                        Log_Debug("Adding stowaway");
+                        //Log_Debug("Adding stowaway");
                         stowaways.Add(thatKerbal);
                     }
                 }
@@ -408,25 +409,25 @@ namespace DF
                 List<Part> crewparts = (from p in vessel.parts where (p.CrewCapacity > 0 && p.internalModel != null) select p).ToList();
                 foreach (Part part in crewparts)
                 {
-                    Log_Debug("Check Portraits for part " + part.name);
+                    //Log_Debug("Check Portraits for part " + part.name);
                     foreach (InternalSeat seat in part.internalModel.seats)
                     {
-                        Log_Debug("checking Seat " + seat.seatTransformName);
-                        if (seat.kerbalRef != null) Log_Debug("kerbalref=" + seat.kerbalRef.crewMemberName);
-                        else Log_Debug("Seat kerbalref is null");
+                        //Log_Debug("checking Seat " + seat.seatTransformName);
+                        //if (seat.kerbalRef != null) Log_Debug("kerbalref=" + seat.kerbalRef.crewMemberName);
+                        //else Log_Debug("Seat kerbalref is null");
                         if (seat.kerbalRef != null && !KerbalGUIManager.ActiveCrew.Contains(seat.kerbalRef))
                         {
-                            Log_Debug("Checking crewstatus " + seat.kerbalRef.protoCrewMember.rosterStatus + " " + seat.kerbalRef.protoCrewMember.type);
+                            //Log_Debug("Checking crewstatus " + seat.kerbalRef.protoCrewMember.rosterStatus + " " + seat.kerbalRef.protoCrewMember.type);
                             if (seat.kerbalRef.protoCrewMember.rosterStatus != ProtoCrewMember.RosterStatus.Dead || seat.kerbalRef.protoCrewMember.type != ProtoCrewMember.KerbalType.Unowned)
                             {
-                                Log_Debug("Adding missing Portrait for " + seat.kerbalRef.crewMemberName);
+                                //Log_Debug("Adding missing Portrait for " + seat.kerbalRef.crewMemberName);
                                 KerbalGUIManager.AddActiveCrew(seat.kerbalRef);
                             }
                         }
                     }
                 }
             }
-            else Log_Debug("Vessel is not active vessel");
+            //else Log_Debug("Vessel is not active vessel");
         }
 
         // The following method is taken from RasterPropMonitor as-is. Which is covered by GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
@@ -539,6 +540,31 @@ namespace DF
             }
         }
 
+        internal static bool setComatoseKerbal(ProtoCrewMember crew, ProtoCrewMember.KerbalType type)
+        {
+            try
+            {
+                crew.type = type;
+                if (type == ProtoCrewMember.KerbalType.Crew)
+                {
+                    KerbalRoster.SetExperienceTrait(crew, "");
+                    ScreenMessages.PostScreenMessage(crew.name + " has recovered from emergency thaw and resumed normal duties.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                }
+                else
+                {
+                    KerbalRoster.SetExperienceTrait(crew, "Tourist");
+                    ScreenMessages.PostScreenMessage(crew.name + " has been emergency thawed and cannot perform duties for " + (DeepFreeze.Instance.DFsettings.comatoseTime / 60).ToString() +  " minutes.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                }
+                return true;
+            }
+            catch (Exception)
+            {
+                Log("DeepFreeze", " Failed to set " + crew.name + " to status of " + type.ToString() + " during emergency thaw processing.");
+                return false;
+            }
+            
+        }
+
         // The following method is taken from Kerbal Alarm Clock as-is. Which is covered by MIT license.
         internal static int getVesselIdx(Vessel vtarget)
         {
@@ -590,6 +616,29 @@ namespace DF
             winpos.y = Mathf.Clamp(winpos.y, yMin, yMax);
 
             return winpos;
+        }
+
+        // The following method is taken from RasterPropMonitor as-is. Which is covered by GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
+        public static string WordWrap(string text, int maxLineLength)
+        {
+            var sb = new StringBuilder();
+            char[] prc = { ' ', ',', '.', '?', '!', ':', ';', '-' };
+            char[] ws = { ' ' };
+
+            foreach (string line in text.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                int currentIndex;
+                int lastWrap = 0;
+                do
+                {
+                    currentIndex = lastWrap + maxLineLength > line.Length ? line.Length : (line.LastIndexOfAny(prc, Math.Min(line.Length - 1, lastWrap + maxLineLength)) + 1);
+                    if (currentIndex <= lastWrap)
+                        currentIndex = Math.Min(lastWrap + maxLineLength, line.Length);
+                    sb.AppendLine(line.Substring(lastWrap, currentIndex - lastWrap).Trim(ws));
+                    lastWrap = currentIndex;
+                } while (currentIndex < line.Length);
+            }
+            return sb.ToString();
         }
 
         // Get Config Node Values out of a config node Methods

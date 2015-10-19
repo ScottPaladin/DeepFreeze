@@ -90,7 +90,7 @@ namespace DF
                 if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ActiveVessel != null)
                     onVesselChange(FlightGlobals.ActiveVessel);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 this.Log_Debug("Invalid Freezer Cam Code in settings. Settings value=" + DeepFreeze.Instance.DFsettings.internalFrzrCamCode);
                 keyFrzrCam = (KeyCode)100;
@@ -303,7 +303,7 @@ namespace DF
                     {
                         kerbalname = ActFrzrCams[lastFrzrCam].FrzrCamPart.part.internalModel.seats[lastFrzrCam].kerbalRef.name;
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         kerbalname = string.Empty;
                     }
@@ -317,10 +317,23 @@ namespace DF
         {
             if (HighLogic.LoadedSceneIsEditor || Time.timeSinceLevelLoad < 5f) return; //Wait 5 seconds on level load before executing
 
+            //We check/update kerbal Dictionary for comatose kerbals in EVERY Game Scene.
+            try
+            {
+                if (DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.Count() > 0)
+                    CheckComaUpdate();
+            }
+            catch (Exception ex)
+            {
+                this.Log("FixedUpdate failed to update DeepFreeze Internal Comatose Kerbals Memory");
+                this.Log("Err: " + ex);
+            }
+
             //We check/update Vessel and Part Dictionary in EVERY Game Scene.
             try
             {
-                CheckVslUpdate();
+                if (DeepFreeze.Instance.DFgameSettings.knownVessels.Count() > 0)
+                    CheckVslUpdate();
             }
             catch (Exception ex)
             {
@@ -341,6 +354,32 @@ namespace DF
                 this.Log("FixedUpdate failed to update DeepFreeze Internal Alarm Memory");
                 this.Log("Err: " + ex);
             }
+        }
+
+        private void CheckComaUpdate()
+        {
+            // Check the knownfrozenkerbals for any tourists kerbals (IE: Comatose) if their time is up and reset them if it is.
+            var keysToDelete = new List<string>();
+            foreach (KeyValuePair<string, KerbalInfo> comaKerbals in DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals)
+            {
+                if (comaKerbals.Value.type == ProtoCrewMember.KerbalType.Tourist)
+                {
+                    if (Planetarium.GetUniversalTime() - comaKerbals.Value.lastUpdate > (double)DeepFreeze.Instance.DFsettings.comatoseTime) // Is time up?
+                    {
+                        ProtoCrewMember crew = HighLogic.CurrentGame.CrewRoster.Tourist.FirstOrDefault(a => a.name == comaKerbals.Key);
+                        if (crew != null)
+                        {
+                            Utilities.setComatoseKerbal(crew, ProtoCrewMember.KerbalType.Crew);
+                            keysToDelete.Add(comaKerbals.Key);
+                        }
+                        else
+                        {
+                            this.Log("Unable to set comatose crew member " + comaKerbals.Key + " back to crew status.");
+                        }                        
+                    }
+                }
+            }
+            keysToDelete.ForEach(id => DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.Remove(id));
         }
 
         private void ChkUnknownFrozenKerbals()
@@ -612,7 +651,7 @@ namespace DF
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 this.Log("Failed to resetFreezerCams");
                 //this.Log("Err: " + ex);
@@ -724,13 +763,13 @@ namespace DF
                 frznChargeRequired = (int)frzr.Value.frznChargeRequired;
                 ECreqdsincelastupdate += ((frznChargeRequired / 60.0f) * timeperiod * frzr.Value.numFrznCrew);
                 frzr.Value.deathCounter = currentTime;
-                this.Log_Debug("predicted EC part " + frzr.Value.vesselID + " " + frzr.Value.PartName + " FrznChargeRequired " + frznChargeRequired + " timeperiod " + timeperiod + " #frzncrew " + frzr.Value.numFrznCrew);
+                //this.Log_Debug("predicted EC part " + frzr.Value.vesselID + " " + frzr.Value.PartName + " FrznChargeRequired " + frznChargeRequired + " timeperiod " + timeperiod + " #frzncrew " + frzr.Value.numFrznCrew);
             }
             double ECafterlastupdate = vesselInfo.storedEC - ECreqdsincelastupdate;
             double predictedMinutes = ECafterlastupdate / frznChargeRequired;  // This probably should be per PART, but for simplicity we will do for the whole vessel
             vesselInfo.predictedECOut = predictedMinutes * 60;
-            this.Log_Debug("UpdatePredictedVesselEC vessel " + vessel.id + " " + vessel.name + " StoredEC=" + vesselInfo.storedEC + " ECreqd=" + ECreqdsincelastupdate + " Prediction Secs=" + vesselInfo.predictedECOut);
-            this.Log_Debug("ECafterlastupdate " + ECafterlastupdate + " FrznChargeRequired " + frznChargeRequired + " predictedMinutes " + predictedMinutes);
+            //this.Log_Debug("UpdatePredictedVesselEC vessel " + vessel.id + " " + vessel.name + " StoredEC=" + vesselInfo.storedEC + " ECreqd=" + ECreqdsincelastupdate + " Prediction Secs=" + vesselInfo.predictedECOut);
+            //this.Log_Debug("ECafterlastupdate " + ECafterlastupdate + " FrznChargeRequired " + frznChargeRequired + " predictedMinutes " + predictedMinutes);
         }
 
         private void UpdateVesselInfo(VesselInfo vesselInfo, Vessel vessel, double currentTime)

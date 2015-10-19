@@ -45,7 +45,7 @@ namespace DF
         private static int KACwindowID = 2000001;
         private static int VSwindowID = 2000002;
         private static int VSFwindowID = 2000003;
-        private GUIStyle statusStyle, frozenStyle, sectionTitleStyle, resizeStyle, StatusOKStyle, StatusWarnStyle, StatusRedStyle, StatusGrayStyle, ButtonStyle;
+        private GUIStyle statusStyle, frozenStyle, comaStyle, sectionTitleStyle, resizeStyle, StatusOKStyle, StatusWarnStyle, StatusRedStyle, StatusGrayStyle, ButtonStyle;
         private Vector2 GUIscrollViewVector, GUIscrollViewVector2, GUIscrollViewVectorKAC, GUIscrollViewVectorKACKerbals = Vector2.zero;
         private bool mouseDownDF = false;
         private bool mouseDownKAC = false;
@@ -101,6 +101,8 @@ namespace DF
         private bool InputVTempinKelvin = true;
         private bool InputStripLightsOn = true;
         private bool InputfatalOption = false;
+        private string InputScomatoseTime = "";
+        private float InputVcomatoseTime = 0f;
 
         //Settings vars
         private bool ECreqdForFreezer;
@@ -110,6 +112,7 @@ namespace DF
         private float KSCcostToThawKerbal;
         private int ECReqdToFreezeThaw;
         private bool fatalOption;
+        private float comatoseTime;
         private int GlykerolReqdToFreeze;
         private bool RegTempReqd;
         private double RegTempFreeze;
@@ -311,7 +314,7 @@ namespace DF
             }
             if (switchVesselManual)
             {
-                if (Planetarium.GetUniversalTime() - switchVesselManualTimer > 30)
+                if (Planetarium.GetUniversalTime() - switchVesselManualTimer > 120)
                 {
                     switchVesselManualTimer = 0;
                     switchVesselManual = false;
@@ -339,6 +342,8 @@ namespace DF
                         InputScostThawKerbal = KSCcostToThawKerbal.ToString();
                         InputSecReqdToFreezeThaw = ECReqdToFreezeThaw.ToString();
                         InputfatalOption = fatalOption;
+                        InputScomatoseTime = comatoseTime.ToString();
+                        InputVcomatoseTime = comatoseTime;
                         InputSglykerolReqdToFreeze = GlykerolReqdToFreeze.ToString();
                         InputVRegTempReqd = RegTempReqd;
                         InputSRegTempFreeze = RegTempFreeze.ToString();
@@ -382,6 +387,11 @@ namespace DF
             frozenStyle.alignment = TextAnchor.MiddleLeft;
             frozenStyle.stretchWidth = true;
             frozenStyle.normal.textColor = Color.cyan;
+
+            comaStyle = new GUIStyle(GUI.skin.label);
+            comaStyle.alignment = TextAnchor.MiddleLeft;
+            comaStyle.stretchWidth = true;
+            comaStyle.normal.textColor = Color.gray;
 
             StatusOKStyle = new GUIStyle(GUI.skin.label);
             StatusOKStyle.alignment = TextAnchor.MiddleLeft;
@@ -464,7 +474,13 @@ namespace DF
                                 GUILayout.Label(TempVar, StatusRedStyle, GUILayout.Width(DFvslPrtTmp));
                                 switchVessel = FlightGlobals.Vessels.Find(a => a.id == frzr.Value.vesselID);
                                 showSwitchVesselStr = "Vessel " + switchVessel.vesselName + " is Over-Heating.";
-                                showSwitchVessel = true;
+                                if (HighLogic.LoadedSceneIsFlight)
+                                {
+                                    if (FlightGlobals.ActiveVessel.id != frzr.Value.vesselID && !switchVesselManual)
+                                    {
+                                        showSwitchVessel = true;
+                                    }
+                                }                                    
                                 break;
                             }
                     }
@@ -487,7 +503,13 @@ namespace DF
                             GUILayout.Label("OUT", StatusRedStyle, GUILayout.Width(DFvslPrtElec));
                             switchVessel = FlightGlobals.Vessels.Find(a => a.id == frzr.Value.vesselID);
                             showSwitchVesselStr = "Vessel " + switchVessel.vesselName + " is out of ElectricCharge.\n Situation Critical.";
-                            showSwitchVessel = true;
+                            if (HighLogic.LoadedSceneIsFlight)
+                            {
+                                if (FlightGlobals.ActiveVessel.id != frzr.Value.vesselID && !switchVesselManual)
+                                {
+                                    showSwitchVessel = true;
+                                }
+                            }
                         }
                         else
                         {
@@ -496,7 +518,13 @@ namespace DF
                                 GUILayout.Label("ALRT", StatusRedStyle, GUILayout.Width(DFvslPrtElec));
                                 switchVessel = FlightGlobals.Vessels.Find(a => a.id == frzr.Value.vesselID);
                                 showSwitchVesselStr = "Vessel " + switchVessel.vesselName + " is almost out of ElectricCharge.";
-                                showSwitchVessel = true;
+                                if (HighLogic.LoadedSceneIsFlight)
+                                {
+                                    if (FlightGlobals.ActiveVessel.id != frzr.Value.vesselID && !switchVesselManual)
+                                    {
+                                        showSwitchVessel = true;
+                                    }
+                                }
                             }
                             else
                             {
@@ -649,48 +677,52 @@ namespace DF
                 foreach (KeyValuePair<string, KerbalInfo> kerbal in DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals)
                 {
                     GUILayout.BeginHorizontal();
-                    GUILayout.Label(kerbal.Key, frozenStyle, GUILayout.Width(DFtxtWdthName));
-                    GUILayout.Label(kerbal.Value.experienceTraitName, frozenStyle, GUILayout.Width(DFtxtWdthProf));
-                    GUILayout.Label(kerbal.Value.vesselName, frozenStyle, GUILayout.Width(DFtxtWdthVslN));
-                    if (HighLogic.LoadedScene == GameScenes.FLIGHT && DFIntMemory.Instance.ActVslHasDpFrezr)
-                    //if in flight and active vessel has a Freezer part check if kerbal is part of this vessel and add a Thaw button to the GUI
+                    GUIStyle dispstyle = (kerbal.Value.type != ProtoCrewMember.KerbalType.Tourist ? frozenStyle : comaStyle);
+                    GUILayout.Label(kerbal.Key, dispstyle, GUILayout.Width(DFtxtWdthName));
+                    GUILayout.Label(kerbal.Value.experienceTraitName, dispstyle, GUILayout.Width(DFtxtWdthProf));
+                    GUILayout.Label(kerbal.Value.vesselName, dispstyle, GUILayout.Width(DFtxtWdthVslN));
+                    if (kerbal.Value.type != ProtoCrewMember.KerbalType.Tourist)
                     {
-                        //foreach (DeepFreezer frzr in DFIntMemory.Instance.DpFrzrActVsl)
-                        //{
-                        //if (frzr.DFIStoredCrewList.FirstOrDefault(a => a.CrewName == kerbal.Key) != null)
-                        if (kerbal.Value.vesselID == FlightGlobals.ActiveVessel.id)
+                        if (HighLogic.LoadedScene == GameScenes.FLIGHT && DFIntMemory.Instance.ActVslHasDpFrezr)
+                        //if in flight and active vessel has a Freezer part check if kerbal is part of this vessel and add a Thaw button to the GUI
                         {
-                            if (DFInstalledMods.IsRTInstalled && !DFInstalledMods.RTVesselConnected(DFIntMemory.Instance.ActVslID))
+                            //foreach (DeepFreezer frzr in DFIntMemory.Instance.DpFrzrActVsl)
+                            //{
+                            //if (frzr.DFIStoredCrewList.FirstOrDefault(a => a.CrewName == kerbal.Key) != null)
+                            if (kerbal.Value.vesselID == FlightGlobals.ActiveVessel.id && kerbal.Value.type != ProtoCrewMember.KerbalType.Tourist)
                             {
-                                GUI.enabled = false;
+                                if (DFInstalledMods.IsRTInstalled && !DFInstalledMods.RTVesselConnected(DFIntMemory.Instance.ActVslID))
+                                {
+                                    GUI.enabled = false;
+                                }
+                                if (GUILayout.Button(new GUIContent("Thaw", "Thaw this Kerbal"), GUILayout.Width(50f)))
+                                {
+                                    DeepFreezer frzr = DFIntMemory.Instance.DpFrzrActVsl.FirstOrDefault(a => a.part.flightID == kerbal.Value.partID);
+                                    if (frzr != null)
+                                        frzr.beginThawKerbal(kerbal.Key);
+                                }
+                                GUI.enabled = true;
                             }
+                            //}
+                        }
+                        if (HighLogic.LoadedScene == GameScenes.SPACECENTER)
+                        {
                             if (GUILayout.Button(new GUIContent("Thaw", "Thaw this Kerbal"), GUILayout.Width(50f)))
                             {
-                                DeepFreezer frzr = DFIntMemory.Instance.DpFrzrActVsl.FirstOrDefault(a => a.part.flightID == kerbal.Value.partID);
-                                if (frzr != null)
-                                    frzr.beginThawKerbal(kerbal.Key);
-                            }
-                            GUI.enabled = true;
-                        }
-                        //}
-                    }
-                    if (HighLogic.LoadedScene == GameScenes.SPACECENTER)
-                    {
-                        if (GUILayout.Button(new GUIContent("Thaw", "Thaw this Kerbal"), GUILayout.Width(50f)))
-                        {
-                            // We need to check kerbal isn't in a vessel still out there somewhere....
-                            Vessel vessel = FlightGlobals.Vessels.Find(v => v.id == kerbal.Value.vesselID);
-                            if (vessel != null)
-                            {
-                                this.Log_Debug("Cannot thaw, vessel still exists " + vessel.situation.ToString() + " at " + vessel.mainBody.bodyName);
-                                ScreenMessages.PostScreenMessage("Cannot thaw " + kerbal.Key + " from KSC. Vessel still exists " + vessel.situation.ToString() + " at " + vessel.mainBody.bodyName, 5.0f, ScreenMessageStyle.UPPER_CENTER);
-                            }
-                            else
-                            {
-                                ThawKeysToDelete.Add(new KeyValuePair<string, KerbalInfo>(kerbal.Key, kerbal.Value));
+                                // We need to check kerbal isn't in a vessel still out there somewhere....
+                                Vessel vessel = FlightGlobals.Vessels.Find(v => v.id == kerbal.Value.vesselID);
+                                if (vessel != null)
+                                {
+                                    this.Log_Debug("Cannot thaw, vessel still exists " + vessel.situation.ToString() + " at " + vessel.mainBody.bodyName);
+                                    ScreenMessages.PostScreenMessage("Cannot thaw " + kerbal.Key + " from KSC. Vessel still exists " + vessel.situation.ToString() + " at " + vessel.mainBody.bodyName, 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                                }
+                                else
+                                {
+                                    ThawKeysToDelete.Add(new KeyValuePair<string, KerbalInfo>(kerbal.Key, kerbal.Value));
+                                }
                             }
                         }
-                    }
+                    }                    
                     GUILayout.EndHorizontal();
                     //}
                 }
@@ -719,16 +751,19 @@ namespace DF
                         GUILayout.Label(crewMember.name, statusStyle, GUILayout.Width(DFtxtWdthName));
                         GUILayout.Label(crewMember.experienceTrait.Title, statusStyle, GUILayout.Width(DFtxtWdthProf));
                         GUILayout.Label(frzr.part.vessel.vesselName, statusStyle, GUILayout.Width(DFtxtWdthVslN));
-                        if (frzr.DFIcrewXferFROMActive || frzr.DFIcrewXferTOActive || (DFInstalledMods.SMInstalled && frzr.IsSMXferRunning())
-                            || frzr.IsFreezeActive || frzr.IsThawActive || (DFInstalledMods.IsRTInstalled && !DFInstalledMods.RTVesselConnected(DFIntMemory.Instance.ActVslID)))
+                        if (crewMember.type != ProtoCrewMember.KerbalType.Tourist)
                         {
-                            GUI.enabled = false;
-                        }
-                        if (GUILayout.Button(new GUIContent("Freeze", "Freeze this Kerbal"), GUILayout.Width(50f)))
-                        {
-                            frzr.beginFreezeKerbal(crewMember);
-                        }
-                        GUI.enabled = true;
+                            if (frzr.DFIcrewXferFROMActive || frzr.DFIcrewXferTOActive || (DFInstalledMods.SMInstalled && frzr.IsSMXferRunning())
+                                                        || frzr.IsFreezeActive || frzr.IsThawActive || (DFInstalledMods.IsRTInstalled && !DFInstalledMods.RTVesselConnected(DFIntMemory.Instance.ActVslID)))
+                            {
+                                GUI.enabled = false;
+                            }
+                            if (GUILayout.Button(new GUIContent("Freeze", "Freeze this Kerbal"), GUILayout.Width(50f)))
+                            {
+                                frzr.beginFreezeKerbal(crewMember);
+                            }
+                            GUI.enabled = true;
+                        }                        
                         GUILayout.EndHorizontal();
                     }
                 }
@@ -800,6 +835,18 @@ namespace DF
             InputfatalOption = GUILayout.Toggle(InputfatalOption, "", GUILayout.MinWidth(30.0F)); //you can play with the width of the text box
             GUILayout.EndHorizontal();
             GUI.enabled = true;
+
+            if (InputfatalOption) GUI.enabled = false;
+            GUILayout.BeginHorizontal();
+            GUILayout.Box(new GUIContent("Non Fatal Kerbal Comatose Time(in secs)", "The time in seconds a kerbal is comatose if fatal EC/Heat option is off"), statusStyle, GUILayout.Width(250));
+            InputScomatoseTime = Regex.Replace(GUILayout.TextField(InputScomatoseTime, 5, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
+            GUILayout.EndHorizontal();
+            GUI.enabled = true;
+
+            if (!float.TryParse(InputScomatoseTime, out InputVcomatoseTime))
+            {
+                InputVcomatoseTime = comatoseTime;
+            }
 
             GUILayout.BeginHorizontal();
             GUILayout.Box(new GUIContent("AutoRecover Frozen Kerbals at KSC", "If on, will AutoRecover Frozen Kerbals at the KSC and deduct the Cost from your funds"), statusStyle, GUILayout.Width(280));
@@ -1159,7 +1206,7 @@ namespace DF
                                         GUILayout.EndHorizontal();
                                     }
                                     //Frozen Crew List
-                                    List<KeyValuePair<string, KerbalInfo>> frzncrew = DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.Where(f => f.Value.partID == frzr.Key).ToList();
+                                    List<KeyValuePair<string, KerbalInfo>> frzncrew = DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.Where(f => f.Value.partID == frzr.Key && f.Value.type != ProtoCrewMember.KerbalType.Tourist).ToList();
                                     foreach (KeyValuePair<string, KerbalInfo> crew in frzncrew)
                                     {
                                         GUILayout.BeginHorizontal();
@@ -1253,7 +1300,7 @@ namespace DF
 
             //Pause the game
             TimeWarp.SetRate(0, true);
-            if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ready)
+            if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ready && !FlightDriver.Pause)
                 FlightDriver.SetPause(true);
 
             GUILayout.BeginVertical();
@@ -1263,7 +1310,7 @@ namespace DF
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button(new GUIContent("Switch to Vessel", "Switch to Vessel"), GUILayout.Width(320)))
+            if (GUILayout.Button(new GUIContent("Switch to Vessel", "Switch to Vessel"), GUILayout.Width(160)))
             {
                 showSwitchVessel = false;
                 if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ready)
@@ -1288,6 +1335,14 @@ namespace DF
                         FlightDriver.StartAndFocusVessel(tmpGame, intVesselidx);
                     }
                 }
+            }
+            if (GUILayout.Button(new GUIContent("Not Now", "Don't switch vessel now"), GUILayout.Width(160)))
+            {
+                showSwitchVessel = false;
+                switchVesselManual = true;
+                switchVesselManualTimer = Planetarium.GetUniversalTime();
+                if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ready)
+                    FlightDriver.SetPause(false);
             }
             GUILayout.EndHorizontal();
             GUILayout.EndVertical();
@@ -1433,6 +1488,7 @@ namespace DF
             debugging = DeepFreeze.Instance.DFsettings.debugging;
             ECreqdForFreezer = DeepFreeze.Instance.DFsettings.ECreqdForFreezer;
             fatalOption = DeepFreeze.Instance.DFsettings.fatalOption;
+            comatoseTime = DeepFreeze.Instance.DFsettings.comatoseTime;
             KSCcostToThawKerbal = DeepFreeze.Instance.DFsettings.KSCcostToThawKerbal;
             ECReqdToFreezeThaw = DeepFreeze.Instance.DFsettings.ECReqdToFreezeThaw;
             GlykerolReqdToFreeze = DeepFreeze.Instance.DFsettings.GlykerolReqdToFreeze;
@@ -1460,6 +1516,7 @@ namespace DF
             DeepFreeze.Instance.DFsettings.debugging = debugging;
             DeepFreeze.Instance.DFsettings.ECreqdForFreezer = ECreqdForFreezer;
             DeepFreeze.Instance.DFsettings.fatalOption = fatalOption;
+            DeepFreeze.Instance.DFsettings.comatoseTime = comatoseTime;
             DeepFreeze.Instance.DFsettings.KSCcostToThawKerbal = KSCcostToThawKerbal;
             DeepFreeze.Instance.DFsettings.ECReqdToFreezeThaw = ECReqdToFreezeThaw;
             DeepFreeze.Instance.DFsettings.GlykerolReqdToFreeze = GlykerolReqdToFreeze;
