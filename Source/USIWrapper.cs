@@ -14,7 +14,8 @@
  * for full details.
  *
  */
- using System;
+
+using System;
 using System.Linq;
 using System.Reflection;
 
@@ -159,7 +160,7 @@ namespace DF
             /// <summary>
             /// Untrack a kerbal in USI LS
             /// </summary>
-            /// <param name="kerbal">A string containing the kerbal's name</param>            
+            /// <param name="kerbal">A string containing the kerbal's name</param>
             internal void UntrackKerbal(string kerbal)
             {
                 try

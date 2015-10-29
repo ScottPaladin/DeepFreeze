@@ -317,6 +317,14 @@ namespace DF
         {
             if (HighLogic.LoadedSceneIsEditor || Time.timeSinceLevelLoad < 5f) return; //Wait 5 seconds on level load before executing
 
+            //Check if the active vessel has changed and if so, process.
+            if (HighLogic.LoadedSceneIsFlight)
+            {
+                if (FlightGlobals.ActiveVessel.id != ActVslID)
+                {
+                    onVesselChange(FlightGlobals.ActiveVessel);
+                }
+            }
             //We check/update kerbal Dictionary for comatose kerbals in EVERY Game Scene.
             try
             {
@@ -332,8 +340,7 @@ namespace DF
             //We check/update Vessel and Part Dictionary in EVERY Game Scene.
             try
             {
-                if (DeepFreeze.Instance.DFgameSettings.knownVessels.Count() > 0)
-                    CheckVslUpdate();
+                CheckVslUpdate();
             }
             catch (Exception ex)
             {
@@ -360,22 +367,23 @@ namespace DF
         {
             // Check the knownfrozenkerbals for any tourists kerbals (IE: Comatose) if their time is up and reset them if it is.
             var keysToDelete = new List<string>();
-            foreach (KeyValuePair<string, KerbalInfo> comaKerbals in DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals)
+            List<KeyValuePair<string, KerbalInfo>> comaKerbals = DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.Where(e => e.Value.type == ProtoCrewMember.KerbalType.Tourist).ToList();
+            foreach (KeyValuePair<string, KerbalInfo> comaKerbal in comaKerbals)
             {
-                if (comaKerbals.Value.type == ProtoCrewMember.KerbalType.Tourist)
+                if (comaKerbal.Value.type == ProtoCrewMember.KerbalType.Tourist)
                 {
-                    if (Planetarium.GetUniversalTime() - comaKerbals.Value.lastUpdate > (double)DeepFreeze.Instance.DFsettings.comatoseTime) // Is time up?
+                    if (Planetarium.GetUniversalTime() - comaKerbal.Value.lastUpdate > (double)DeepFreeze.Instance.DFsettings.comatoseTime) // Is time up?
                     {
-                        ProtoCrewMember crew = HighLogic.CurrentGame.CrewRoster.Tourist.FirstOrDefault(a => a.name == comaKerbals.Key);
+                        ProtoCrewMember crew = HighLogic.CurrentGame.CrewRoster.Tourist.FirstOrDefault(a => a.name == comaKerbal.Key);
                         if (crew != null)
                         {
                             Utilities.setComatoseKerbal(crew, ProtoCrewMember.KerbalType.Crew);
-                            keysToDelete.Add(comaKerbals.Key);
+                            keysToDelete.Add(comaKerbal.Key);
                         }
                         else
                         {
-                            this.Log("Unable to set comatose crew member " + comaKerbals.Key + " back to crew status.");
-                        }                        
+                            this.Log("Unable to set comatose crew member " + comaKerbal.Key + " back to crew status.");
+                        }
                     }
                 }
             }
@@ -517,6 +525,7 @@ namespace DF
                         if (frznKerbals.Value.partID == frzr.part.flightID)
                         {
                             frznKerbals.Value.vesselID = vessel.id;
+                            frznKerbals.Value.vesselName = vessel.vesselName;
                         }
                     }
                     //Update the Frzr Parts internal frozenkerbals list GUID
@@ -525,7 +534,7 @@ namespace DF
                         storedCrew.VesselID = vessel.id;
                     }
                 }
-            }            
+            }
         }
 
         internal void onPartCouple(GameEvents.FromToAction<Part, Part> fromToAction)
@@ -548,6 +557,7 @@ namespace DF
                         if (frznKerbals.Value.partID == frzr.part.flightID)
                         {
                             frznKerbals.Value.vesselID = fromToAction.to.vessel.id;
+                            frznKerbals.Value.vesselName = fromToAction.to.vessel.vesselName;
                         }
                     }
                     //Update the Frzr Parts internal frozenkerbals list GUID
@@ -567,7 +577,7 @@ namespace DF
         }
 
         internal void onVesselChange(Vessel vessel)
-        {            
+        {
             if (HighLogic.LoadedSceneIsFlight)
             {
                 this.Log_Debug("OnVesselChange activevessel " + FlightGlobals.ActiveVessel.name + "(" + FlightGlobals.ActiveVessel.id + ") parametervessel " + vessel.name + "(" + vessel.id + ")");
