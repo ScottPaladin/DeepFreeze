@@ -2431,9 +2431,9 @@ namespace DF
                 kerbalInfo.type = ProtoCrewMember.KerbalType.Unowned;
                 kerbalInfo.status = ProtoCrewMember.RosterStatus.Dead;
                 if (partHasInternals)
-                {
-                    kerbalInfo.seatName = ToFrzeKerbalXformNme;
-                    kerbalInfo.seatIdx = ToFrzeKerbalSeat;
+                {                    
+                    kerbalInfo.seatName = this.part.internalModel.seats[SeatIndx].seatTransformName;
+                    kerbalInfo.seatIdx = SeatIndx;
                 }
                 else
                 {
