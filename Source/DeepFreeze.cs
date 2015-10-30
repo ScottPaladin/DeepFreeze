@@ -172,24 +172,38 @@ namespace DF
                 KerbalInfo kerbalinfo = DFgameSettings.KnownFrozenKerbals[key];
                 if (kerbalinfo.vesselID == vessel.vesselID)
                 {
-                    if (DeepFreeze.Instance.DFsettings.AutoRecoverFznKerbals)
+                    if (kerbalinfo.type == ProtoCrewMember.KerbalType.Unowned) //Frozen crew
                     {
-                        this.Log_Debug("AutoRecover is ON");
-                        this.Log("Calling ThawFrozen Crew to thaw FrozenCrew " + key);
-                        ThawFrozenCrew(key, vessel.vesselID);
-                    }
-                    else
-                    {
-                        this.Log("DeepFreeze AutoRecovery of frozen kerbals is set to off. Must be thawed manually.");
-                        this.Log("DeepFreezeEvents frozenkerbal remains frozen =" + key);
-                        ProtoCrewMember realkerbal = HighLogic.CurrentGame.CrewRoster.Unowned.FirstOrDefault(b => b.name == key);
-                        if (realkerbal != null)
+                        if (DeepFreeze.Instance.DFsettings.AutoRecoverFznKerbals)
                         {
-                            realkerbal.type = ProtoCrewMember.KerbalType.Unowned;
-                            realkerbal.rosterStatus = ProtoCrewMember.RosterStatus.Dead;
-                            this.Log_Debug("Kerbal " + realkerbal.name + " " + realkerbal.type + " " + realkerbal.rosterStatus);
-                            ScreenMessages.PostScreenMessage(key + " was stored frozen at KSC", 5.0f, ScreenMessageStyle.UPPER_RIGHT);
+                            this.Log_Debug("AutoRecover is ON");
+                            this.Log("Calling ThawFrozen Crew to thaw FrozenCrew " + key);
+                            ThawFrozenCrew(key, vessel.vesselID);
                         }
+                        else
+                        {
+                            this.Log("DeepFreeze AutoRecovery of frozen kerbals is set to off. Must be thawed manually.");
+                            this.Log("DeepFreezeEvents frozenkerbal remains frozen =" + key);
+                            ProtoCrewMember realkerbal = HighLogic.CurrentGame.CrewRoster.Unowned.FirstOrDefault(b => b.name == key);
+                            if (realkerbal != null)
+                            {
+                                realkerbal.type = ProtoCrewMember.KerbalType.Unowned;
+                                realkerbal.rosterStatus = ProtoCrewMember.RosterStatus.Dead;
+                                this.Log_Debug("Kerbal " + realkerbal.name + " " + realkerbal.type + " " + realkerbal.rosterStatus);
+                                ScreenMessages.PostScreenMessage(key + " was stored frozen at KSC", 5.0f, ScreenMessageStyle.UPPER_RIGHT);
+                            }
+                        }
+                    }
+                    else // Tourist/Comatose crew
+                    {
+                        this.Log_Debug("Comatose crew - reset to crew " + key);
+                        ProtoCrewMember crew = HighLogic.CurrentGame.CrewRoster.Tourist.FirstOrDefault(c => c.name == key);
+                        crew.type = ProtoCrewMember.KerbalType.Crew;
+                        crew.rosterStatus = ProtoCrewMember.RosterStatus.Assigned;
+                        this.Log_Debug("Kerbal " + crew.name + " " + crew.type + " " + crew.rosterStatus);
+                        crew.ArchiveFlightLog();
+                        crew.rosterStatus = ProtoCrewMember.RosterStatus.Available;
+                        DFgameSettings.KnownFrozenKerbals.Remove(crew.name);
                     }
                 }
             }
@@ -317,7 +331,23 @@ namespace DF
                 }
             }
             else
-                this.Log("DeepFreezeEvents " + kerbal.name + " couldn't find them to kill them.");
+            {
+                // check if comatose crew
+                ProtoCrewMember crew = HighLogic.CurrentGame.CrewRoster.Tourist.FirstOrDefault(a => a.name == FrozenCrew);
+                if (crew != null)
+                {
+                    this.Log("DeepFreezeEvents " + kerbal.name + " killed");
+                    kerbal.type = ProtoCrewMember.KerbalType.Crew;
+                    kerbal.rosterStatus = ProtoCrewMember.RosterStatus.Dead;
+                    if (HighLogic.CurrentGame.Parameters.Difficulty.MissingCrewsRespawn == true)
+                    {
+                        kerbal.StartRespawnPeriod();
+                        this.Log("DeepFreezeEvents " + kerbal.name + " respawn started.");
+                    }
+                }
+                else
+                    this.Log("DeepFreezeEvents " + kerbal.name + " couldn't find them to kill them.");
+            }
         }
 
         #endregion Events

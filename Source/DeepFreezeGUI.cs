@@ -480,7 +480,7 @@ namespace DF
                                     {
                                         showSwitchVessel = true;
                                     }
-                                }                                    
+                                }
                                 break;
                             }
                     }
@@ -722,7 +722,7 @@ namespace DF
                                 }
                             }
                         }
-                    }                    
+                    }
                     GUILayout.EndHorizontal();
                     //}
                 }
@@ -763,7 +763,7 @@ namespace DF
                                 frzr.beginFreezeKerbal(crewMember);
                             }
                             GUI.enabled = true;
-                        }                        
+                        }
                         GUILayout.EndHorizontal();
                     }
                 }
@@ -1417,7 +1417,7 @@ namespace DF
                         DFvslPrtElec = Mathf.Round((DFwindowPos.width - 28f) / 12.3f);
                         DFvslAlarms = Mathf.Round((DFwindowPos.width - 28f) / 8f);
                         DFvslLstUpd = Mathf.Round((DFwindowPos.width - 28f) / 5.5f);
-                        DFvslRT = Mathf.Round((DFwindowPos.width - 28f) / 12.3f);                        
+                        DFvslRT = Mathf.Round((DFwindowPos.width - 28f) / 12.3f);
                     }
                     else
                     {

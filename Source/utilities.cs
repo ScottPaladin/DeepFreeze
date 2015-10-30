@@ -553,7 +553,7 @@ namespace DF
                 else
                 {
                     KerbalRoster.SetExperienceTrait(crew, "Tourist");
-                    ScreenMessages.PostScreenMessage(crew.name + " has been emergency thawed and cannot perform duties for " + (DeepFreeze.Instance.DFsettings.comatoseTime / 60).ToString() +  " minutes.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                    ScreenMessages.PostScreenMessage(crew.name + " has been emergency thawed and cannot perform duties for " + (DeepFreeze.Instance.DFsettings.comatoseTime / 60).ToString() + " minutes.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                 }
                 return true;
             }
@@ -562,7 +562,6 @@ namespace DF
                 Log("DeepFreeze", " Failed to set " + crew.name + " to status of " + type.ToString() + " during emergency thaw processing.");
                 return false;
             }
-            
         }
 
         // The following method is taken from Kerbal Alarm Clock as-is. Which is covered by MIT license.
