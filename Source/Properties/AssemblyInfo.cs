@@ -31,7 +31,7 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("0.19.2.0")]
-[assembly: AssemblyFileVersion("0.19.2.0")]
+[assembly: AssemblyVersion("0.19.3.0")]
+[assembly: AssemblyFileVersion("0.19.3.0")]
 [assembly: KSPAssembly("DeepFreeze", 0, 19)]
-[assembly: KSPAssemblyDependency("DFInterface", 0, 3)]
+[assembly: KSPAssemblyDependency("DFInterface", 0, 4)]

@@ -16,9 +16,6 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using UnityEngine;
 
 namespace DF
@@ -61,10 +58,10 @@ namespace DF
                 Debug.Log("DFInterface - Load of GUID VesselID for frozen kerbal failed Err: " + ex);
             }
             info.partID = GetNodeValue(node, "partID", (uint)0);
-            info.vesselName = GetNodeValue(node, "VesselName", "");
+            info.vesselName = GetNodeValue(node, "VesselName", " ");
             info.seatIdx = GetNodeValue(node, "seatIdx", 0);
             info.seatName = GetNodeValue(node, "seatName", "");
-            info.experienceTraitName = GetNodeValue(node, "experienceTraitName", "");
+            info.experienceTraitName = GetNodeValue(node, "experienceTraitName", " ");
 
             return info;
         }

@@ -1,4 +1,6 @@
-﻿[B]V0.19.2.0 "Bug fixes & Enhancements"[/B]
+﻿[B]V0.19.3.0 "KSP 1.0.5"[/B]   
+re-compile for KSP 1.0.5.   
+[B]V0.19.2.0 "Bug fixes & Enhancements"[/B]
 Fix distribution to include missing Editor group icon from V0.19.0.0 that somehow got left out of V0.19.1.0.
 Fix bug that V0.19.2.0 introduced that was causing invalid seat placements and
 Add more robust checking of Seat placements for frozen kerbals to avoid bugs that have been occurring for some users.

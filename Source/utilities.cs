@@ -385,15 +385,15 @@ namespace DF
             {
                 if (thatKerbal.InPart == null)
                 {
-                    //Log_Debug("kerbal " + thatKerbal.name + " Invessel = null add stowaway");
+                    Log_Debug("kerbal " + thatKerbal.name + " Invessel = null add stowaway");
                     stowaways.Add(thatKerbal);
                 }
                 else
                 {
-                    //Log_Debug("kerbal " + thatKerbal.name + " Invessel = " + thatKerbal.InVessel + " InvesselID = " + thatKerbal.InVessel.id);
+                    Log_Debug("kerbal " + thatKerbal.name + " Invessel = " + thatKerbal.InVessel + " InvesselID = " + thatKerbal.InVessel.id);
                     if (thatKerbal.InVessel.id != FlightGlobals.ActiveVessel.id)
                     {
-                        //Log_Debug("Adding stowaway");
+                        Log_Debug("Adding stowaway");
                         stowaways.Add(thatKerbal);
                     }
                 }
@@ -409,25 +409,25 @@ namespace DF
                 List<Part> crewparts = (from p in vessel.parts where (p.CrewCapacity > 0 && p.internalModel != null) select p).ToList();
                 foreach (Part part in crewparts)
                 {
-                    //Log_Debug("Check Portraits for part " + part.name);
+                    Log_Debug("Check Portraits for part " + part.name);
                     foreach (InternalSeat seat in part.internalModel.seats)
                     {
-                        //Log_Debug("checking Seat " + seat.seatTransformName);
-                        //if (seat.kerbalRef != null) Log_Debug("kerbalref=" + seat.kerbalRef.crewMemberName);
-                        //else Log_Debug("Seat kerbalref is null");
+                        Log_Debug("checking Seat " + seat.seatTransformName);
+                        if (seat.kerbalRef != null) Log_Debug("kerbalref=" + seat.kerbalRef.crewMemberName);
+                        else Log_Debug("Seat kerbalref is null");
                         if (seat.kerbalRef != null && !KerbalGUIManager.ActiveCrew.Contains(seat.kerbalRef))
                         {
-                            //Log_Debug("Checking crewstatus " + seat.kerbalRef.protoCrewMember.rosterStatus + " " + seat.kerbalRef.protoCrewMember.type);
+                            Log_Debug("Checking crewstatus " + seat.kerbalRef.protoCrewMember.rosterStatus + " " + seat.kerbalRef.protoCrewMember.type);
                             if (seat.kerbalRef.protoCrewMember.rosterStatus != ProtoCrewMember.RosterStatus.Dead || seat.kerbalRef.protoCrewMember.type != ProtoCrewMember.KerbalType.Unowned)
                             {
-                                //Log_Debug("Adding missing Portrait for " + seat.kerbalRef.crewMemberName);
+                                Log_Debug("Adding missing Portrait for " + seat.kerbalRef.crewMemberName);
                                 KerbalGUIManager.AddActiveCrew(seat.kerbalRef);
                             }
                         }
                     }
                 }
             }
-            //else Log_Debug("Vessel is not active vessel");
+            else Log_Debug("Vessel is not active vessel");
         }
 
         // The following method is taken from RasterPropMonitor as-is. Which is covered by GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
