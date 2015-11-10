@@ -271,8 +271,10 @@ namespace DF
             if (kerbal != null)
             {
                 Vessel vessel = FlightGlobals.Vessels.Find(v => v.id == vesselID);
+                this.Log_Debug("vessel mainbody" + vessel.mainBody.name + " is homeworld? " + vessel.mainBody.isHomeWorld);
+                     
                 if (vessel == null ||
-                    (vessel.mainBody == FlightGlobals.Bodies[1]
+                    (vessel.mainBody.isHomeWorld
                     && (vessel.situation == Vessel.Situations.LANDED || vessel.situation == Vessel.Situations.PRELAUNCH || vessel.situation == Vessel.Situations.SPLASHED)))
                 {
                     if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER)
