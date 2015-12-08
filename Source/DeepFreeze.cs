@@ -271,7 +271,7 @@ namespace DF
             if (kerbal != null)
             {
                 Vessel vessel = FlightGlobals.Vessels.Find(v => v.id == vesselID);
-                this.Log_Debug("vessel mainbody" + vessel.mainBody.name + " is homeworld? " + vessel.mainBody.isHomeWorld);
+                //this.Log_Debug("vessel mainbody" + vessel.mainBody.name + " is homeworld? " + vessel.mainBody.isHomeWorld);
                      
                 if (vessel == null ||
                     (vessel.mainBody.isHomeWorld
