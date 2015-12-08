@@ -27,6 +27,7 @@ namespace DF
         //numFrznCrew               - Number of frozen crew on-board
         //hibernating               - True if vessel is unloaded
         //hasextDoor                - True if somewhere on the vessel is a DeepFreezer part with an external door
+        //hasextPod                 - True if somewhere on the vessel is a DeepFreezer part with an external pod
         //lastUpdate                - Time this class entry was last updated
         //storedEC                  - How much ElectricCharge the vessel has
         //predictedECOut            - Predicted time in seconds ElectricCharge will run out (by just running the freezers)
@@ -40,6 +41,7 @@ namespace DF
         internal int numFrznCrew;
         internal bool hibernating;
         internal bool hasextDoor;
+        internal bool hasextPod;
         internal double lastUpdate = 0f;
         internal double storedEC = 0f;
         internal double predictedECOut = 0f;
@@ -48,6 +50,7 @@ namespace DF
         {
             this.vesselName = vesselName;
             hibernating = false;
+            hasextDoor = false;
             hasextDoor = false;
             lastUpdate = currentTime;
         }
@@ -65,6 +68,7 @@ namespace DF
             info.numFrznCrew = Utilities.GetNodeValue(node, "numFrznCrew", 0);
             info.hibernating = Utilities.GetNodeValue(node, "hibernating", false);
             info.hasextDoor = Utilities.GetNodeValue(node, "hasextDoor", false);
+            info.hasextPod = Utilities.GetNodeValue(node, "hasextPod", false);
             info.storedEC = Utilities.GetNodeValue(node, "storedEC", 0d);
             info.predictedECOut = Utilities.GetNodeValue(node, "predictedECOut", 0d);
 
@@ -82,6 +86,7 @@ namespace DF
             node.AddValue("numFrznCrew", numFrznCrew);
             node.AddValue("hibernating", hibernating);
             node.AddValue("hasextDoor", hasextDoor);
+            node.AddValue("hasextPod", hasextPod);
             node.AddValue("lastUpdate", lastUpdate);
             node.AddValue("storedEC", storedEC);
             node.AddValue("predictedECOut", predictedECOut);

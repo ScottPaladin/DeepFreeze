@@ -85,6 +85,9 @@ namespace DF
         [KSPField(isPersistant = false, guiActive = false, guiName = "Animated")] //Set to true if Internal contains Animated Cryopods, read from part.cfg.
         public bool isPartAnimated;
 
+        [KSPField(isPersistant = false, guiActive = false, guiName = "PodExternal")] //Set to true if Cryopod is External part (eg. CRY-0300R), read from part.cfg.
+        public bool isPodExternal = false;
+
         [KSPField(isPersistant = true, guiActive = true, guiName = "Freezer Capacity")] //Total Size of Freezer, get's read from part.cfg.
         public int FreezerSize;
 
@@ -158,7 +161,7 @@ namespace DF
         [KSPField(isPersistant = true, guiName = "Cabin Temperature", guiUnits = "K", guiFormat = "F1", guiActive = true)]
         public float CabinTemp = 0f;
 
-        [KSPEvent(active = true, guiActive = true, name = "showMenu", guiName = "Toggle Menu")]
+        [KSPEvent(active = true, guiActive = true, name = "showMenu", guiName = "DeepFreeze Menu")]
         public void showMenu()
         {
             DeepFreezeGUI obj = DeepFreeze.Instance.GetComponent("DeepFreezeGUI") as DeepFreezeGUI;
@@ -388,15 +391,14 @@ namespace DF
         private bool[] seatTakenbyFrznKerbal; //This bool array is set to true for each seat that is currently being taken by a frozen kerbal.
 
         //Audio Sounds
-        protected AudioSource mon_beep;
-
-        protected AudioSource flatline;
-        protected AudioSource hatch_lock;
-        protected AudioSource ice_freeze;
-        protected AudioSource machine_hum;
-        protected AudioSource ding_ding;
-        protected AudioSource ext_door;
-        protected AudioSource charge_up;
+        private AudioSource mon_beep;
+        private AudioSource flatline;
+        private AudioSource hatch_lock;
+        private AudioSource ice_freeze;
+        private AudioSource machine_hum;
+        private AudioSource ding_ding;
+        private AudioSource ext_door;
+        private AudioSource charge_up;
 
         public List<PartResourceDefinition> GetConsumedResources()
         {
@@ -408,24 +410,63 @@ namespace DF
             return resources;
         }
 
-        public override void OnUpdate()
+        public void Update()
         {
-            if (Time.timeSinceLevelLoad < 2.0f || !HighLogic.LoadedSceneIsFlight) // Check not loading level or not in flight
-            {
+            if (Time.timeSinceLevelLoad < 2.0f) // Check not loading level
                 return;
-            }
 
-            // This should only happen once, we need to load the StoredCrewList of frozen kerbals for this part from the DeepFreeze master list
+            // This should only happen once in flight only, we need to load the StoredCrewList of frozen kerbals for this part from the DeepFreeze master list
             //This should be done in onload, but it doesn't seem to be working, probably should be checking and doing when vessel loads/unloads/switches/etc.
-            if (!setGameSettings)
+            if (!setGameSettings && HighLogic.LoadedSceneIsFlight)
             {
                 onceoffSetup();
             }
 
+            // If we have an external door (CRY-0300) or external pod (CRY-0300R) check RPM transparency setting and change the door settings as appropriate
+            if ((hasExternalDoor || isPodExternal) && (DFInstalledMods.IsRPMInstalled) && !IsFreezeActive && !IsThawActive)
+            {
+                try
+                {
+                    checkRPMPodTransparencySetting();
+                }
+                catch (Exception ex)
+                {
+                    this.Log("Exception attempting to check RPM transparency settings. Report this error on the Forum Thread.");
+                    this.Log("Err: " + ex);
+                }
+            }
+
+            if (!HighLogic.LoadedSceneIsFlight) // If scene is not flight we are done with onUpdate
+                return;
+
+            //This is necessary to override stock crew xfer behaviour. When the user cancels the xfer the Stock highlighting system
+            // makes the transparent pod opaque. There is no way (that I can find) to know when this occurs.
+            // So we look through the parts pod states for any part that is not animated (IE: CRY-0300R) any that are OPEN we
+            // set their window to transparent..... Maybe we should check it first.
+            if (FlightGlobals.ready && this.vessel.loaded && isPodExternal && !IsFreezeActive && !IsThawActive && DFInstalledMods.IsRPMInstalled)
+            {
+                if (_prevRPMTransparentpodSetting == "ON")
+                {
+                    for (int i = 0; i < cryopodstateclosed.Length; i++)
+                    {
+                        if (!cryopodstateclosed[i])
+                        {
+                            string windowname = "Cryopod-" + (i + 1).ToString() + "-Window";
+                            Renderer extwindowrenderer = this.part.FindModelComponent<Renderer>(windowname);
+                            if (extwindowrenderer != null)
+                            {
+                                if (extwindowrenderer.material.shader != TransparentSpecularShader)
+                                    setCryopodWindowTransparent(i);
+                            }
+                        }
+                    }
+                }
+            } 
+
             //For some reason when we go on EVA or switch vessels the InternalModel is destroyed.
             //Which causes a problem when we re-board the part as the re-boarding kerbal ends up in a frozen kerbals seat.
             //So we check for the internmodel existing while the vessel this part is attached to is loaded and if it isn't we re-instansiate it.
-            if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ready && this.vessel.loaded && partHasInternals && this.part.internalModel == null)
+            if (FlightGlobals.ready && this.vessel.loaded && partHasInternals && this.part.internalModel == null)
             {
                 this.Log("Part " + this.part.name + "(" + this.part.flightID + ") is loaded and internalModel has disappeared, so re-instansiate it");
                 this.part.SpawnCrew();
@@ -441,7 +482,7 @@ namespace DF
             if ((Time.time - lastUpdate) > updatetnterval && (Time.time - lastRemove) > updatetnterval) // We only update every updattnterval time interval.
             {
                 lastUpdate = Time.time;
-                if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ready && FlightGlobals.ActiveVessel != null)
+                if (FlightGlobals.ready && FlightGlobals.ActiveVessel != null)
                 {
                     CrntVslID = this.vessel.id;
                     CrntVslName = this.vessel.vesselName;
@@ -477,20 +518,6 @@ namespace DF
                             this.Log("Exception attempting to check RemoteTech vessel connections. Report this error on the Forum Thread.");
                             this.Log("Err: " + ex);
                             isRTConnected = false;
-                        }
-                    }
-
-                    // If we have an external door (CRY-0300) check RPM transparency setting and change the door settings as appropriate
-                    if (hasExternalDoor && (DFInstalledMods.IsRPMInstalled))
-                    {
-                        try
-                        {
-                            checkRPMPodTransparencySetting();
-                        }
-                        catch (Exception ex)
-                        {
-                            this.Log("Exception attempting to check RPM transparency settings. Report this error on the Forum Thread.");
-                            this.Log("Err: " + ex);
                         }
                     }
 
@@ -620,59 +647,110 @@ namespace DF
                             switch (transparentPodSetting)
                             {
                                 case "ON":
-                                    // If the doors are closed or closing set open doors event active
-                                    if (_externaldoorstate != DoorState.CLOSED && _externaldoorstate != DoorState.CLOSING)
+                                    if (hasExternalDoor)  //CRY-0300
                                     {
-                                        Events["eventOpenDoors"].active = false;
-                                        Events["eventCloseDoors"].active = true;
-                                    }
-                                    else
-                                    {
-                                        //If the doors are open or opening set close doors event active
-                                        if (_externaldoorstate != DoorState.OPEN && _externaldoorstate != DoorState.OPENING)
+                                        // If the doors are closed or closing set open doors event active
+                                        if (_externaldoorstate != DoorState.CLOSED && _externaldoorstate != DoorState.CLOSING)
                                         {
-                                            Events["eventOpenDoors"].active = true;
-                                            Events["eventCloseDoors"].active = false;
+                                            Events["eventOpenDoors"].active = false;
+                                            Events["eventCloseDoors"].active = true;
+                                        }
+                                        else
+                                        {
+                                            //If the doors are open or opening set close doors event active
+                                            if (_externaldoorstate != DoorState.OPEN && _externaldoorstate != DoorState.OPENING)
+                                            {
+                                                Events["eventOpenDoors"].active = true;
+                                                Events["eventCloseDoors"].active = false;
+                                            }
                                         }
                                     }
+                                    else //CRY-0300R
+                                    {
+                                        for (int i = 0; i < FreezerSize; i++)
+                                        {
+                                            string windowname = "Cryopod-" + (i + 1).ToString() + "-Window";
+                                            Renderer extwindowrenderer = this.part.FindModelComponent<Renderer>(windowname);
+                                            if (extwindowrenderer != null)
+                                            {
+                                                if (HighLogic.LoadedSceneIsFlight)  //If in flight, we check the pod state
+                                                {
+                                                    if (!cryopodstateclosed[i])  //Pod is open
+                                                    {
+                                                        if (extwindowrenderer.material.shader != TransparentSpecularShader)
+                                                            setCryopodWindowTransparent(i);
+                                                    }
+                                                    else  //Pod is closed
+                                                    {
+                                                        if (extwindowrenderer.material.shader != KSPSpecularShader)
+                                                            setCryopodWindowSpecular(i);
+                                                    }
+                                                }
+                                                else  //If in editor, always transparent
+                                                {
+                                                    if (extwindowrenderer.material.shader != TransparentSpecularShader)
+                                                        setCryopodWindowTransparent(i);
+                                                }
+                                            }
+                                        }
+                                    }
+
                                     break;
 
                                 default:
                                     this.Log_Debug("RPM set to OFF or AUTO for transparent pod");
-                                    //hasExternalDoor = false;
-                                    // We must close the doors if they are not or we see an empty internal.
-                                    DoorState actualDoorState = getdoorState();
-                                    if (actualDoorState != DoorState.CLOSED)
+                                    if (hasExternalDoor)  //CRY-0300
                                     {
-                                        try
+                                        //hasExternalDoor = false;
+                                        // We must close the doors if they are not or we see an empty internal.
+
+                                        DoorState actualDoorState = getdoorState();
+                                        if (actualDoorState != DoorState.CLOSED)
                                         {
-                                            Animation anim;
-                                            Animation[] animators = this.part.internalModel.FindModelAnimators("DOORHandle");
-                                            if (animators.Length > 0)
+                                            try
                                             {
-                                                anim = animators[0];
-                                                anim["DOORHandle"].speed = float.MinValue;
-                                                anim["DOORHandle"].normalizedTime = 1;
-                                                anim.Play("DOORHandle");
+                                                Animation anim;
+                                                Animation[] animators = this.part.internalModel.FindModelAnimators("DOORHandle");
+                                                if (animators.Length > 0)
+                                                {
+                                                    anim = animators[0];
+                                                    anim["DOORHandle"].speed = float.MinValue;
+                                                    anim["DOORHandle"].normalizedTime = 1;
+                                                    anim.Play("DOORHandle");
+                                                }
+                                                ext_door.Play();
                                             }
-                                            ext_door.Play();
+                                            catch (Exception ex)
+                                            {
+                                                Debug.Log("Exception trying to run the Doorhandle animation");
+                                                Debug.Log("Err: " + ex);
+                                            }
+                                            if (animationName != null)
+                                            {
+                                                externalDoorAnim[animationName].normalizedTime = 1;
+                                                externalDoorAnim[animationName].speed = float.MinValue;
+                                                externalDoorAnim.Play("Open");
+                                            }
+                                            _prevexterndoorstate = _externaldoorstate;
+                                            _externaldoorstate = DoorState.CLOSED;
                                         }
-                                        catch (Exception ex)
-                                        {
-                                            Debug.Log("Exception trying to run the Doorhandle animation");
-                                            Debug.Log("Err: " + ex);
-                                        }
-                                        if (animationName != null)
-                                        {
-                                            externalDoorAnim[animationName].normalizedTime = 1;
-                                            externalDoorAnim[animationName].speed = float.MinValue;
-                                            externalDoorAnim.Play("Open");
-                                        }
-                                        _prevexterndoorstate = _externaldoorstate;
-                                        _externaldoorstate = DoorState.CLOSED;
+                                        Events["eventOpenDoors"].active = false;
+                                        Events["eventCloseDoors"].active = false;
                                     }
-                                    Events["eventOpenDoors"].active = false;
-                                    Events["eventCloseDoors"].active = false;
+                                    else  //CRY-0300R
+                                    {
+                                        for (int i = 0; i < FreezerSize; i++)
+                                        {
+                                            string windowname = "Cryopod-" + (i + 1).ToString() + "-Window";
+                                            Renderer extwindowrenderer = this.part.FindModelComponent<Renderer>(windowname);
+
+                                            if (extwindowrenderer != null)
+                                            {
+                                                if (extwindowrenderer.material.shader != KSPSpecularShader)
+                                                    setCryopodWindowSpecular(i);
+                                            }
+                                        }
+                                    }
                                     break;
                             }
                             _prevRPMTransparentpodSetting = transparentPodSetting;
@@ -729,6 +807,7 @@ namespace DF
             }
 
             resetFrozenKerbals();
+                        
             this.Log_Debug("Onceoffsetup resetcryopod doors");
             if (partHasInternals)
             {
@@ -757,28 +836,36 @@ namespace DF
             //If we have lightstrips (CRY-5000) set them up
             if (partHasInternals)
             {
-                Animation[] animators = this.part.internalModel.FindModelAnimators("LightStrip");
-                if (animators.Length > 0)
+                try
                 {
-                    this.Log_Debug("Found " + animators.Length + " LightStrip animations starting");
-                    partHasStripLights = true;
-                    if (DeepFreeze.Instance.DFsettings.StripLightsActive)
+                    Animation[] animators = this.part.internalModel.FindModelAnimators("LightStrip");
+                    if (animators.Length > 0)
                     {
-                        foreach (Animation anim in animators)
+                        this.Log_Debug("Found " + animators.Length + " LightStrip animations starting");
+                        partHasStripLights = true;
+                        if (DeepFreeze.Instance.DFsettings.StripLightsActive)
                         {
-                            anim["LightStrip"].speed = 1;
-                            anim["LightStrip"].normalizedTime = 0;
-                            anim.wrapMode = WrapMode.Loop;
-                            anim.Play("LightStrip");
+                            foreach (Animation anim in animators)
+                            {
+                                anim["LightStrip"].speed = 1;
+                                anim["LightStrip"].normalizedTime = 0;
+                                anim.wrapMode = WrapMode.Loop;
+                                anim.Play("LightStrip");
+                            }
+                        }
+                        else
+                        {
+                            foreach (Animation anim in animators)
+                            {
+                                anim.Stop();
+                            }
                         }
                     }
-                    else
-                    {
-                        foreach (Animation anim in animators)
-                        {
-                            anim.Stop();
-                        }
-                    }
+                }
+                catch (Exception ex)
+                {
+                    Utilities.Log("DeepFreezer", " Error finding Internal LightStrip Animators");
+                    Utilities.Log("DeepFreezer ", ex.Message);
                 }
             }
             setGameSettings = true; //set the flag so this method doesn't execute a second time
@@ -1178,8 +1265,10 @@ namespace DF
             ding_ding.panLevel = 0;
             ding_ding.rolloffMode = AudioRolloffMode.Linear;
             ding_ding.Stop();
+            List<UrlDir.UrlFile> databaseAudioFiles = new List<UrlDir.UrlFile>();
+            databaseAudioFiles = GameDatabase.Instance.databaseAudioFiles;
             ext_door = gameObject.AddComponent<AudioSource>();
-            ext_door.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/extdoorswitch");
+            ext_door.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/externaldoorswitch");
             ext_door.volume = .7F;
             ext_door.panLevel = 0;
             ext_door.rolloffMode = AudioRolloffMode.Linear;
@@ -1484,14 +1573,12 @@ namespace DF
                 case 2:
                     //close the Pod door Hal
                     this.Log_Debug("Freeze Step 2");
-                    if (partHasInternals && !isPartAnimated)
-                    // Part has no animated cryopods but has internals. Set window to on and skip to step 4.
-                    {
-                        hatch_lock.Play();  // Play the sound effects.
-                        machine_hum.Play();
-                        machine_hum.loop = true;
-                        setCryoWindowOn(ToFrzeKerbalSeat);
-                        FreezeStepInProgress = 4;
+                    if (partHasInternals && isPodExternal)
+                    // Part has no animated cryopods but has internals. skip to step 3.
+                    {                        
+                        cryopodstateclosed[ToFrzeKerbalSeat] = true;
+                        savecryopodstatepersistent();
+                        FreezeStepInProgress = 3;
                     }
                     else
                     {
@@ -1505,7 +1592,8 @@ namespace DF
                                 machine_hum.loop = true;
                                 ClosePodAnimPlaying = true;
                                 closeCryopod(ToFrzeKerbalSeat, 1f);
-                                cryopodstateclosed[ToFrzeKerbalSeat] = true;
+                                //cryopodstateclosed[ToFrzeKerbalSeat] = true;
+                                //savecryopodstatepersistent();
                             }
                             else  // Animation is already playing, check if it has finished.
                             {
@@ -1536,6 +1624,8 @@ namespace DF
                         {
                             //Part is not animated, skip to step 4.
                             ClosePodAnimPlaying = false;
+                            cryopodstateclosed[ToFrzeKerbalSeat] = true;
+                            savecryopodstatepersistent();
                             FreezeStepInProgress = 4;
                         }
                     }
@@ -1544,7 +1634,7 @@ namespace DF
                 case 3:
                     //Freeze the window
                     this.Log_Debug("Freeze Step 3");
-                    if (partHasInternals && isPartAnimated)
+                    if (partHasInternals)
                     {
                         if (!FreezeWindowAnimPlaying)  // If animation not already playing start it playing.
                         {
@@ -1590,7 +1680,7 @@ namespace DF
                 case 4:
                     //Finalise
                     this.Log_Debug("Freeze Step 4");
-                    if (partHasInternals && isPartAnimated)
+                    if (partHasInternals)
                     {
                         setCryopodWindowSpecular(ToFrzeKerbalSeat);
                     }
@@ -1715,22 +1805,20 @@ namespace DF
                 Utilities.setFrznKerbalLayer(CrewMember, true, false);
                 if (partHasInternals)
                 {
-                    if (isPartAnimated)
+                    if (vesselisinIVA || vesselisinInternal)
                     {
-                        if (vesselisinIVA || vesselisinInternal)
-                        {
-                            setIVAFrzrCam(ToFrzeKerbalSeat);
-                        }
-                        openCryopod(ToFrzeKerbalSeat, float.MaxValue);
-                        thawCryopodWindow(ToFrzeKerbalSeat, float.MaxValue);
-                        cryopodstateclosed[ToFrzeKerbalSeat] = false;
-                        if (partHasStripLights && DeepFreeze.Instance.DFsettings.StripLightsActive)
-                        {
-                            stopStripLightFlash(ToFrzeKerbalSeat);
-                        }
+                        setIVAFrzrCam(ToFrzeKerbalSeat);
                     }
-                    else
-                        setCryoWindowOff(ToFrzeKerbalSeat);
+                    if (isPartAnimated)
+                        openCryopod(ToFrzeKerbalSeat, float.MaxValue);
+                    if (isPartAnimated || (isPodExternal && DFInstalledMods.IsRPMInstalled && _prevRPMTransparentpodSetting == "ON"))
+                        thawCryopodWindow(ToFrzeKerbalSeat, float.MaxValue);
+                    cryopodstateclosed[ToFrzeKerbalSeat] = false;
+                    savecryopodstatepersistent();
+                    if (partHasStripLights && DeepFreeze.Instance.DFsettings.StripLightsActive)
+                    {
+                        stopStripLightFlash(ToFrzeKerbalSeat);
+                    }
                 }
 
                 if (!AddKerbal(CrewMember, ToFrzeKerbalSeat))
@@ -1896,60 +1984,52 @@ namespace DF
                 case 2:
                     //thaw the cryopod window
                     //this.Log_Debug("Thaw Step 2");
-                    if (partHasInternals && !isPartAnimated)
-                    // Part has no animated cryopods but has internals. Set window to off and skip to step 4.
+                    if (partHasInternals)
                     {
-                        ice_freeze.Play();
-                        setCryoWindowOff(ToThawKerbalSeat);
-                        ThawStepInProgress = 4;
-                    }
-                    else
-                    {
-                        if (partHasInternals && isPartAnimated)
+                        if (!ThawWindowAnimPlaying)  // If animation not already playing start it playing.
                         {
-                            if (!ThawWindowAnimPlaying)  // If animation not already playing start it playing.
-                            {
-                                this.Log_Debug("Thawing the cryopod window");
-                                ice_freeze.Play();
-                                ThawWindowAnimPlaying = true;
+                            this.Log_Debug("Thawing the cryopod window");
+                            ice_freeze.Play();
+                            ThawWindowAnimPlaying = true;
+                            if (isPartAnimated || (isPodExternal && DFInstalledMods.IsRPMInstalled && _prevRPMTransparentpodSetting == "ON"))
                                 thawCryopodWindow(ToThawKerbalSeat, 1f);
-                                if (partHasStripLights && DeepFreeze.Instance.DFsettings.StripLightsActive)
-                                {
-                                    startStripLightFlash(ToThawKerbalSeat);
-                                }
-                            }
-                            else  // Animation is already playing, check if it has finished.
+                            if (partHasStripLights && DeepFreeze.Instance.DFsettings.StripLightsActive)
                             {
-                                if (_windowAnimation != null)
+                                startStripLightFlash(ToThawKerbalSeat);
+                            }
+                        }
+                        else  // Animation is already playing, check if it has finished.
+                        {
+                            if (_windowAnimation != null)
+                            {
+                                if (_windowAnimation.IsPlaying("CryopodWindowOpen"))
                                 {
-                                    if (_windowAnimation.IsPlaying("CryopodWindowOpen"))
-                                    {
-                                        //this.Log_Debug("waiting for the pod animation to complete the thaw");
-                                        ThawWindowAnimPlaying = true;
-                                    }
-                                    else
-                                    {
-                                        this.Log_Debug("Animation has completed. go to step 3.");
-                                        ThawWindowAnimPlaying = false;
-                                        ThawStepInProgress = 3;
-                                    }
+                                    //this.Log_Debug("waiting for the pod animation to complete the thaw");
+                                    ThawWindowAnimPlaying = true;
                                 }
                                 else
                                 {
-                                    this.Log_Debug("Animation disappeared. go to step 3.");
-                                    //There is no animation found? Skip to step 3.
+                                    this.Log_Debug("Animation has completed. go to step 3.");
                                     ThawWindowAnimPlaying = false;
                                     ThawStepInProgress = 3;
                                 }
                             }
-                        }
-                        else
-                        {
-                            //Part is not animated, skip to step 4.
-                            ThawWindowAnimPlaying = false;
-                            ThawStepInProgress = 4;
+                            else
+                            {
+                                this.Log_Debug("Animation disappeared. go to step 3.");
+                                //There is no animation found? Skip to step 3.
+                                ThawWindowAnimPlaying = false;
+                                ThawStepInProgress = 3;
+                            }
                         }
                     }
+                    else
+                    {
+                        //Part is not animated, skip to step 4.
+                        ThawWindowAnimPlaying = false;
+                        ThawStepInProgress = 4;
+                    }
+                    //}
                     break;
 
                 case 3:
@@ -1965,7 +2045,8 @@ namespace DF
                             machine_hum.loop = true;
                             OpenPodAnimPlaying = true;
                             openCryopod(ToThawKerbalSeat, 1f);
-                            cryopodstateclosed[ToThawKerbalSeat] = false;
+                            //cryopodstateclosed[ToThawKerbalSeat] = false;
+                            //savecryopodstatepersistent();
                         }
                         else  // Animation is already playing, check if it has finished.
                         {
@@ -1996,6 +2077,8 @@ namespace DF
                     {
                         //Part is not animated, skip to step 4.
                         OpenPodAnimPlaying = false;
+                        cryopodstateclosed[ToThawKerbalSeat] = false;
+                        savecryopodstatepersistent();
                         ThawStepInProgress = 4;
                     }
                     break;
@@ -2118,8 +2201,6 @@ namespace DF
                                     KerbalGUIManager.PrintActiveCrew();
                                     //Utilities.setFrznKerbalLayer(kerbal, false, true);
                                     this.Log_Debug("Expected condition met, kerbal already in their seat.");
-                                    // If not animated pods change the window state.
-                                    if (!isPartAnimated) setCryoWindowOff(tmpcrew.SeatIdx);
                                     // If in IVA mode set the camera to watch the process.
                                     if (vesselisinIVA || vesselisinInternal)
                                         setIVAFrzrCam(tmpcrew.SeatIdx);
@@ -2196,7 +2277,6 @@ namespace DF
                                 KerbalGUIManager.AddActiveCrew(kerbal.KerbalRef); //Add them to the portrait cams.
                                 this.Log_Debug("Just thawing crew and added to GUIManager");
                                 KerbalGUIManager.PrintActiveCrew();
-                                if (!isPartAnimated && partHasInternals) setCryoWindowOff(tmpcrew.SeatIdx);
                                 if (vesselisinIVA || vesselisinInternal)
                                     setIVAFrzrCam(tmpcrew.SeatIdx);
                                 if (hasExternalDoor)
@@ -2305,13 +2385,15 @@ namespace DF
             {
                 setIVAFrzrCam(ToThawKerbalSeat);
             }
-            if (isPartAnimated && partHasInternals)
+            if (partHasInternals)
             {
-                closeCryopod(ToThawKerbalSeat, float.MaxValue);
+                if (isPartAnimated)
+                    closeCryopod(ToThawKerbalSeat, float.MaxValue);
                 this.Log_Debug("Time freezewindow started " + Planetarium.GetUniversalTime());
                 freezeCryopodWindow(ToThawKerbalSeat, float.MaxValue);
                 this.Log_Debug("Time freezewindow finished make them invisible " + Planetarium.GetUniversalTime());
                 cryopodstateclosed[ToThawKerbalSeat] = true;
+                savecryopodstatepersistent();
                 if (partHasStripLights && DeepFreeze.Instance.DFsettings.StripLightsActive)
                 {
                     stopStripLightFlash(ToThawKerbalSeat);
@@ -2431,7 +2513,7 @@ namespace DF
                 kerbalInfo.type = ProtoCrewMember.KerbalType.Unowned;
                 kerbalInfo.status = ProtoCrewMember.RosterStatus.Dead;
                 if (partHasInternals)
-                {                    
+                {
                     kerbalInfo.seatName = this.part.internalModel.seats[SeatIndx].seatTransformName;
                     kerbalInfo.seatIdx = SeatIndx;
                 }
@@ -3173,95 +3255,103 @@ namespace DF
 
         internal void resetFrozenKerbals()
         {
-            // Create a list of kerbals that are in InvSeats (SeatIndx == -1 where kerbal is in this part in this vessel & they are not comatose/tourist
-            List<KeyValuePair<string, KerbalInfo>> kerbalsInvSeats = DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.Where(e => e.Value.partID == CrntPartID && e.Value.vesselID == CrntVslID && e.Value.type != ProtoCrewMember.KerbalType.Tourist && e.Value.seatIdx == -1).ToList();
-            // create a list of kerbal that are in this part in this vessel & they are not comatose/tourist
-            List<KeyValuePair<string, KerbalInfo>> FrznKerbalsinPart = DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.Where(e => e.Value.partID == CrntPartID && e.Value.vesselID == CrntVslID && e.Value.type != ProtoCrewMember.KerbalType.Tourist).ToList();
-
-            if (kerbalsInvSeats.Count() > 0) //If we found any Invalid Seat assignments we need to find them empty seats
+            try
             {
-                bool[] seatIndxs = new bool[FreezerSize];  //Create a bool array to store whether seats are taken or not
-                //go through all the frozen kerbals in the part that don't have invalid seats and set bool array seat index to true (taken) for each
-                foreach (KeyValuePair<string, KerbalInfo> frznkerbal in FrznKerbalsinPart)
+                // Create a list of kerbals that are in InvSeats (SeatIndx == -1 where kerbal is in this part in this vessel & they are not comatose/tourist
+                List<KeyValuePair<string, KerbalInfo>> kerbalsInvSeats = DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.Where(e => e.Value.partID == CrntPartID && e.Value.vesselID == CrntVslID && e.Value.type != ProtoCrewMember.KerbalType.Tourist && e.Value.seatIdx == -1).ToList();
+                // create a list of kerbal that are in this part in this vessel & they are not comatose/tourist
+                List<KeyValuePair<string, KerbalInfo>> FrznKerbalsinPart = DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.Where(e => e.Value.partID == CrntPartID && e.Value.vesselID == CrntVslID && e.Value.type != ProtoCrewMember.KerbalType.Tourist).ToList();
+
+                if (kerbalsInvSeats.Count() > 0) //If we found any Invalid Seat assignments we need to find them empty seats
                 {
-                    if (frznkerbal.Value.seatIdx > -1 && frznkerbal.Value.seatIdx < FreezerSize - 1)
-                        seatIndxs[frznkerbal.Value.seatIdx] = true;
-                }
-                //go through all the thawed kerbals in the part and set bool array seat index to true (taken) for each
-                foreach (ProtoCrewMember crew in this.part.protoModuleCrew)
-                {
-                    seatIndxs[crew.seatIdx] = true;
-                }
-                //Go through all our kerbals with invalid seats and find them an empty seat.
-                foreach (KeyValuePair<string, KerbalInfo> frznkerbal in kerbalsInvSeats)
-                {
-                    //Iterate for the number of seats in the part
-                    for (int i = 0; i < FreezerSize; i++)
+                    bool[] seatIndxs = new bool[FreezerSize];  //Create a bool array to store whether seats are taken or not
+                                                               //go through all the frozen kerbals in the part that don't have invalid seats and set bool array seat index to true (taken) for each
+                    foreach (KeyValuePair<string, KerbalInfo> frznkerbal in FrznKerbalsinPart)
                     {
-                        if (seatIndxs[i] == false)  //If seat not already taken we take it
+                        if (frznkerbal.Value.seatIdx > -1 && frznkerbal.Value.seatIdx < FreezerSize - 1)
+                            seatIndxs[frznkerbal.Value.seatIdx] = true;
+                    }
+                    //go through all the thawed kerbals in the part and set bool array seat index to true (taken) for each
+                    foreach (ProtoCrewMember crew in this.part.protoModuleCrew)
+                    {
+                        seatIndxs[crew.seatIdx] = true;
+                    }
+                    //Go through all our kerbals with invalid seats and find them an empty seat.
+                    foreach (KeyValuePair<string, KerbalInfo> frznkerbal in kerbalsInvSeats)
+                    {
+                        //Iterate for the number of seats in the part
+                        for (int i = 0; i < FreezerSize; i++)
                         {
-                            seatIndxs[i] = true;
-                            frznkerbal.Value.seatIdx = i;
-                            frznkerbal.Value.seatName = this.part.internalModel.seats[i].seatTransformName;
-                            break;
+                            if (seatIndxs[i] == false)  //If seat not already taken we take it
+                            {
+                                seatIndxs[i] = true;
+                                frznkerbal.Value.seatIdx = i;
+                                frznkerbal.Value.seatName = this.part.internalModel.seats[i].seatTransformName;
+                                break;
+                            }
                         }
                     }
                 }
-            }
-            // Iterate through the dictionary of all known frozen kerbals where kerbal is in this part in this vessel & they are not comatose/tourist
-            foreach (KeyValuePair<string, KerbalInfo> kerbal in FrznKerbalsinPart)
-            {
-                //Check if they are in the _StoredCrewList and if they aren't Add them in.
-                FrznCrewMbr fzncrew = new FrznCrewMbr(kerbal.Key, kerbal.Value.seatIdx, CrntVslID, CrntVslName);
-                FrznCrewMbr tmpcrew = _StoredCrewList.Find(a => a.CrewName == kerbal.Key);
-                if (tmpcrew == null)
+                // Iterate through the dictionary of all known frozen kerbals where kerbal is in this part in this vessel & they are not comatose/tourist
+                foreach (KeyValuePair<string, KerbalInfo> kerbal in FrznKerbalsinPart)
                 {
-                    //add them to our storedcrewlist for this part.
-                    Utilities.Log_Debug("DeepFreezer", "Adding frozen kerbal to this part storedcrewlist " + kerbal.Key);
-                    _StoredCrewList.Add(fzncrew);
-                }
+                    //Check if they are in the _StoredCrewList and if they aren't Add them in.
+                    FrznCrewMbr fzncrew = new FrznCrewMbr(kerbal.Key, kerbal.Value.seatIdx, CrntVslID, CrntVslName);
+                    FrznCrewMbr tmpcrew = _StoredCrewList.Find(a => a.CrewName == kerbal.Key);
+                    if (tmpcrew == null)
+                    {
+                        //add them to our storedcrewlist for this part.
+                        Utilities.Log_Debug("DeepFreezer", "Adding frozen kerbal to this part storedcrewlist " + kerbal.Key);
+                        _StoredCrewList.Add(fzncrew);
+                    }
 
-                //check if they are in part spawned, if not do so.
-                ProtoCrewMember crewmember = HighLogic.CurrentGame.CrewRoster.Unowned.FirstOrDefault(a => a.name == kerbal.Key);
-                if (partHasInternals)
-                {
-                    crewmember.seatIdx = kerbal.Value.seatIdx;
-                    if (crewmember.seatIdx != -1 && crewmember.seatIdx < FreezerSize)
-                        crewmember.seat = this.part.internalModel.seats[crewmember.seatIdx];
-                    if (crewmember.KerbalRef == null)
+                    //check if they are in part spawned, if not do so.
+                    ProtoCrewMember crewmember = HighLogic.CurrentGame.CrewRoster.Unowned.FirstOrDefault(a => a.name == kerbal.Key);
+                    if (partHasInternals)
                     {
-                        crewmember.Spawn();
+                        crewmember.seatIdx = kerbal.Value.seatIdx;
+                        if (crewmember.seatIdx != -1 && crewmember.seatIdx < FreezerSize)
+                            crewmember.seat = this.part.internalModel.seats[crewmember.seatIdx];
+                        if (crewmember.KerbalRef == null)
+                        {
+                            crewmember.Spawn();
+                        }
+                        crewmember.KerbalRef.transform.parent = this.part.internalModel.seats[crewmember.seatIdx].seatTransform;
+                        crewmember.KerbalRef.transform.localPosition = Vector3.zero;
+                        crewmember.KerbalRef.transform.localRotation = Quaternion.identity;
+                        crewmember.KerbalRef.InPart = null;
+                        if (hasExternalDoor)
+                        {
+                            //set the seat to allow helmet, this will cause the helmet to appear
+                            crewmember.KerbalRef.showHelmet = true;
+                        }
+                        else
+                        {
+                            crewmember.KerbalRef.showHelmet = false;
+                            crewmember.KerbalRef.ShowHelmet(false);
+                        }
+                        seatTakenbyFrznKerbal[crewmember.seatIdx] = true;
+                        //setup seat and part settings for frozen kerbal.
+                        Utilities.setFrznKerbalLayer(crewmember, false, false);
+                        this.part.internalModel.seats[crewmember.seatIdx].taken = true;
+                        this.part.internalModel.seats[crewmember.seatIdx].kerbalRef = crewmember.KerbalRef;
+                        this.part.internalModel.seats[crewmember.seatIdx].crew = crewmember;
+                        setseatstaticoverlay(this.part.internalModel.seats[crewmember.seatIdx]);
                     }
-                    crewmember.KerbalRef.transform.parent = this.part.internalModel.seats[crewmember.seatIdx].seatTransform;
-                    crewmember.KerbalRef.transform.localPosition = Vector3.zero;
-                    crewmember.KerbalRef.transform.localRotation = Quaternion.identity;
-                    crewmember.KerbalRef.InPart = null;
-                    if (hasExternalDoor)
+                    //Unregister their traits/abilities and remove them from the Portrait Cameras if they are there.
+                    crewmember.UnregisterExperienceTraits(this.part);
+                    this.part.protoModuleCrew.Remove(crewmember);
+                    if (KerbalGUIManager.ActiveCrew.Contains(crewmember.KerbalRef))
                     {
-                        //set the seat to allow helmet, this will cause the helmet to appear
-                        crewmember.KerbalRef.showHelmet = true;
+                        KerbalGUIManager.RemoveActiveCrew(crewmember.KerbalRef);
                     }
-                    else
-                    {
-                        crewmember.KerbalRef.showHelmet = false;
-                        crewmember.KerbalRef.ShowHelmet(false);
-                    }
-                    seatTakenbyFrznKerbal[crewmember.seatIdx] = true;
-                    //setup seat and part settings for frozen kerbal.
-                    Utilities.setFrznKerbalLayer(crewmember, false, false);
-                    this.part.internalModel.seats[crewmember.seatIdx].taken = true;
-                    this.part.internalModel.seats[crewmember.seatIdx].kerbalRef = crewmember.KerbalRef;
-                    this.part.internalModel.seats[crewmember.seatIdx].crew = crewmember;
-                    setseatstaticoverlay(this.part.internalModel.seats[crewmember.seatIdx]);
-                }
-                //Unregister their traits/abilities and remove them from the Portrait Cameras if they are there.
-                crewmember.UnregisterExperienceTraits(this.part);
-                this.part.protoModuleCrew.Remove(crewmember);
-                if (KerbalGUIManager.ActiveCrew.Contains(crewmember.KerbalRef))
-                {
-                    KerbalGUIManager.RemoveActiveCrew(crewmember.KerbalRef);
                 }
             }
+            catch (Exception ex)
+            {
+                Utilities.Log("DeepFreezer", " Error attempting to resetFrozenKerbals, Critical ERROR, Report on the forum");
+                Utilities.Log("DeepFreezer ", ex.Message);
+            }            
         }
 
         private void OnCrewBoardVessel(GameEvents.FromToAction<Part, Part> fromToAction)
@@ -3292,40 +3382,14 @@ namespace DF
                     // Reset the seat status for frozen crew to taken - true, because it seems to reset by something?? So better safe than sorry.
                     if (partHasInternals)
                     {
-                        if (!isPartAnimated) //Only applicable for non-animated internals
-                        {
-                            // set cryotube window off for all crew onboard the part
-                            Utilities.Log_Debug("DeepFreezer", "Checking all actual crewseats status");
-                            foreach (ProtoCrewMember onbrdcrew in this.part.protoModuleCrew)
-                            {
-                                setCryoWindowOff(onbrdcrew.seatIdx);
-                                Utilities.Log_Debug("Setting CryoWindowOff for onboard crew " + onbrdcrew.name + ",Seatindx=" + onbrdcrew.seatIdx);
-                            }
-                            // set cryotube window off for all empty seats in the part
-                            int i = 0;
-                            foreach (InternalSeat chkpartseats in this.part.internalModel.seats)
-                            {
-                                string kerblrefstring;
-                                if (chkpartseats.kerbalRef == null)
-                                {
-                                    kerblrefstring = ("kerbalref not found in seatindex=" + i + ",turning the window off");
-                                    setCryoWindowOff(i);
-                                }
-                                else kerblrefstring = chkpartseats.kerbalRef.crewMemberName;
-                                Utilities.Log_Debug("DeepFreezer", "seatXformName=" + chkpartseats.seatTransformName + ",SeatIndex=" + i + ",KerbalRef=" + kerblrefstring);
-                                i++;
-                            }
-                        }
-
                         // reset seats to TAKEN for all frozen kerbals in the part, check KerbalRef is still in place or re-instantiate it and check frozen kerbals
                         // are not appearing in the Portrait Cameras, if they are remove them.
                         //Utilities.Log_Debug("DeepFreezer", "StoredCrewList");
                         foreach (FrznCrewMbr lst in _StoredCrewList)
                         {
                             this.part.internalModel.seats[lst.SeatIdx].taken = true;
-                            seatTakenbyFrznKerbal[lst.SeatIdx] = true;
-                            if (!isPartAnimated && partHasInternals) setCryoWindowOn(lst.SeatIdx);
-                            if (isPartAnimated && partHasInternals)
+                            seatTakenbyFrznKerbal[lst.SeatIdx] = true;                            
+                            if (partHasInternals)
                             {
                                 setCryopodWindowSpecular(lst.SeatIdx);
                             }
@@ -3484,11 +3548,7 @@ namespace DF
                 }
 
                 //Create a temporary array and set entries to true where that seat index contains a frozen kerbal.
-                bool[] closedpods = new bool[FreezerSize];
-                //for (int i = 0; i < FreezerSize; i++)
-                //{
-                //    this.Log_Debug("cryopodstate closed=" + cryopodstateclosed[i].ToString() + " checking pod " + i);
-                //}
+                bool[] closedpods = new bool[FreezerSize];                
                 foreach (FrznCrewMbr frzncrew in _StoredCrewList)
                 {
                     closedpods[frzncrew.SeatIdx] = true;
@@ -3502,100 +3562,48 @@ namespace DF
                     this.Log_Debug("resetCryopod " + i + " contains frozen kerbal? " + closedpods[i]);
                     if (closedpods[i]) //Pod contains a frozen kerbal
                     {
-                        if (isPartAnimated)
+                        if (!cryopodstateclosed[i])  //If we think the pod is not closed, we close it.
                         {
-                            if (!cryopodstateclosed[i])  //If we think the pod is not closed, we close it.
-                            {
-                                this.Log_Debug("pod is open so close it");
+                            this.Log_Debug("pod is open so close it");
+                            if (isPartAnimated)
                                 closeCryopod(i, float.MaxValue);
-                                cryopodstateclosed[i] = true;
-                                //this.Log_Debug("Time freezewindow started " + Planetarium.GetUniversalTime());
-                                freezeCryopodWindow(i, float.MaxValue);
-                                //this.Log_Debug("Time freezewindow finished make them invisible " + Planetarium.GetUniversalTime());
-                            }
-                            else
-                            {
-                                this.Log_Debug("pod is already closed");
-                                freezeCryopodWindow(i, float.MaxValue);
-                            }
+                            cryopodstateclosed[i] = true;
+                            //this.Log_Debug("Time freezewindow started " + Planetarium.GetUniversalTime());
+                            freezeCryopodWindow(i, float.MaxValue);
+                            //this.Log_Debug("Time freezewindow finished make them invisible " + Planetarium.GetUniversalTime());
                         }
                         else
                         {
-                            setCryoWindowOn(i);
+                            this.Log_Debug("pod is already closed");
+                            freezeCryopodWindow(i, float.MaxValue);
                         }
                     }
                     else  //Pod does not contain a frozen kerbal
                     {
-                        if (isPartAnimated)
+                        if (cryopodstateclosed[i]) //If we think the pod is closed, we open it.
                         {
-                            if (cryopodstateclosed[i]) //If we think the pod is closed, we open it.
-                            {
-                                this.Log_Debug("pod is closed so open it");
-                                thawCryopodWindow(i, float.MaxValue);
+                            this.Log_Debug("pod is closed so open it");
+                            if (isPartAnimated)
+                            {                                
                                 openCryopod(i, float.MaxValue);
-                                cryopodstateclosed[i] = false;
                             }
-                            else
-                            {
-                                this.Log_Debug("pod is already open");
-                                thawCryopodWindow(i, float.MaxValue);
-                            }
+                            thawCryopodWindow(i, float.MaxValue);                            
+                            cryopodstateclosed[i] = false;
                         }
                         else
                         {
-                            setCryoWindowOff(i);
+                            this.Log_Debug("pod is already open");                            
+                            thawCryopodWindow(i, float.MaxValue);
                         }
                     }
+                    setseatstaticoverlay(this.part.internalModel.seats[i]);
                 }
+                savecryopodstatepersistent();
             }
             catch (Exception ex)
             {
                 Debug.Log("Unable to reset cryopods in internal model for " + this.part.vessel.id.ToString() + " " + this.part.flightID);
                 Debug.Log("Err: " + ex);
-            }
-        }
-
-        private void setCryoWindowOff(int SeatIndx)  //only called for non-animated internal parts
-        {
-            Renderer renderer;
-            string windowname = "Cryopod-" + (SeatIndx + 1).ToString() + "-Window";
-            try
-            {
-                //Debug.Log("setCryoWindowOff for " + windowname + " on partid=" + this.part.flightID);
-                renderer = this.part.internalModel.FindModelComponent<Renderer>(windowname);
-                //renderer.enabled = false;
-                GameObject objfnd = renderer.gameObject;
-                objfnd.layer = 21;
-                //Debug.Log("setcryoff set renderergo to layer 21 ok");
-                Component parobj = objfnd.GetComponentUpwards("Component");
-                parobj.gameObject.layer = 21;
-                //Debug.Log("setcryoff set rendererparentgo to layer 21 ok");
-            }
-            catch (Exception)
-            {
-                Debug.Log("Unable to find Renderer in internal model for this part called " + windowname);
-            }
-        }
-
-        private void setCryoWindowOn(int SeatIndx) //only called for non-animated internal parts
-        {
-            Renderer renderer;
-            string windowname = "Cryopod-" + (SeatIndx + 1).ToString() + "-Window";
-            try
-            {
-                //Debug.Log("setCryoWindowOn for " + windowname + " on partid=" + this.part.flightID);
-                renderer = this.part.internalModel.FindModelComponent<Renderer>(windowname);
-                //renderer.enabled = true;
-                GameObject objfnd = renderer.gameObject;
-                objfnd.layer = 16;
-                //Debug.Log("setcryon set renderergo to layer 16 ok");
-                Component parobj = objfnd.GetComponentUpwards("Component");
-                parobj.gameObject.layer = 16;
-                //Debug.Log("setcryon set rendererparentgo to layer 16 ok");
-            }
-            catch (Exception)
-            {
-                Debug.Log("Unable to find Renderer in internal model for this part called " + windowname);
             }
         }
 
@@ -3613,6 +3621,7 @@ namespace DF
                         _animation["Open"].speed = speed;
                         _animation.Play("Open");
                         cryopodstateclosed[seatIndx] = false;
+                        savecryopodstatepersistent();
                     }
                 }
                 else
@@ -3628,8 +3637,19 @@ namespace DF
         private void thawCryopodWindow(int seatIndx, float speed)
         {
             setCryopodWindowOpaque(seatIndx);
-            string windowname = "Animated-Cryopod-" + (seatIndx + 1).ToString() + "-Window";
+            string windowname = "";
+            if (isPartAnimated)
+                windowname = "Animated-Cryopod-" + (seatIndx + 1).ToString() + "-Window";
+            else
+                windowname = "Cryopod-" + (seatIndx + 1).ToString() + "-Window";
+
             _windowAnimation = this.part.internalModel.FindModelComponent<Animation>(windowname);
+            Animation _extwindowAnimation = null;
+            if (isPodExternal)
+            {
+                _extwindowAnimation = this.part.FindModelComponent<Animation>(windowname);
+            }
+
             if (_windowAnimation == null)
             {
                 this.Log_Debug("Why can't I find the window animation?");
@@ -3638,28 +3658,80 @@ namespace DF
             {
                 _windowAnimation["CryopodWindowOpen"].speed = speed;
                 _windowAnimation.Play("CryopodWindowOpen");
+                if (isPodExternal && _extwindowAnimation != null)
+                {
+                    _extwindowAnimation["CryopodWindowOpen"].speed = speed;
+                    _extwindowAnimation.Play("CryopodWindowOpen");
+                }
             }
         }
 
         private void setCryopodWindowOpaque(int seatIndx)
         {
-            //Set their Window glass to fully opaque. - Just in case.
-            string windowname = "Animated-Cryopod-" + (seatIndx + 1).ToString() + "-Window";
-            Renderer windowrenderer = this.part.internalModel.FindModelComponent<Renderer>(windowname);
-            windowrenderer.material.shader = TransparentSpecularShader;
-            Color savedwindowcolor = windowrenderer.material.color;
-            savedwindowcolor.a = 1f;
-            windowrenderer.material.color = savedwindowcolor;
+            try
+            {
+                //Set their Window glass to fully opaque. - Just in case.
+                string windowname = "";
+                if (isPartAnimated)
+                    windowname = "Animated-Cryopod-" + (seatIndx + 1).ToString() + "-Window";
+                else
+                    windowname = "Cryopod-" + (seatIndx + 1).ToString() + "-Window";
+                Renderer windowrenderer = this.part.internalModel.FindModelComponent<Renderer>(windowname);
+                if (windowrenderer != null)
+                {
+                    windowrenderer.material.shader = TransparentSpecularShader;
+                    Color savedwindowcolor = windowrenderer.material.color;
+                    savedwindowcolor.a = 1f;
+                    windowrenderer.material.color = savedwindowcolor;
+                }                
+                if (isPodExternal)
+                {
+                    Renderer extwindowrenderer = this.part.FindModelComponent<Renderer>(windowname);
+                    if (extwindowrenderer != null)
+                    {
+                        extwindowrenderer.material.shader = TransparentSpecularShader;
+                        Color extsavedwindowcolor = extwindowrenderer.material.color;
+                        extsavedwindowcolor.a = 1f;
+                        extwindowrenderer.material.color = extsavedwindowcolor;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.Log("Unable to setCryopodWindowOpaque seat " + seatIndx);
+                Debug.Log("Err: " + ex);
+            }
         }
 
         private void setCryopodWindowSpecular(int seatIndx)
         {
-            //Set the window glass to specular shader
-            string windowname = "Animated-Cryopod-" + (seatIndx + 1).ToString() + "-Window";
-            Renderer windowrenderer = this.part.internalModel.FindModelComponent<Renderer>(windowname);
-            if (windowrenderer != null)
+            try
             {
-                windowrenderer.material.shader = KSPSpecularShader;
+                //Set the window glass to specular shader
+                string windowname = "";
+                if (isPartAnimated)
+                    windowname = "Animated-Cryopod-" + (seatIndx + 1).ToString() + "-Window";
+                else
+                    windowname = "Cryopod-" + (seatIndx + 1).ToString() + "-Window";
+
+                Renderer windowrenderer = this.part.internalModel.FindModelComponent<Renderer>(windowname);
+                Renderer extwindowrenderer = null;
+                if (isPodExternal)
+                    extwindowrenderer = this.part.FindModelComponent<Renderer>(windowname);
+
+                if (windowrenderer != null && windowrenderer.material.shader != KSPSpecularShader)
+                    windowrenderer.material.shader = KSPSpecularShader;
+                
+                if (isPodExternal && extwindowrenderer != null)
+                {
+                    if (extwindowrenderer.material.shader != KSPSpecularShader)
+                        extwindowrenderer.material.shader = KSPSpecularShader;
+                }                                    
+            }
+            catch (Exception ex)
+            {
+                Debug.Log("Unable to setCryopodWindowSpecular seat " + seatIndx);
+                Debug.Log("Err: " + ex);
             }
         }
 
@@ -3705,6 +3777,7 @@ namespace DF
                         _animation["Close"].speed = speed;
                         _animation.Play("Close");
                         cryopodstateclosed[seatIndx] = true;
+                        savecryopodstatepersistent();
                     }
                 }
                 else
@@ -3719,9 +3792,23 @@ namespace DF
 
         private void freezeCryopodWindow(int seatIndx, float speed)
         {
-            setCryopodWindowTransparent(seatIndx);
-            string windowname = "Animated-Cryopod-" + (seatIndx + 1).ToString() + "-Window";
+            if (isPartAnimated || (isPodExternal && DFInstalledMods.IsRPMInstalled && _prevRPMTransparentpodSetting == "ON"))
+                setCryopodWindowTransparent(seatIndx);
+            else
+                speed = float.MaxValue;
+            string windowname = "";
+            if (isPartAnimated)
+                windowname = "Animated-Cryopod-" + (seatIndx + 1).ToString() + "-Window";
+            else
+                windowname = "Cryopod-" + (seatIndx + 1).ToString() + "-Window";
+
             _windowAnimation = this.part.internalModel.FindModelComponent<Animation>(windowname);
+            Animation _extwindowAnimation = null;
+            if (isPodExternal)
+            {
+                _extwindowAnimation = this.part.FindModelComponent<Animation>(windowname);
+            }
+
             if (_windowAnimation == null)
             {
                 this.Log_Debug("Why can't I find the window animation?");
@@ -3730,18 +3817,47 @@ namespace DF
             {
                 _windowAnimation["CryopodWindowClose"].speed = speed;
                 _windowAnimation.Play("CryopodWindowClose");
+                if (isPodExternal && _extwindowAnimation != null)
+                {
+                    _extwindowAnimation["CryopodWindowClose"].speed = speed;
+                    _extwindowAnimation.Play("CryopodWindowClose");
+                }
             }
         }
 
         private void setCryopodWindowTransparent(int seatIndx)
         {
-            //Set their Window glass to see-through. - Just in case.
-            string windowname = "Animated-Cryopod-" + (seatIndx + 1).ToString() + "-Window";
-            Renderer windowrenderer = this.part.internalModel.FindModelComponent<Renderer>(windowname);
-            windowrenderer.material.shader = TransparentSpecularShader;
-            Color savedwindowcolor = windowrenderer.material.color;
-            savedwindowcolor.a = 0.3f;
-            windowrenderer.material.color = savedwindowcolor;
+            try
+            {
+                //Set their Window glass to see-through. - Just in case.
+                string windowname = "";
+                if (isPartAnimated)
+                    windowname = "Animated-Cryopod-" + (seatIndx + 1).ToString() + "-Window";
+                else
+                    windowname = "Cryopod-" + (seatIndx + 1).ToString() + "-Window";
+                Renderer windowrenderer = this.part.internalModel.FindModelComponent<Renderer>(windowname);                
+                    windowrenderer.material.shader = TransparentSpecularShader;
+                    Color savedwindowcolor = windowrenderer.material.color;
+                    savedwindowcolor.a = 0.3f;
+                    windowrenderer.material.color = savedwindowcolor;
+                
+                if (isPodExternal)
+                {
+                    Renderer extwindowrenderer = this.part.FindModelComponent<Renderer>(windowname);
+                    if (extwindowrenderer != null)
+                    {
+                        extwindowrenderer.material.shader = TransparentSpecularShader;
+                        Color extsavedwindowcolor = extwindowrenderer.material.color;
+                        extsavedwindowcolor.a = 0.3f;
+                        extwindowrenderer.material.color = extsavedwindowcolor;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.Log("Unable to setCryopodWindowTransparent seat " + seatIndx);
+                Debug.Log("Err: " + ex);
+            }
         }
 
         private void stopStripLightFlash(int seatIndx)
@@ -3777,7 +3893,7 @@ namespace DF
             string camname = "FrzCam" + (seatIndx + 1).ToString();
             //this.Log_Debug("Setting FrzrCam " + camname);
             Camera cam = this.part.internalModel.FindModelComponent<Camera>(camname);
-            if (cam != null)
+            if (cam != null)  //Found Freezer Camera so switch to it.
             {
                 Transform camxform = cam.transform;
                 if (camxform != null)
@@ -3785,6 +3901,10 @@ namespace DF
                     CameraManager.Instance.SetCameraInternal(this.part.internalModel, camxform);
                     DFIntMemory.Instance.lastFrzrCam = seatIndx;
                 }
+            }
+            else  //Didn't find Freezer Camera so kick out to flight camera.
+            {
+                CameraManager.Instance.SetCameraMode(CameraManager.CameraMode.Flight);
             }
         }
 

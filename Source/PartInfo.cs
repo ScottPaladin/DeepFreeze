@@ -32,6 +32,7 @@ namespace DF
         //numFrznCrew           - # of frozen crew in the part
         //hibernating           - true if the part/vessel is unloaded
         //hasextDoor            - true if the part has an External door and therefore needs TransparentPod treatment, etc.
+        //hasextPod             - True if the part has an external pod and therefore need TransparentPod treatment, etc.
         //timeLastElectricity   - the time last EC was taken to run the part's Frozen kerbal monitoring
         //frznChargeRequired    - the amount of EC required per frozen kerbal to run the part's Frozen kerbal monitoring
         //timeLastTempCheck     - the time last Temperature check was taken on the part
@@ -53,6 +54,7 @@ namespace DF
         internal int numFrznCrew;
         internal bool hibernating;
         internal bool hasextDoor;
+        internal bool hasextPod;
         internal double timeLastElectricity = 0f;
         internal double frznChargeRequired = 0f;
         internal double timeLastTempCheck = 0f;
@@ -71,6 +73,7 @@ namespace DF
             this.PartName = PartName;
             hibernating = false;
             hasextDoor = false;
+            hasextPod = false;
             outofEC = false;
             ECWarning = false;
             TempWarning = false;
@@ -118,6 +121,7 @@ namespace DF
             info.numFrznCrew = Utilities.GetNodeValue(node, "numFrznCrew", 0);
             info.hibernating = Utilities.GetNodeValue(node, "hibernating", false);
             info.hasextDoor = Utilities.GetNodeValue(node, "hasextDoor", false);
+            info.hasextPod = Utilities.GetNodeValue(node, "hasextPod", false);
             info.timeLastElectricity = Utilities.GetNodeValue(node, "timeLastElectricity", lastUpdate);
             info.frznChargeRequired = Utilities.GetNodeValue(node, "frznChargeRequired", 0d);
             info.timeLastTempCheck = Utilities.GetNodeValue(node, "timeLastTempCheck", lastUpdate);
@@ -146,6 +150,7 @@ namespace DF
             node.AddValue("numFrznCrew", numFrznCrew);
             node.AddValue("hibernating", hibernating);
             node.AddValue("hasextDoor", hasextDoor);
+            node.AddValue("hasextPod", hasextPod);
             node.AddValue("timeLastElectricity", timeLastElectricity);
             node.AddValue("frznChargeRequired", frznChargeRequired);
             node.AddValue("timeLastTempCheck", timeLastTempCheck);

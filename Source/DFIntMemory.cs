@@ -712,7 +712,7 @@ namespace DF
                         {
                             UpdatePredictedVesselEC(vesselInfo, vessel, currentTime);
                         }
-                        if (vesselInfo.hasextDoor)
+                        if (vesselInfo.hasextDoor || vesselInfo.hasextPod)
                         {
                             // If vessel is Not ActiveVessel and has a Transparent Pod reset the Cryopods.
                             if (FlightGlobals.ActiveVessel != vessel)
@@ -721,9 +721,9 @@ namespace DF
                                 DpFrzrLoadedVsl = vessel.FindPartModulesImplementing<DeepFreezer>();
                                 foreach (DeepFreezer frzr in DpFrzrLoadedVsl)
                                 {
-                                    if (frzr.hasExternalDoor)
+                                    if (frzr.hasExternalDoor || frzr.isPodExternal)
                                     {
-                                        this.Log_Debug("chkvslupdate loaded freezer with door, reset the cryopods");
+                                        this.Log_Debug("chkvslupdate loaded freezer with door or external pod, reset the cryopods");
                                         frzr.resetCryopods(false);
                                     }
                                 }
@@ -800,6 +800,7 @@ namespace DF
                     this.Log("New Freezer Part: " + frzr.name + "(" + frzr.part.flightID + ")" + " (" + vessel.id + ")");
                     partInfo = new PartInfo(vessel.id, frzr.name, currentTime);
                     partInfo.hasextDoor = frzr.hasExternalDoor;
+                    partInfo.hasextPod = frzr.isPodExternal;
                     partInfo.numSeats = frzr.FreezerSize;
                     partInfo.timeLastElectricity = frzr.timeSinceLastECtaken;
                     partInfo.frznChargeRequired = frzr.FrznChargeRequired;
@@ -820,6 +821,7 @@ namespace DF
                 else   // Update existing entry
                 {
                     partInfo.hasextDoor = frzr.hasExternalDoor;
+                    partInfo.hasextPod = frzr.isPodExternal;
                     partInfo.numSeats = frzr.FreezerSize;
                     partInfo.timeLastElectricity = frzr.timeSinceLastECtaken;
                     partInfo.frznChargeRequired = frzr.FrznChargeRequired;
@@ -839,10 +841,9 @@ namespace DF
                 }
                 //now update the knownfreezerpart and any related vesselinfo field
                 if (frzr.hasExternalDoor)
-                {
                     vesselInfo.hasextDoor = true;
-                    break;
-                }
+                if (frzr.isPodExternal)
+                    vesselInfo.hasextPod = true;
             }
         }
 

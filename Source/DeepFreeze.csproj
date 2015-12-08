@@ -36,7 +36,8 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\Assembly-CSharp.dll</HintPath>
     </Reference>
-    <Reference Include="DFInterface">
+    <Reference Include="DFInterface, Version=0.4.5792.35419, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\DFInterface\bin\Debug\DFInterface.dll</HintPath>
     </Reference>
     <Reference Include="SMInterface, Version=4.3.0.0, Culture=neutral, processorArchitecture=MSIL">
