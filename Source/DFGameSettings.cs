@@ -31,11 +31,11 @@ namespace DF
         // knownKACAlarms = all Kerbal Alarm Clock alarms that are associated with a DeppFreezer knownVessels entry
 
         public const string configNodeName = "DFGameSettings";
-        public bool Enabled { get; set; }
-        internal Dictionary<string, KerbalInfo> KnownFrozenKerbals { get; private set; }
-        internal Dictionary<Guid, VesselInfo> knownVessels { get; private set; }
-        internal Dictionary<uint, PartInfo> knownFreezerParts { get; private set; }
-        internal Dictionary<string, AlarmInfo> knownKACAlarms { get; private set; }
+        public bool Enabled;
+        internal Dictionary<string, KerbalInfo> KnownFrozenKerbals;
+        internal Dictionary<Guid, VesselInfo> knownVessels;
+        internal Dictionary<uint, PartInfo> knownFreezerParts;
+        internal Dictionary<string, AlarmInfo> knownKACAlarms;
 
         internal DFGameSettings()
         {

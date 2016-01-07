@@ -198,7 +198,7 @@ namespace DF
             else
             {
                 // Set up the stock toolbar
-                this.Log_Debug("Removing onGUIAppLauncher callbacks");
+                Utilities.Log("DeepFreezeGUI", "Removing onGUIAppLauncher callbacks");
                 GameEvents.onGUIApplicationLauncherReady.Remove(OnGUIAppLauncherReady);
                 if (this.stockToolbarButton != null)
                 {

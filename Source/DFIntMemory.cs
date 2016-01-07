@@ -121,7 +121,7 @@ namespace DF
 
         private void OnDestroy()
         {
-            this.Log_Debug("DFIntMemory OnDestroy");
+            Utilities.Log("DFIntMemory", "OnDestroy");
             //destroy the event hook for KAC
             if (KACWrapper.APIReady)
                 KACWrapper.KAC.onAlarmStateChanged -= KAC_onAlarmStateChanged;
@@ -130,8 +130,7 @@ namespace DF
             GameEvents.onVesselLoaded.Remove(onVesselLoad);
             GameEvents.onVesselCreate.Remove(onVesselCreate);
             GameEvents.onPartCouple.Remove(onPartCouple);
-            GameEvents.onGUIEngineersReportReady.Remove(AddTests);
-            this.Log_Debug("DFIntMemory end OnDestroy");
+            GameEvents.onGUIEngineersReportReady.Remove(AddTests);            
         }
 
         private void Update()
