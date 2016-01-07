@@ -25,9 +25,10 @@ namespace DF
     [KSPScenario(ScenarioCreationOptions.AddToAllGames, GameScenes.SPACECENTER, GameScenes.EDITOR, GameScenes.FLIGHT, GameScenes.TRACKSTATION)]
     public class DeepFreeze : ScenarioModule, IDFInterface
     {
-        public static DeepFreeze Instance { get; private set; }
-        internal DFSettings DFsettings { get; private set; }
-        internal DFGameSettings DFgameSettings { get; private set; }
+        public static DeepFreeze Instance;
+        public static bool APIReady;
+        internal DFSettings DFsettings;
+        internal DFGameSettings DFgameSettings;
         private readonly string globalConfigFilename;
         private ConfigNode globalNode = new ConfigNode();
         private readonly List<Component> children = new List<Component>();
@@ -36,14 +37,15 @@ namespace DF
         {
             get
             {
-                return this.DFgameSettings.KnownFrozenKerbals;
+                return DFgameSettings.KnownFrozenKerbals;
             }
         }
 
-        protected DeepFreeze()
+        public DeepFreeze()
         {
             Utilities.Log("DeepFreeze", "Constructor");
             Instance = this;
+            APIReady = false;
             DFsettings = new DFSettings();
             DFgameSettings = new DFGameSettings();
             globalConfigFilename = System.IO.Path.Combine(_AssemblyFolder, "Config.cfg").Replace("\\", "/");
@@ -91,6 +93,8 @@ namespace DF
                 var child = gameObject.AddComponent<DeepFreezeGUI>();
                 children.Add(child);
             }
+
+            
         }
 
         public override void OnLoad(ConfigNode gameNode)
@@ -108,11 +112,13 @@ namespace DF
                     s.Load(globalNode);
                 }
             }
+            APIReady = true;
             this.Log("Scenario: " + HighLogic.LoadedScene.ToString() + " OnLoad: \n " + gameNode + "\n" + globalNode);
         }
 
         public override void OnSave(ConfigNode gameNode)
         {
+            //APIReady = false;
             base.OnSave(gameNode);
             DFgameSettings.Save(gameNode);
             foreach (Savable s in children.Where(c => c is Savable))
@@ -133,6 +139,8 @@ namespace DF
         protected void OnDestroy()
         {
             this.Log("OnDestroy");
+            Instance = null;
+            APIReady = false;
             foreach (Component child in children)
             {
                 this.Log("DeepFreeze Child Destroy for " + child.name);

@@ -410,7 +410,7 @@ namespace DF
             return resources;
         }
 
-        public void Update()
+        public void Update() 
         {
             if (Time.timeSinceLevelLoad < 2.0f) // Check not loading level
                 return;
@@ -1206,7 +1206,7 @@ namespace DF
             Debug.Log("DeepFreezer OnStart");
             base.OnStart(state);
             //Set the GameEvents we are interested in
-            if ((state != StartState.None || state != StartState.Editor))
+            if ((state != StartState.None && state != StartState.Editor))
             {
                 GameEvents.onCrewTransferred.Add(this.OnCrewTransferred);
                 GameEvents.onVesselChange.Add(this.OnVesselChange);
@@ -1223,63 +1223,65 @@ namespace DF
             KSPSpecularShader = listshaders.Find(b => b.name == "KSP/Specular");
 
             // Setup the sounds
-            mon_beep = gameObject.AddComponent<AudioSource>();
-            mon_beep.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/mon_beep");
-            mon_beep.volume = .2F;
-            mon_beep.panLevel = 0;
-            mon_beep.rolloffMode = AudioRolloffMode.Logarithmic;
-            mon_beep.audio.maxDistance = 10f;
-            mon_beep.audio.minDistance = 8f;
-            mon_beep.audio.dopplerLevel = 0f;
-            mon_beep.audio.panLevel = 0f;
-            mon_beep.audio.playOnAwake = false;
-            mon_beep.audio.priority = 255;
-            mon_beep.Stop();
-            flatline = gameObject.AddComponent<AudioSource>();
-            flatline.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/flatline");
-            flatline.volume = 1;
-            flatline.panLevel = 0;
-            flatline.rolloffMode = AudioRolloffMode.Linear;
-            flatline.Stop();
-            hatch_lock = gameObject.AddComponent<AudioSource>();
-            hatch_lock.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/hatch_lock");
-            hatch_lock.volume = .5F;
-            hatch_lock.panLevel = 0;
-            hatch_lock.rolloffMode = AudioRolloffMode.Linear;
-            hatch_lock.Stop();
-            ice_freeze = gameObject.AddComponent<AudioSource>();
-            ice_freeze.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/ice_freeze");
-            ice_freeze.volume = 1;
-            ice_freeze.panLevel = 0;
-            ice_freeze.rolloffMode = AudioRolloffMode.Linear;
-            ice_freeze.Stop();
-            machine_hum = gameObject.AddComponent<AudioSource>();
-            machine_hum.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/machine_hum");
-            machine_hum.volume = .2F;
-            machine_hum.panLevel = 0;
-            machine_hum.rolloffMode = AudioRolloffMode.Linear;
-            machine_hum.Stop();
-            ding_ding = gameObject.AddComponent<AudioSource>();
-            ding_ding.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/ding_ding");
-            ding_ding.volume = .4F;
-            ding_ding.panLevel = 0;
-            ding_ding.rolloffMode = AudioRolloffMode.Linear;
-            ding_ding.Stop();
-            List<UrlDir.UrlFile> databaseAudioFiles = new List<UrlDir.UrlFile>();
-            databaseAudioFiles = GameDatabase.Instance.databaseAudioFiles;
-            ext_door = gameObject.AddComponent<AudioSource>();
-            ext_door.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/externaldoorswitch");
-            ext_door.volume = .7F;
-            ext_door.panLevel = 0;
-            ext_door.rolloffMode = AudioRolloffMode.Linear;
-            ext_door.Stop();
-            charge_up = gameObject.AddComponent<AudioSource>();
-            charge_up.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/charge_up");
-            charge_up.volume = 1;
-            charge_up.panLevel = 0;
-            charge_up.rolloffMode = AudioRolloffMode.Linear;
-            charge_up.Stop();
-
+            if ((state != StartState.None && state != StartState.Editor))
+            {
+                mon_beep = gameObject.AddComponent<AudioSource>();
+                mon_beep.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/mon_beep");
+                mon_beep.volume = .2F;
+                mon_beep.panLevel = 0;
+                mon_beep.rolloffMode = AudioRolloffMode.Logarithmic;
+                mon_beep.audio.maxDistance = 10f;
+                mon_beep.audio.minDistance = 8f;
+                mon_beep.audio.dopplerLevel = 0f;
+                mon_beep.audio.panLevel = 0f;
+                mon_beep.audio.playOnAwake = false;
+                mon_beep.audio.priority = 255;
+                mon_beep.Stop();
+                flatline = gameObject.AddComponent<AudioSource>();
+                flatline.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/flatline");
+                flatline.volume = 1;
+                flatline.panLevel = 0;
+                flatline.rolloffMode = AudioRolloffMode.Linear;
+                flatline.Stop();
+                hatch_lock = gameObject.AddComponent<AudioSource>();
+                hatch_lock.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/hatch_lock");
+                hatch_lock.volume = .5F;
+                hatch_lock.panLevel = 0;
+                hatch_lock.rolloffMode = AudioRolloffMode.Linear;
+                hatch_lock.Stop();
+                ice_freeze = gameObject.AddComponent<AudioSource>();
+                ice_freeze.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/ice_freeze");
+                ice_freeze.volume = 1;
+                ice_freeze.panLevel = 0;
+                ice_freeze.rolloffMode = AudioRolloffMode.Linear;
+                ice_freeze.Stop();
+                machine_hum = gameObject.AddComponent<AudioSource>();
+                machine_hum.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/machine_hum");
+                machine_hum.volume = .2F;
+                machine_hum.panLevel = 0;
+                machine_hum.rolloffMode = AudioRolloffMode.Linear;
+                machine_hum.Stop();
+                ding_ding = gameObject.AddComponent<AudioSource>();
+                ding_ding.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/ding_ding");
+                ding_ding.volume = .4F;
+                ding_ding.panLevel = 0;
+                ding_ding.rolloffMode = AudioRolloffMode.Linear;
+                ding_ding.Stop();
+                List<UrlDir.UrlFile> databaseAudioFiles = new List<UrlDir.UrlFile>();
+                databaseAudioFiles = GameDatabase.Instance.databaseAudioFiles;
+                ext_door = gameObject.AddComponent<AudioSource>();
+                ext_door.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/externaldoorswitch");
+                ext_door.volume = .7F;
+                ext_door.panLevel = 0;
+                ext_door.rolloffMode = AudioRolloffMode.Linear;
+                ext_door.Stop();
+                charge_up = gameObject.AddComponent<AudioSource>();
+                charge_up.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/charge_up");
+                charge_up.volume = 1;
+                charge_up.panLevel = 0;
+                charge_up.rolloffMode = AudioRolloffMode.Linear;
+                charge_up.Stop();
+            }
             //If we have an external door (CRY-0300) check if RPM is installed, if not disable the door, otherwise set it's current state (open/closed).
             if (animationName != string.Empty)
             {

@@ -64,6 +64,7 @@
     <Compile Include="DFInstalledMods.cs" />
     <Compile Include="DFSettings.cs" />
     <Compile Include="DFIntMemory.cs" />
+    <Compile Include="DFWrapper.cs" />
     <Compile Include="EngineerReport.cs" />
     <Compile Include="InstallChecker.cs" />
     <Compile Include="KACWrapper.cs" />
