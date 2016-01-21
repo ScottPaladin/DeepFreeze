@@ -1288,7 +1288,7 @@ namespace DF
                 externalDoorAnim = this.part.FindModelAnimators(animationName).FirstOrDefault();
                 if (externalDoorAnim == null)
                 {
-                    this.Log_Debug("Part has external animation defined but cannot find the animation on the part");
+                    Utilities.Log_Debug("Part has external animation defined but cannot find the animation on the part");
                     hasExternalDoor = false;
                     Events["eventOpenDoors"].active = false;
                     Events["eventCloseDoors"].active = false;
@@ -1297,10 +1297,10 @@ namespace DF
                 }
                 else
                 {
-                    this.Log_Debug("Part has external animation, check if RPM is installed and process");
+                    Utilities.Log_Debug("Part has external animation, check if RPM is installed and process");
                     if (DFInstalledMods.IsRPMInstalled)
                     {
-                        this.Log_Debug("RPM installed, set doorstate");
+                        Utilities.Log_Debug("RPM installed, set doorstate");
                         hasExternalDoor = true;
                         if (_externaldoorstate == DoorState.OPEN)
                         {
@@ -1313,11 +1313,11 @@ namespace DF
                     }
                     else  //RPM is not installed, disable the doors.
                     {
-                        this.Log_Debug("RPM NOT installed, set transparent transforms");
+                        Utilities.Log_Debug("RPM NOT installed, set transparent transforms");
                         hasExternalDoor = false;
                         Events["eventOpenDoors"].active = false;
                         Events["eventCloseDoors"].active = false;
-                        this.Log_Debug("door actions/events off");
+                        Utilities.Log_Debug("door actions/events off");
                         if (transparentTransforms != string.Empty)
                             Utilities.setTransparentTransforms(this.part, transparentTransforms);
                     }
@@ -3239,18 +3239,18 @@ namespace DF
         //     ie scene changes, exiting loading distance
         private void onVesselDestroy(Vessel vessel)
         {
-            this.Log_Debug("OnVesselDestroy");
+            Utilities.Log_Debug("OnVesselDestroy");
             //Check a Freeze or Thaw is not in progress, if it is, we must abort.
             if (IsThawActive)
             {
                 ScreenMessages.PostScreenMessage("Vessel about to change, Aborting Thaw process", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-                this.Log_Debug("Thawisactive - abort");
+                Utilities.Log_Debug("Thawisactive - abort");
                 ThawKerbalAbort(ToThawKerbal);
             }
             if (IsFreezeActive)
             {
                 ScreenMessages.PostScreenMessage("Vessel about to change, Aborting Freeze process", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-                this.Log_Debug("Freezeisactive - abort");
+                Utilities.Log_Debug("Freezeisactive - abort");
                 FreezeKerbalAbort(ActiveFrzKerbal);
             }
         }

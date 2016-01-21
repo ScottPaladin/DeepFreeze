@@ -822,30 +822,62 @@ namespace DF
 
         internal static void Log_Debug(this UnityEngine.Object obj, string message)
         {
-            DFSettings DFsettings = DeepFreeze.Instance.DFsettings;
-            if (DFsettings.debugging)
+            try
+            {
+                DFSettings DFsettings = DeepFreeze.Instance.DFsettings;
+                if (DFsettings.debugging)
+                    Debug.Log(obj.GetType().FullName + "[" + obj.GetInstanceID().ToString("X") + "][" + Time.time.ToString("0.00") + "]: " + message);
+            }
+            catch
+            {
                 Debug.Log(obj.GetType().FullName + "[" + obj.GetInstanceID().ToString("X") + "][" + Time.time.ToString("0.00") + "]: " + message);
+            }
+            
         }
 
         internal static void Log_Debug(this System.Object obj, string message)
         {
-            DFSettings DFsettings = DeepFreeze.Instance.DFsettings;
-            if (DFsettings.debugging)
+            try
+            {
+                DFSettings DFsettings = DeepFreeze.Instance.DFsettings;
+                if (DFsettings.debugging)
+                    Debug.Log(obj.GetType().FullName + "[" + obj.GetHashCode().ToString("X") + "][" + Time.time.ToString("0.00") + "]: " + message);
+            }
+            catch
+            {
                 Debug.Log(obj.GetType().FullName + "[" + obj.GetHashCode().ToString("X") + "][" + Time.time.ToString("0.00") + "]: " + message);
+            }
+            
         }
 
         internal static void Log_Debug(string context, string message)
         {
-            DFSettings DFsettings = DeepFreeze.Instance.DFsettings;
-            if (DFsettings.debugging)
+
+            try
+            {
+                DFSettings DFsettings = DeepFreeze.Instance.DFsettings;
+                if (DFsettings.debugging)
+                    Debug.Log(context + "[][" + Time.time.ToString("0.00") + "]: " + message);
+            }
+            catch
+            {
                 Debug.Log(context + "[][" + Time.time.ToString("0.00") + "]: " + message);
+            }
         }
 
         internal static void Log_Debug(string message)
         {
-            DFSettings DFsettings = DeepFreeze.Instance.DFsettings;
-            if (DFsettings.debugging)
+
+            try
+            {
+                DFSettings DFsettings = DeepFreeze.Instance.DFsettings;
+                if (DFsettings.debugging)
+                    Debug.Log("[DeepFreeze][" + Time.time.ToString("0.00") + "]: " + message);
+            }
+            catch
+            {
                 Debug.Log("[DeepFreeze][" + Time.time.ToString("0.00") + "]: " + message);
+            }
         }
     }
 }

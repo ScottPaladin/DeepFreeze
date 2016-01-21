@@ -173,5 +173,21 @@ namespace DF
                 }
             }
         }
+
+        internal void DmpKnownVessels()
+        {
+            this.Log("Dump of KnownVessels");
+            if (knownVessels.Count() == 0)
+            {
+                this.Log("KnownVessels is EMPTY.");
+            }
+            else
+            {
+                foreach (KeyValuePair<Guid, VesselInfo> vessel in knownVessels)
+                {
+                    this.Log("Vessel = " + vessel.Key + " Name = " + vessel.Value.vesselName + " crew = " + vessel.Value.numCrew + " frozencrew = " + vessel.Value.numFrznCrew);
+                }
+            }
+        }
     }
 }
