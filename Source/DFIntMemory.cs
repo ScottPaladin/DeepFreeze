@@ -686,7 +686,34 @@ namespace DF
                 this.Log_Debug("knownvessels id = " + entry.Key + " Name = " + entry.Value.vesselName);
                 Guid vesselId = entry.Key;
                 VesselInfo vesselInfo = entry.Value;
-                Vessel vessel = allVessels.Find(v => v.id == vesselId);
+                Vessel vessel = null;
+                try
+                {
+                    vessel = allVessels.Find(v => v.id == vesselId);
+                }
+                catch (Exception ex)
+                {
+                    DeepFreeze.Instance.DFgameSettings.DmpKnownVessels();
+                    if (allVessels.Count == 0 || allVessels == null)
+                    {
+                        this.Log("FlightGlobals.Vessels = 0 or null");
+                    }
+                    else
+                    {
+                        foreach(Vessel vsl in allVessels)
+                        {
+                            this.Log("Vessel " + vsl.id + " name = " + vsl.name);
+                        }
+                    }
+                    this.Log("Exception: " + ex);
+                    if (entry.Value.numFrznCrew == 0)
+                    {
+                        this.Log("Removing entry as vessel has no frozen crew");
+                        vesselsToDelete.Add(vesselId);
+                        partsToDelete.AddRange(DeepFreeze.Instance.DFgameSettings.knownFreezerParts.Where(e => e.Value.vesselID == vesselId).Select(e => e.Key).ToList());
+                        continue;
+                    }
+                }                
                 if (vessel == null)
                 {
                     this.Log_Debug("Deleting vessel " + vesselInfo.vesselName + " - vessel does not exist anymore");
