@@ -1,4 +1,7 @@
-﻿V0.20.2.0 "Bug fixes"
+﻿V0.20.3.0 "bug Fixes"
+Fixed bug when thawing some kerbals vessel where vessel reference transform was not set in some cases.
+Modified debugging and error messages during thawing to assist easier bug hunting in the future.
+V0.20.2.0 "Bug fixes"
 Fixed null ref bug when vessels are destroyed.
 Fixed null ref bug when KSP vessel list cannot be accessed.
 Fixed null ref/NAN bug when revert to editor (from vessel with DeepFreeze part) and launch another vessel.

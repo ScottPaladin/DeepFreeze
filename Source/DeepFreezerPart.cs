@@ -368,8 +368,8 @@ namespace DF
         private Guid CrntVslID;
         private uint CrntPartID;
         private string CrntVslName;
-        private bool vesselisinIVA;
-        private bool vesselisinInternal;
+        private bool vesselisinIVA = false;
+        private bool vesselisinInternal = false;
 
         private bool setGameSettings = false;
 
@@ -767,13 +767,19 @@ namespace DF
 
         private void onceoffSetup()
         {
-            Utilities.Log_Debug("DeepFreezer", "OnUpdate SetGameSettings");
+            Utilities.Log_Debug("DeepFreezer", "OnUpdate onceoffSetup");
             _StoredCrewList.Clear();
             CrntVslID = this.vessel.id;
             CrntVslName = this.vessel.vesselName;
             CrntPartID = this.part.flightID;
             lastUpdate = Time.time;
             lastRemove = Time.time;
+            if (DeepFreeze.Instance == null)
+            {
+                Utilities.Log("DeepFreezer", "Onceoffsetup - waiting for DeepFreeze settings instance");
+                setGameSettings = false;
+                return;
+            }
             // Master settings values override the part values for EC required and Glykerol required
             if (DeepFreeze.Instance.DFsettings.ECReqdToFreezeThaw != ChargeRequired)
             {
@@ -2166,8 +2172,9 @@ namespace DF
                             // we check the internal seat has our Crewmember in it. Not some other kerbal.
                             if (crew.name == frozenkerbal)
                             {
+                                int codestep = 0;
                                 try
-                                {
+                                {                                    
                                     //seat is taken and it is by themselves. Expected condition.
                                     //Check the KerbalRef isn't null. If it is we need to respawn them. (this shouldn't occur).
                                     if (kerbal.KerbalRef == null)
@@ -2178,6 +2185,7 @@ namespace DF
                                         kerbal.Spawn();
                                         this.Log_Debug("Kerbal kerbalref = " + kerbal.KerbalRef.GetInstanceID());
                                     }
+                                    codestep = 1;
                                     if (kerbal.KerbalRef != null)
                                     {
                                         Utilities.subdueIVAKerbalAnimations(kerbal.KerbalRef);
@@ -2185,6 +2193,7 @@ namespace DF
                                     Utilities.setFrznKerbalLayer(kerbal, true, false);  //Set the Kerbal renderer layers on so they are visible again.
                                     kerbal.KerbalRef.InPart = this.part; //Put their kerbalref back in the part.
                                     kerbal.KerbalRef.rosterStatus = ProtoCrewMember.RosterStatus.Assigned;
+                                    codestep = 2;
                                     try
                                     {
                                         if (DFInstalledMods.IsTexReplacerInstalled)
@@ -2198,6 +2207,7 @@ namespace DF
                                         Debug.Log("Err: " + ex);
                                     }
 
+                                    codestep = 3;
                                     KerbalGUIManager.AddActiveCrew(kerbal.KerbalRef); //Add them to the portrait cams.
                                     this.Log_Debug("Just thawing crew and added to GUIManager");
                                     KerbalGUIManager.PrintActiveCrew();
@@ -2207,6 +2217,7 @@ namespace DF
                                     if (vesselisinIVA || vesselisinInternal)
                                         setIVAFrzrCam(tmpcrew.SeatIdx);
 
+                                    codestep = 4;
                                     if (hasExternalDoor)
                                     {
                                         //now set the helmet state depending on the external door state.
@@ -2219,11 +2230,13 @@ namespace DF
                                             Utilities.setHelmetshaders(kerbal.KerbalRef, true);
                                         }
                                     }
-                                    this.Log_Debug("Reference part after add=" + this.vessel.GetReferenceTransformPart().name + ",flightid=" + this.vessel.GetReferenceTransformPart().flightID);
+                                    this.Log_Debug("Finishing ThawKerbalStep0");
+                                    //this.Log_Debug("Reference part after add=" + this.vessel.GetReferenceTransformPart().name + ",flightid=" + this.vessel.GetReferenceTransformPart().flightID);
                                 }
                                 catch (Exception ex)
                                 {
                                     Debug.Log("Exception attempting to add to seat for " + frozenkerbal);
+                                    Debug.Log("Part has Internals, and Frozen Kerbal was found codestep = " + codestep);
                                     Debug.Log("Err: " + ex);
                                     ScreenMessages.PostScreenMessage("Code Error: Cannot thaw kerbal at this time, Check Log", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                                     ThawKerbalAbort(frozenkerbal);
@@ -2245,6 +2258,7 @@ namespace DF
                         {
                             this.Log_Debug("Seat Crew KerbalRef is NULL re-add them at seatidx=" + tmpcrew.SeatIdx);
                             //this.part.internalModel.seats[tmpcrew.SeatIdx].taken = false; // Set their seat to NotTaken before we assign them back to their seat, not sure we really need this.
+                            int codestep = 0;
                             try
                             {
                                 this.part.internalModel.SitKerbalAt(kerbal, this.part.internalModel.seats[tmpcrew.SeatIdx]);
@@ -2253,6 +2267,7 @@ namespace DF
                                     //set the seat to allow helmet, this will cause the helmet to appear
                                     kerbal.seat.allowCrewHelmet = true;
                                 }
+                                codestep = 1;
                                 kerbal.seat.SpawnCrew();
                                 setseatstaticoverlay(this.part.internalModel.seats[tmpcrew.SeatIdx]);
                                 // Think this will get rid of the static that appears on the portrait camera
@@ -2263,6 +2278,7 @@ namespace DF
                                 Utilities.setFrznKerbalLayer(kerbal, true, false);  //Set the Kerbal renderer layers on so they are visible again.
                                 kerbal.KerbalRef.InPart = this.part; //Put their kerbalref back in the part.
                                 kerbal.KerbalRef.rosterStatus = ProtoCrewMember.RosterStatus.Assigned;
+                                codestep = 2;
                                 try
                                 {
                                     if (DFInstalledMods.IsTexReplacerInstalled)
@@ -2276,11 +2292,14 @@ namespace DF
                                     Debug.Log("Err: " + ex);
                                 }
 
+                                codestep = 3;
                                 KerbalGUIManager.AddActiveCrew(kerbal.KerbalRef); //Add them to the portrait cams.
                                 this.Log_Debug("Just thawing crew and added to GUIManager");
                                 KerbalGUIManager.PrintActiveCrew();
+                                codestep = 4;
                                 if (vesselisinIVA || vesselisinInternal)
                                     setIVAFrzrCam(tmpcrew.SeatIdx);
+                                codestep = 5;
                                 if (hasExternalDoor)
                                 {
                                     //now set the helmet state depending on the external door state.
@@ -2293,10 +2312,12 @@ namespace DF
                                         Utilities.setHelmetshaders(kerbal.KerbalRef, true);
                                     }
                                 }
+                                this.Log_Debug("Finishing ThawKerbalStep0");
                             }
                             catch (Exception ex)
                             {
                                 Debug.Log("Exception attempting to add to seat for " + frozenkerbal);
+                                Debug.Log("Seat Crew KerbalRef is NULL re-add them at seatidx=" + tmpcrew.SeatIdx + " codestep = " + codestep);
                                 Debug.Log("Err: " + ex);
                                 ScreenMessages.PostScreenMessage("Code Error: Cannot thaw kerbal at this time, Check Log", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                                 ThawKerbalAbort(frozenkerbal);
@@ -2316,6 +2337,7 @@ namespace DF
                         catch (Exception ex)
                         {
                             Debug.Log("Exception attempting to add to seat for " + frozenkerbal);
+                            Debug.Log("Where DeepFreezer Module is attached to internal-LESS part");
                             Debug.Log("Err: " + ex);
                             ScreenMessages.PostScreenMessage("Code Error: Cannot thaw kerbal at this time, Check Log", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                             ThawKerbalAbort(frozenkerbal);
@@ -2505,7 +2527,7 @@ namespace DF
                 }
                 else
                 {
-                    this.Log("Found Kerbal in the stored frozen crew list for this part, critical error. Report this on the forum.");
+                    this.Log("Found Kerbal in the stored frozen crew list for this part.");
                     this.Log("Crewmember:" + tmpcrew.CrewName + " Seat:" + tmpcrew.SeatIdx);
                 }
                 // Update the saved frozen kerbals dictionary
@@ -3892,8 +3914,7 @@ namespace DF
         //This method sets the internal camera to the Freezer view prior to thawing or freezing a kerbal so we can see the nice animations.
         private void setIVAFrzrCam(int seatIndx)
         {
-            string camname = "FrzCam" + (seatIndx + 1).ToString();
-            //this.Log_Debug("Setting FrzrCam " + camname);
+            string camname = "FrzCam" + (seatIndx + 1).ToString();            
             Camera cam = this.part.internalModel.FindModelComponent<Camera>(camname);
             if (cam != null)  //Found Freezer Camera so switch to it.
             {
@@ -3908,6 +3929,7 @@ namespace DF
             {
                 CameraManager.Instance.SetCameraMode(CameraManager.CameraMode.Flight);
             }
+            this.Log_Debug("Finished Setting FrzrCam " + camname);
         }
 
         private void setseatstaticoverlay(InternalSeat seat)
