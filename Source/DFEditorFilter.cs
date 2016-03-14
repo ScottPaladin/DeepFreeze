@@ -16,10 +16,9 @@
  */
 
 using System.Collections.Generic;
-using UnityEngine;
 using System.IO;
-using KSP.IO;
-
+using RUI.Icons.Selectable;
+using UnityEngine;
 
 namespace DF
 {
@@ -34,10 +33,11 @@ namespace DF
         internal string category = "Filter by Function";
         internal string subCategoryTitle = "DeepFreeze Items";
         internal string defaultTitle = "DF";
+
         //internal string iconName = "R&D_node_icon_evatech";
         //create and the icons
-        Texture2D icon_DeepFreeze_Editor = new Texture2D(32, 32);
-        
+        private Texture2D icon_DeepFreeze_Editor = new Texture2D(32, 32);
+
         internal string iconName = "DeepFreezeEditor";
         internal bool filter = true;
 
@@ -48,7 +48,7 @@ namespace DF
             //ModuleManager.MMPatchLoader.addPostPatchCallback(DFMMCallBack);
             DFMMCallBack();
             //load the icons
-            icon_DeepFreeze_Editor.LoadImage(System.IO.File.ReadAllBytes("GameData/REPOSoftTech/DeepFreeze/Icons/DeepFreezeEditor.png"));
+            icon_DeepFreeze_Editor.LoadImage(File.ReadAllBytes("GameData/REPOSoftTech/DeepFreeze/Icons/DeepFreezeEditor.png"));
 
             Debug.Log("DFEditorFilter Awake Complete");
         }
@@ -75,15 +75,12 @@ namespace DF
             {
                 return true;
             }
-            else
-            {
-                return false;
-            }
+            return false;
         }
 
         private void SubCategories()
-        {                        
-            RUI.Icons.Selectable.Icon filterDeepFreeze = new RUI.Icons.Selectable.Icon("DeepFreezeEditor", icon_DeepFreeze_Editor, icon_DeepFreeze_Editor, true);
+        {
+            Icon filterDeepFreeze = new Icon("DeepFreezeEditor", icon_DeepFreeze_Editor, icon_DeepFreeze_Editor, true);
             PartCategorizer.Category Filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == category);
             PartCategorizer.AddCustomSubcategoryFilter(Filter, subCategoryTitle, filterDeepFreeze, p => EditorItemsFilter(p));
             RUIToggleButtonTyped button = Filter.button.activeButton;

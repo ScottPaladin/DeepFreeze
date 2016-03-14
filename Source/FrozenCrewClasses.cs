@@ -17,35 +17,33 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using UnityEngine;
 
 namespace DF
 {
-
     public class FrznCrewMbr
     {
         public string CrewName { get; set; }
         public int SeatIdx { get; set; }
         public Guid VesselID { get; set; }
-        public string VesselName { get; set; }       
-        
+        public string VesselName { get; set; }
 
         public FrznCrewMbr(string crewName, int seat, Guid vessel, string VesselName)
         {
-
-            this.CrewName = crewName;
-            this.SeatIdx = seat;
-            this.VesselID = vessel;
+            CrewName = crewName;
+            SeatIdx = seat;
+            VesselID = vessel;
             this.VesselName = VesselName;
         }
-
     }
+
     public class FrznCrewList : List<FrznCrewMbr>
-    {      
+    {
+    }
 
-        
-
+    public enum FrzrTmpStatus
+    {
+        OK = 0,
+        WARN = 1,
+        RED = 2
     }
 }

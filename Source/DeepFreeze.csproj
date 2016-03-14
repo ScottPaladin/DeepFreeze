@@ -36,14 +36,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\Assembly-CSharp.dll</HintPath>
     </Reference>
-    <Reference Include="DFInterface, Version=0.4.5792.35419, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\DFInterface\bin\Debug\DFInterface.dll</HintPath>
-    </Reference>
-    <Reference Include="SMInterface, Version=4.3.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>.\SMInterface.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -56,6 +48,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\..\REPOSoftTechKSPUtils\RSTutilities.cs">
+      <Link>RSTutilities.cs</Link>
+    </Compile>
     <Compile Include="DeepFreeze.cs" />
     <Compile Include="DeepFreezerPart.cs" />
     <Compile Include="DFAlarmInfo.cs" />
@@ -64,50 +59,60 @@
     <Compile Include="DFInstalledMods.cs" />
     <Compile Include="DFSettings.cs" />
     <Compile Include="DFIntMemory.cs" />
-    <Compile Include="DFWrapper.cs" />
+    <Compile Include="APIs\DFWrapper.cs" />
     <Compile Include="EngineerReport.cs" />
+    <Compile Include="FrozenCrewClasses.cs" />
     <Compile Include="InstallChecker.cs" />
-    <Compile Include="KACWrapper.cs" />
+    <Compile Include="APIs\KACWrapper.cs" />
+    <Compile Include="KerbalInfo.cs" />
     <Compile Include="PartInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="DeepFreezeGUI.cs" />
     <None Include="RPMScreenDeepFreeze.cs" />
-    <Compile Include="RTWrapper.cs" />
-    <Compile Include="TRWrapper.cs" />
-    <Compile Include="USIWrapper.cs" />
+    <Compile Include="APIs\RTWrapper.cs" />
+    <Compile Include="APIs\SMWrapper.cs" />
+    <Compile Include="APIs\TRWrapper.cs" />
+    <Compile Include="APIs\USIWrapper.cs" />
     <Compile Include="VesselInfo.cs" />
-    <Compile Include="ToolBarManager.cs" />
-    <Compile Include="utilities.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="ksp_dir.txt" />
+    <Compile Include="APIs\ToolBarManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Changelog.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="LocalDev\7za_dir.txt" />
+    <Content Include="LocalDev\ksp_dir.txt" />
+    <Content Include="LocalDev\mono_exe.txt" />
+    <Content Include="LocalDev\pdb2mdb_exe.txt" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>set /p KSP_DIR=&lt;"$(ProjectDir)ksp_dir.txt"
+    <PostBuildEvent>set /p KSP_DIR=&lt;"$(ProjectDir)LocalDev\ksp_dir.txt"
 
-xcopy "$(TargetPath)" "$(SolutionDir)..\GameData\REPOSoftTech\$(ProjectName)\Plugins\" /Y
+set /p MONO_EXE_DIR=&lt;"$(ProjectDir)LocalDev\mono_exe.txt"
 
-xcopy "$(TargetDir)$(ProjectName).pdb" "$(SolutionDir)..\GameData\REPOSoftTech\$(ProjectName)\Plugins\" /Y
+set /p PDB2MDB_EXE_DIR=&lt;"$(ProjectDir)LocalDev\pdb2mdb_exe.txt"
+
+set /p ZA_DIR=&lt;"$(ProjectDir)LocalDev\7za_dir.txt"
+xcopy "$(TargetPath)" "$(SolutionDir)..\Distribution\GameData\REPOSoftTech\$(ProjectName)\Plugins\" /Y
+
+xcopy "$(TargetDir)$(ProjectName).pdb" "$(SolutionDir)..\Distribution\GameData\REPOSoftTech\$(ProjectName)\Plugins\" /Y
 
 cd "$(TargetDir)"
-"C:\Program Files (x86)\mono\bin\mono.exe" "C:\Program Files (x86)\mono\lib\mono\4.5\pdb2mdb.exe" "$(TargetFileName)"
-xcopy "$(TargetDir)$(ProjectName).dll.mdb" "$(SolutionDir)..\GameData\REPOSoftTech\$(ProjectName)\Plugins\" /Y
+"%25MONO_EXE_DIR%25" "%25PDB2MDB_EXE_DIR%25" "$(TargetFileName)"
+xcopy "$(TargetDir)$(ProjectName).dll.mdb" "$(SolutionDir)..\Distribution\GameData\REPOSoftTech\$(ProjectName)\Plugins\" /Y
 
-where /q "C:\7za\:7za.exe"
+where /q %25ZA_DIR%25:7za.exe
 if %25ERRORLEVEL%25 == 1 (
    echo Cannot find 7-zip to package build
 ) else (
    echo Packaging build
   ) 
-if exist "$(SolutionDir)..\$(ProjectName).zip" del "$(SolutionDir)..\$(ProjectName).zip"
+if exist "$(SolutionDir)..\Distribution\$(ProjectName).zip" del "$(SolutionDir)..\Ditribution\$(ProjectName).zip"
    
-c:\7za\7za a -tzip -r  "$(SolutionDir)..\$(ProjectName).zip" "$(SolutionDir)..\GameData"
-c:\7za\7za d -r  -x!REPOSoftTech.png -x!Glykerol.png -x!DFtoolbar.png -x!DeepFreezeOff.png -x!DeepFreezeOn.png -x!DeepFreezeEditor.png -x!alphaonly.png "$(SolutionDir)..\$(ProjectName).zip" "*.ddsified" "*.pdb" "*.mdb" "*.png"
-xcopy /E /Y "$(SolutionDir)..\GameData" "%25KSP_DIR%25\GameData"</PostBuildEvent>
+%25ZA_DIR%257za.exe a -tzip -r  "$(SolutionDir)..\Distribution\$(ProjectName).zip" "$(SolutionDir)..\Distribution\GameData"
+c:\7za\7za d -r  -x!REPOSoftTech.png -x!Glykerol.png -x!DFtoolbar.png -x!DeepFreezeOff.png -x!DeepFreezeOn.png -x!DeepFreezeEditor.png -x!alphaonly.png "$(SolutionDir)..\Distribution\$(ProjectName).zip" "*.ddsified" "*.pdb" "*.mdb" "*.png"
+xcopy /E /Y "$(SolutionDir)..\Distribution\GameData" "%25KSP_DIR%25\GameData"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

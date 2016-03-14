@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using RSTUtils;
 
 namespace DF
 {
@@ -47,9 +48,9 @@ namespace DF
         internal AlarmInfo(string Name, Guid vesselID)
         {
             this.Name = Name;
-            this.VesselID = vesselID;
-            this.FrzKerbals = new List<string>();
-            this.ThwKerbals = new List<string>();
+            VesselID = vesselID;
+            FrzKerbals = new List<string>();
+            ThwKerbals = new List<string>();
         }
 
         internal static AlarmInfo Load(ConfigNode node)

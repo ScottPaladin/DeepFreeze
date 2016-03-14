@@ -18,22 +18,21 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using RSTUtils;
 
 namespace DF
 {
     internal class DFInstalledMods
     {
         // Class used to check what Other mods we are interested in are installed.
-        private static bool? _SMInstalled = null;
-
+        
         private static Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
-        internal static bool SMInstalled
+        internal static bool IsSMInstalled
         {
             get
             {
-                _SMInstalled = ShipManifest.SMInterface.IsSMInstalled;
-                return (bool)_SMInstalled;
+                return IsModInstalled("ShipManifest");
             }
         }
 
@@ -116,14 +115,14 @@ namespace DF
                 if (IsRTInstalled && RTWrapper.APIReady)
                 {
                     //RTVslConnected = (RemoteTech.API.API.HasLocalControl(id) || RemoteTech.API.API.HasAnyConnection(id));
-                    RTVslConnected = (RTWrapper.RTactualAPI.HasLocalControl(id) || RTWrapper.RTactualAPI.HasAnyConnection(id));
+                    RTVslConnected = RTWrapper.RTactualAPI.HasLocalControl(id) || RTWrapper.RTactualAPI.HasAnyConnection(id);
                     //Utilities.Log_Debug("vessel " + id + "haslocal " + RemoteTech.API.API.HasLocalControl(id) + " has any " + RemoteTech.API.API.HasAnyConnection(id));
                 }
             }
             catch (Exception ex)
             {
-                Utilities.Log("DeepFreeze", "Exception attempting to check RemoteTech connections. Report this error on the Forum Thread.");
-                Utilities.Log("DeepFreeze", "Err: " + ex);
+                Utilities.Log("DeepFreeze Exception attempting to check RemoteTech connections. Report this error on the Forum Thread.");
+                Utilities.Log("DeepFreeze Err: " + ex);
             }
             return RTVslConnected;
         }
@@ -140,8 +139,8 @@ namespace DF
                 }
                 catch (Exception ex)
                 {
-                    Utilities.Log("DeepFreeze", "Exception attempting to check RemoteTech VesselDelay. Report this error on the Forum Thread.");
-                    Utilities.Log("DeepFreeze", "Err: " + ex);
+                    Utilities.Log("DeepFreeze Exception attempting to check RemoteTech VesselDelay. Report this error on the Forum Thread.");
+                    Utilities.Log("DeepFreeze Err: " + ex);
                 }
                 return RTVslDelay;
             }
