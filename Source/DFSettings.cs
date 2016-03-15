@@ -15,6 +15,8 @@
  *
  */
 
+using RSTUtils;
+
 namespace DF
 {
     internal class DFSettings
@@ -81,7 +83,7 @@ namespace DF
             TempinKelvin = true;
             defaultTimeoutforCrewXfer = 30;
             cryopodResettimeDelay = 5;
-            DFWindowWidth = 420f;
+            DFWindowWidth = 560f;
             CFWindowWidth = 340f;
             KACWindowWidth = 485f;
             ECLowWarningTime = 3600f;
@@ -132,7 +134,7 @@ namespace DF
                 internalFrzrCamCode = Utilities.GetNodeValue(DFsettingsNode, "internalFrzrCamCode", internalFrzrCamCode);
                 internalNxtFrzrCamCode = Utilities.GetNodeValue(DFsettingsNode, "internalNxtFrzrCamCode", internalNxtFrzrCamCode);
                 internalPrvFrzrCamCode = Utilities.GetNodeValue(DFsettingsNode, "internalPrvFrzrCamCode", internalPrvFrzrCamCode);
-                this.Log_Debug("DFSettings load complete");
+                 Utilities.Log_Debug("DFSettings load complete");
             }
         }
 
@@ -181,7 +183,7 @@ namespace DF
             settingsNode.AddValue("internalFrzrCamCode", internalFrzrCamCode);
             settingsNode.AddValue("internalNxtFrzrCamCode", internalNxtFrzrCamCode);
             settingsNode.AddValue("internalPrvFrzrCamCode", internalPrvFrzrCamCode);
-            this.Log_Debug("DFSettings save complete");
+             Utilities.Log_Debug("DFSettings save complete");
         }
     }
 }

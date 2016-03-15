@@ -13,6 +13,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using RSTUtils;
 using UnityEngine;
 
 namespace DF
@@ -30,18 +31,19 @@ namespace DF
             try
             {
                 // Log some information that might be of interest when debugging
-                this.Log(modName + " - KSPUtil.ApplicationRootPath = " + KSPUtil.ApplicationRootPath);
-                this.Log(modName + " - GameDatabase.Instance.PluginDataFolder = " + GameDatabase.Instance.PluginDataFolder);
-                this.Log(modName + " - Assembly.GetExecutingAssembly().Location = " + Assembly.GetExecutingAssembly().Location);
-                this.Log(modName + " - Using 64-bit? " + (IntPtr.Size == 8));
+                Utilities.Log(modName + " - KSPUtil.ApplicationRootPath = " + KSPUtil.ApplicationRootPath);
+                Utilities.Log(modName + " - GameDatabase.Instance.PluginDataFolder = " + GameDatabase.Instance.PluginDataFolder);
+                Utilities.Log(modName + " - Assembly.GetExecutingAssembly().Location = " + Assembly.GetExecutingAssembly().Location);
+                Utilities.Log(modName + " - Using 64-bit? " + (IntPtr.Size == 8));
 
                 // Search for this mod's DLL existing in the wrong location. This will also detect duplicate copies because only one can be in the right place.
                 var assemblies = AssemblyLoader.loadedAssemblies.Where(a => a.assembly.GetName().Name == Assembly.GetExecutingAssembly().GetName().Name).Where(a => a.url != expectedPath);
-                if (assemblies.Any())
+                var loadedAssemblies = assemblies as AssemblyLoader.LoadedAssembly[] ?? assemblies.ToArray();
+                if (loadedAssemblies.Any())
                 {
-                    var badPaths = assemblies.Select(a => a.path).Select(p => Uri.UnescapeDataString(new Uri(Path.GetFullPath(KSPUtil.ApplicationRootPath)).MakeRelativeUri(new Uri(p)).ToString().Replace('/', Path.DirectorySeparatorChar)));
+                    var badPaths = loadedAssemblies.Select(a => a.path).Select(p => Uri.UnescapeDataString(new Uri(Path.GetFullPath(KSPUtil.ApplicationRootPath)).MakeRelativeUri(new Uri(p)).ToString().Replace('/', Path.DirectorySeparatorChar)));
                     string badPathsString = String.Join("\n", badPaths.ToArray());
-                    this.Log(modName + " - Incorrectly installed, bad paths:\n" + badPathsString);
+                    Utilities.Log(modName + " - Incorrectly installed, bad paths:\n" + badPathsString);
                     PopupDialog.SpawnPopupDialog("Incorrect " + modName + " Installation",
                         modName + " has been installed incorrectly and will not function properly. All files should be located in KSP/GameData/" + expectedPath +
                         ". Do not move any files from inside that folder.\n\nPlease Remove all old installations and invalid files, as follows.\n\nIncorrect path(s):\n" + badPathsString,
@@ -53,7 +55,7 @@ namespace DF
                 {
                     if (!AssemblyLoader.loadedAssemblies.Any(a => a.assembly.GetName().Name.StartsWith("ModuleManager") && a.url == ""))
                     {
-                        this.Log(modName + " - Missing or incorrectly installed RPM & ModuleManager.");
+                        Utilities.Log(modName + " - Missing or incorrectly installed RPM & ModuleManager.");
                         PopupDialog.SpawnPopupDialog("Missing Module Manager",
                             modName + " requires the Module Manager mod in order to function properly with Raster Prop Monitor mod Installed.\n\nPlease download from http://forum.kerbalspaceprogram.com/threads/55219 and copy to the KSP/GameData/ directory.",
                             "OK", false, HighLogic.Skin);
@@ -64,7 +66,7 @@ namespace DF
                 // Check for Module Manager
                 if (!AssemblyLoader.loadedAssemblies.Any(a => a.assembly.GetName().Name.StartsWith("ModuleManager") && a.url == ""))
                 {
-                    this.Log(modName + " - Missing or incorrectly installed ModuleManager.");
+                    Utilities.Log("DeepFreeze - Missing or incorrectly installed ModuleManager.");
                     PopupDialog.SpawnPopupDialog("Missing Module Manager",
                         modName + " requires the Module Manager mod in order to function properly.\n\nPlease download from http://forum.kerbalspaceprogram.com/threads/55219 and copy to the KSP/GameData/ directory.",
                         "OK", false, HighLogic.Skin);
@@ -73,20 +75,20 @@ namespace DF
                 // Is AddonController installed? (It could potentially cause problems.)
                 if (AssemblyLoader.loadedAssemblies.Any(a => a.assembly.GetName().Name.StartsWith("AddonController")))
                 {
-                    this.Log("AddonController is installed");
+                    Utilities.Log("AddonController is installed");
                 }
 
                 // Is Compatibility Popup Blocker installed? (It could potentially cause problems.)
                 if (AssemblyLoader.loadedAssemblies.Any(a => a.assembly.GetName().Name.StartsWith("popBlock")))
                 {
-                    this.Log("Compatibility Popup Blocker is installed");
+                    Utilities.Log("Compatibility Popup Blocker is installed");
                 }
 
                 //CleanupOldVersions();
             }
             catch (Exception ex)
             {
-                Utilities.Log(modName, " - Caught an exception:\n" + ex.Message + "\n" + ex.StackTrace);
+                Utilities.Log("DeepFreeze - Caught an exception:\n" + ex.Message + "\n" + ex.StackTrace);
                 PopupDialog.SpawnPopupDialog("Incorrect " + modName + " Installation",
                     "A very serious error has occurred while checking the installation of " + modName + ".\n\n" +
                     "You need to\n" +
@@ -111,14 +113,14 @@ namespace DF
             // Was GameData/PaladinLabs now GameData/REPOSoftTech
             if (File.Exists(KSPUtil.ApplicationRootPath + "x.cfg"))
             {
-                this.Log(modName + " - deleting the old x.cfg.");
+                 Utilities.Log(modName + " - deleting the old x.cfg.");
                 File.Delete(KSPUtil.ApplicationRootPath + "x.cfg");
                 requireRestart = true;
             }
 
             if (requireRestart)
             {
-                this.Log(modName + " - requiring restart.");
+                 Utilities.Log(modName + " - requiring restart.");
                 PopupDialog.SpawnPopupDialog("Incorrect " + modName + " Installation",
                     "Files from a previous version of " + modName + " were found and deleted. You need to restart KSP now.",
                     "OK", false, HighLogic.Skin);

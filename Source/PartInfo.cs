@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using RSTUtils;
 using UnityEngine;
 
 namespace DF
@@ -55,21 +56,21 @@ namespace DF
         internal bool hibernating;
         internal bool hasextDoor;
         internal bool hasextPod;
-        internal double timeLastElectricity = 0f;
-        internal double frznChargeRequired = 0f;
-        internal double timeLastTempCheck = 0f;
-        internal double deathCounter = 0f;
-        internal double tmpdeathCounter = 0f;
+        internal double timeLastElectricity;
+        internal double frznChargeRequired;
+        internal double timeLastTempCheck;
+        internal double deathCounter;
+        internal double tmpdeathCounter;
         internal bool outofEC;
         internal FrzrTmpStatus TmpStatus = FrzrTmpStatus.OK;
         internal bool ECWarning;
         internal bool TempWarning;
-        internal float cabinTemp = 0f;
-        internal double lastUpdate = 0f;
+        internal float cabinTemp;
+        internal double lastUpdate;
 
         internal PartInfo(Guid vesselid, string PartName, double currentTime)
         {
-            this.vesselID = vesselid;
+            vesselID = vesselid;
             this.PartName = PartName;
             hibernating = false;
             hasextDoor = false;

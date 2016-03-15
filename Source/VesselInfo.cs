@@ -14,6 +14,8 @@
  * for full details.
  */
 
+using RSTUtils;
+
 namespace DF
 {
     internal class VesselInfo
@@ -42,9 +44,9 @@ namespace DF
         internal bool hibernating;
         internal bool hasextDoor;
         internal bool hasextPod;
-        internal double lastUpdate = 0f;
-        internal double storedEC = 0f;
-        internal double predictedECOut = 0f;
+        internal double lastUpdate;
+        internal double storedEC;
+        internal double predictedECOut;
 
         internal VesselInfo(string vesselName, double currentTime)
         {
