@@ -2818,87 +2818,102 @@ namespace DF
                 Utilities.Log_Debug("DeepFreezer Check SMxfer running what kind and store it");
                 if (!SMWrapper.SMAPIReady)
                     SMWrapper.InitSMWrapper();
-                //If IsStockXfer = true than a StockXfer is running under SM control
-                //When it finishes, SM will revert the Xfer and then run a normal SM CrewXfer.
-                //So While the Stock Xfer is running we ignore this OnCrewTransferred event.
-                //If SM does not have OverrideStockCrewXfer = true than it will ignore the event, so we bypass this
-                // IF and the next IF and do a stock Xfer processing further down.
-                Utilities.Log_Debug("SMStockXfer?=" + SMWrapper.ShipManifestAPI.IsStockXfer);
-                 Utilities.Log_Debug("SMXfer?=" + SMWrapper.ShipManifestAPI.CrewXferActive);
-                 Utilities.Log_Debug("SMseat2seat?=" + SMWrapper.ShipManifestAPI.IsSeat2SeatXfer);
-                 Utilities.Log_Debug("OverrideStock?=" + SMWrapper.ShipManifestAPI.OverrideStockCrewXfer);
-                crewXferSMTimeDelay = SMWrapper.ShipManifestAPI.CrewXferDelaySec;
-                if (SMWrapper.ShipManifestAPI.IsStockXfer || 
-                    (!SMWrapper.ShipManifestAPI.CrewXferActive && SMWrapper.ShipManifestAPI.OverrideStockCrewXfer))
+                //If the SMWrapper fails to initialize we skip the rest of SM processing and treat it like stock.. at our peril.
+                if (SMWrapper.SMAPIReady)
                 {
-                    //we need to just check one thing, that if this a xfer to the part that isn't FULL of frozen kerbals.
-                    //If it is we must take over and revert.
-                     Utilities.Log_Debug("Partfull=" + PartFull);
-                     Utilities.Log_Debug("to part is this part=" + fromToAction.to + " - " + part);
-                    if (FreezerSpace == 0 && fromToAction.to == part)  // If there is no available seats for this Kerbal we kick them back out.
+                    //If IsStockXfer = true than a StockXfer is running under SM control
+                    //When it finishes, SM will revert the Xfer and then run a normal SM CrewXfer.
+                    //So While the Stock Xfer is running we ignore this OnCrewTransferred event.
+                    //If SM does not have OverrideStockCrewXfer = true than it will ignore the event, so we bypass this
+                    // IF and the next IF and do a stock Xfer processing further down.
+                    Utilities.Log_Debug("SMStockXfer?=" + SMWrapper.ShipManifestAPI.IsStockXfer);
+                    Utilities.Log_Debug("SMXfer?=" + SMWrapper.ShipManifestAPI.CrewXferActive);
+                    Utilities.Log_Debug("SMseat2seat?=" + SMWrapper.ShipManifestAPI.IsSeat2SeatXfer);
+                    Utilities.Log_Debug("OverrideStock?=" + SMWrapper.ShipManifestAPI.OverrideStockCrewXfer);
+                    crewXferSMTimeDelay = SMWrapper.ShipManifestAPI.CrewXferDelaySec;
+                    if (SMWrapper.ShipManifestAPI.IsStockXfer ||
+                        (!SMWrapper.ShipManifestAPI.CrewXferActive && SMWrapper.ShipManifestAPI.OverrideStockCrewXfer))
                     {
-                        _crewXferTOActive = true; // Set a flag to know a Xfer has started and we check when it is finished in
-                        savecryopodstatepersistent();
-                        saveexternaldoorstatepersistent();
-                        Utilities.Log_Debug("DeepFreezer CrewXfer PartFull transfer them back, part is full - attempt to cancel stock xfer");
-                        ScreenMessages.PostScreenMessage("Cannot enter this freezer, part is full", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-                        // Remove the transfer message that stock displayed.
-                        var message = new ScreenMessage(string.Empty, 15f, ScreenMessageStyle.LOWER_CENTER);
-                        var messages = FindObjectOfType<ScreenMessages>();
-                        if (messages != null)
+                        //we need to just check one thing, that if this a xfer to the part that isn't FULL of frozen kerbals.
+                        //If it is we must take over and revert.
+                        Utilities.Log_Debug("Partfull=" + PartFull);
+                        Utilities.Log_Debug("to part is this part=" + fromToAction.to + " - " + part);
+                        if (FreezerSpace == 0 && fromToAction.to == part)
+                            // If there is no available seats for this Kerbal we kick them back out.
                         {
-                            var messagesToRemove = messages.activeMessages.Where(x => x.startTime == message.startTime && x.style == ScreenMessageStyle.LOWER_CENTER).ToList();
-                            foreach (var m in messagesToRemove)
-                                ScreenMessages.RemoveMessage(m);
+                            _crewXferTOActive = true;
+                                // Set a flag to know a Xfer has started and we check when it is finished in
+                            savecryopodstatepersistent();
+                            saveexternaldoorstatepersistent();
+                            Utilities.Log_Debug(
+                                "DeepFreezer CrewXfer PartFull transfer them back, part is full - attempt to cancel stock xfer");
+                            ScreenMessages.PostScreenMessage("Cannot enter this freezer, part is full", 5.0f,
+                                ScreenMessageStyle.UPPER_CENTER);
+                            // Remove the transfer message that stock displayed.
+                            var message = new ScreenMessage(string.Empty, 15f, ScreenMessageStyle.LOWER_CENTER);
+                            var messages = FindObjectOfType<ScreenMessages>();
+                            if (messages != null)
+                            {
+                                var messagesToRemove =
+                                    messages.activeMessages.Where(
+                                        x =>
+                                            x.startTime == message.startTime &&
+                                            x.style == ScreenMessageStyle.LOWER_CENTER).ToList();
+                                foreach (var m in messagesToRemove)
+                                    ScreenMessages.RemoveMessage(m);
+                            }
+                            xferisfromEVA = false;
+                            xferfromPart = fromToAction.from;
+                            xferfromSeat = fromToAction.host.seat;
+                            xfertoPart = fromToAction.to;
+                            xfercrew = fromToAction.host;
+                            setseatstaticoverlay(xfercrew.seat);
+                            xferbackwhenFull = true;
+                            return;
                         }
-                        xferisfromEVA = false;
-                        xferfromPart = fromToAction.from;
-                        xferfromSeat = fromToAction.host.seat;
-                        xfertoPart = fromToAction.to;
-                        xfercrew = fromToAction.host;
-                        setseatstaticoverlay(xfercrew.seat);
-                        xferbackwhenFull = true;
+
+                        Utilities.Log_Debug(
+                            "Stock Xfer is running with Ship Manifest Override, so we ignore the Stock Xfer");
                         return;
                     }
 
-                    Utilities.Log_Debug("Stock Xfer is running with Ship Manifest Override, so we ignore the Stock Xfer");
-                    return;
-                }
-
-                //This is a normal Ship Manifest Crew Xfer or an over-riden Stock Crew Xfer from SM
-                if (SMWrapper.ShipManifestAPI.CrewXferActive)
-                {
-                    Utilities.Log_Debug("SMXfer is running");
-                    FlightEVA.fetch.DisableInterface();
-                    savecryopodstatepersistent();
-                    saveexternaldoorstatepersistent();
-                    crewXferSMActive = SMWrapper.ShipManifestAPI.CrewXferActive;
-                    if (SMWrapper.ShipManifestAPI.FromPart == part)
+                    //This is a normal Ship Manifest Crew Xfer or an over-riden Stock Crew Xfer from SM
+                    if (SMWrapper.ShipManifestAPI.CrewXferActive)
                     {
-                        removeFreezeEvent(fromToAction.host.name);
-                        _crewXferFROMActive = true;  // Set a flag to know a Xfer has started and we check when it is finished in
-                        xferfromPart = SMWrapper.ShipManifestAPI.FromPart;
-                        xfertoPart = SMWrapper.ShipManifestAPI.ToPart;
-                        xfercrew = fromToAction.host;
-                        if (xfercrew.KerbalRef != null)
+                        Utilities.Log_Debug("SMXfer is running");
+                        FlightEVA.fetch.DisableInterface();
+                        savecryopodstatepersistent();
+                        saveexternaldoorstatepersistent();
+                        crewXferSMActive = SMWrapper.ShipManifestAPI.CrewXferActive;
+                        if (SMWrapper.ShipManifestAPI.FromPart == part)
                         {
-                            Utilities.reinvigerateIVAKerbalAnimations(xfercrew.KerbalRef);
+                            removeFreezeEvent(fromToAction.host.name);
+                            _crewXferFROMActive = true;
+                                // Set a flag to know a Xfer has started and we check when it is finished in
+                            xferfromPart = SMWrapper.ShipManifestAPI.FromPart;
+                            xfertoPart = SMWrapper.ShipManifestAPI.ToPart;
+                            xfercrew = fromToAction.host;
+                            if (xfercrew.KerbalRef != null)
+                            {
+                                Utilities.reinvigerateIVAKerbalAnimations(xfercrew.KerbalRef);
+                            }
+                            timecrewXferFROMfired = Time.time;
                         }
-                        timecrewXferFROMfired = Time.time;
+                        if (SMWrapper.ShipManifestAPI.ToPart == part)
+                        {
+                            _crewXferTOActive = true;
+                                // Set a flag to know a Xfer has started and we check when it is finished in
+                            xferfromPart = SMWrapper.ShipManifestAPI.FromPart;
+                            xfertoPart = SMWrapper.ShipManifestAPI.ToPart;
+                            xfercrew = fromToAction.host;
+                            xfertoSeat = SMWrapper.ShipManifestAPI.ToSeat;
+                            setseatstaticoverlay(SMWrapper.ShipManifestAPI.ToSeat);
+                            timecrewXferTOfired = Time.time;
+                        }
+                        return;
                     }
-                    if (SMWrapper.ShipManifestAPI.ToPart == part)
-                    {
-                        _crewXferTOActive = true; // Set a flag to know a Xfer has started and we check when it is finished in
-                        xferfromPart = SMWrapper.ShipManifestAPI.FromPart;
-                        xfertoPart = SMWrapper.ShipManifestAPI.ToPart;
-                        xfercrew = fromToAction.host;
-                        xfertoSeat = SMWrapper.ShipManifestAPI.ToSeat;
-                        setseatstaticoverlay(SMWrapper.ShipManifestAPI.ToSeat);
-                        timecrewXferTOfired = Time.time;
-                    }
-                    return;
+                    Utilities.Log_Debug("No SMXfer running");
                 }
-                Utilities.Log_Debug("No SMXfer running");
             }
 
             //Stock Transfers only past here, or no Stock Xfer override is active within SM. So it must be stock

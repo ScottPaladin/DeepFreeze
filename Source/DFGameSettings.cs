@@ -68,7 +68,7 @@ namespace DF
                         string id = kerbalNode.GetValue("kerbalName");
                          Utilities.Log_Debug("DFGameSettings Loading kerbal = " + id);
                         KerbalInfo kerbalInfo = KerbalInfo.Load(kerbalNode);
-                        KnownFrozenKerbals[id] = kerbalInfo;
+                        KnownFrozenKerbals.Add(id, kerbalInfo);
                     }
                 }
                  Utilities.Log_Debug("DFGameSettings finished loading FrozenKerbals");

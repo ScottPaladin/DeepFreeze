@@ -535,7 +535,7 @@ namespace DF
                         }
                     }
                     //Update the Frzr Parts internal frozenkerbals list GUID
-                    foreach (FrznCrewMbr storedCrew in frzr.DFIStoredCrewList)
+                    foreach (FrznCrewMbr storedCrew in frzr.DFIStoredCrewList) 
                     {
                         storedCrew.VesselID = vessel.id;
                     }

@@ -68,6 +68,62 @@
     <Compile Include="PartInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="DeepFreezeGUI.cs" />
+    <None Include="Distribution\DeepFreeze.zip" />
+    <None Include="Distribution\GameData\REPOSoftTech\Agencies\Agents.cfg" />
+    <None Include="Distribution\GameData\REPOSoftTech\Agencies\REPOSoftTech_scaled.truecolor" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Assets\cornerBump_NRM.dds" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Assets\cornerColor.dds" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Assets\CRY-0300Freezer.mu" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Assets\Cry-0300Internals.mu" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Assets\CRY-0300RFreezer.mu" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Assets\Cry-0300RInternals.mu" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Assets\Cry-1300Freezer.mu" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Assets\Cry-1300Internals.mu" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Assets\Cry-2300Internals.mu" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Assets\CRY0300_bump_NRM.dds" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Assets\CRY0300_color.dds" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Assets\CRY2300IVA_color.dds" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Assets\CryopodCushionColor.dds" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Assets\CryopodTexture.dds" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Assets\GlykerolRadialTank.mu" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Assets\GlykerolTank_diff.dds" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Assets\hitchhikerIVAcolor.dds" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Assets\model.mu" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Assets\model000.dds" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Assets\model001_NRM.dds" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Assets\RadialCryopodTexture.dds" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Assets\tubesBump_NRM.dds" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Assets\tubesColor.dds" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Assets\wallTextureBump_NRM.dds" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Assets\wallTextureColor.dds" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\DeepFreezeContinued.version" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\MMDeepFreezeCLS.cfg" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\MMDeepFreezeCTT.cfg" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Parts\CRY0300Freezer.cfg" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Parts\CRY0300RFreezer.cfg" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Parts\CRY0300RPMInternalsMM.cfg" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Parts\CRY0300RRPMInternalsMM.cfg" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Parts\CRY1300Freezer.cfg" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Parts\CRY2300Freezer.cfg" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Parts\CRY2300partDepricated.cfg" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Parts\GlykerolRadialTank.cfg" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Plugins\Config.cfg" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Props\DoorHandle.cfg" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Props\DoorHandle.mu" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Props\ElectricGaugeBar.cfg" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Props\flatBarGauge.mu" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Props\GykerolGaugeBar.cfg" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Props\LightSwitch.cfg" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Props\LightSwitch.mu" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Props\propBase_DIF.dds" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Props\propBase_EMI.dds" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Props\propLabels_DIF.dds" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Props\propLabels_EMI.dds" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Resources\DF-Resources.cfg" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Spaces\Cry-0300internal.cfg" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Spaces\Cry-0300Rinternal.cfg" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Spaces\Cry-1300internal.cfg" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Spaces\Cry-2300internal.cfg" />
     <None Include="RPMScreenDeepFreeze.cs" />
     <Compile Include="APIs\RTWrapper.cs" />
     <Compile Include="APIs\SMWrapper.cs" />
@@ -77,9 +133,31 @@
     <Compile Include="APIs\ToolBarManager.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Changelog.txt" />
+    <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Changelog.txt" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Distribution\GameData\REPOSoftTech\Agencies\REPOSoftTech.png" />
+    <Content Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Icons\DeepFreezeEditor.png" />
+    <Content Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Icons\DeepFreezeOff.png" />
+    <Content Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Icons\DeepFreezeOn.png" />
+    <Content Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Icons\DFtoolbar.png" />
+    <Content Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Icons\Glykerol.png" />
+    <Content Include="Distribution\GameData\REPOSoftTech\DeepFreeze\MiniAVC Licence.txt" />
+    <Content Include="Distribution\GameData\REPOSoftTech\DeepFreeze\MiniAVC.dll" />
+    <Content Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Plugins\DeepFreeze.dll" />
+    <Content Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Plugins\DeepFreeze.dll.mdb">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Plugins\DeepFreeze.pdb" />
+    <Content Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Sounds\beep.wav" />
+    <Content Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Sounds\charge_up.wav" />
+    <Content Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Sounds\ding_ding.wav" />
+    <Content Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Sounds\externaldoorswitch.wav" />
+    <Content Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Sounds\flatline.wav" />
+    <Content Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Sounds\hatch_lock.wav" />
+    <Content Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Sounds\ice_freeze.wav" />
+    <Content Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Sounds\machine_hum.wav" />
+    <Content Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Sounds\mon_beep.wav" />
     <Content Include="LocalDev\7za_dir.txt" />
     <Content Include="LocalDev\ksp_dir.txt" />
     <Content Include="LocalDev\mono_exe.txt" />
@@ -94,13 +172,13 @@ set /p MONO_EXE_DIR=&lt;"$(ProjectDir)LocalDev\mono_exe.txt"
 set /p PDB2MDB_EXE_DIR=&lt;"$(ProjectDir)LocalDev\pdb2mdb_exe.txt"
 
 set /p ZA_DIR=&lt;"$(ProjectDir)LocalDev\7za_dir.txt"
-xcopy "$(TargetPath)" "$(SolutionDir)..\Distribution\GameData\REPOSoftTech\$(ProjectName)\Plugins\" /Y
+xcopy "$(TargetPath)" "$(SolutionDir)Distribution\GameData\REPOSoftTech\$(ProjectName)\Plugins\" /Y
 
-xcopy "$(TargetDir)$(ProjectName).pdb" "$(SolutionDir)..\Distribution\GameData\REPOSoftTech\$(ProjectName)\Plugins\" /Y
+xcopy "$(TargetDir)$(ProjectName).pdb" "$(SolutionDir)Distribution\GameData\REPOSoftTech\$(ProjectName)\Plugins\" /Y
 
 cd "$(TargetDir)"
 "%25MONO_EXE_DIR%25" "%25PDB2MDB_EXE_DIR%25" "$(TargetFileName)"
-xcopy "$(TargetDir)$(ProjectName).dll.mdb" "$(SolutionDir)..\Distribution\GameData\REPOSoftTech\$(ProjectName)\Plugins\" /Y
+xcopy "$(TargetDir)$(ProjectName).dll.mdb" "$(SolutionDir)Distribution\GameData\REPOSoftTech\$(ProjectName)\Plugins\" /Y
 
 where /q %25ZA_DIR%25:7za.exe
 if %25ERRORLEVEL%25 == 1 (
@@ -108,11 +186,11 @@ if %25ERRORLEVEL%25 == 1 (
 ) else (
    echo Packaging build
   ) 
-if exist "$(SolutionDir)..\Distribution\$(ProjectName).zip" del "$(SolutionDir)..\Ditribution\$(ProjectName).zip"
+if exist "$(SolutionDir)Distribution\$(ProjectName).zip" del "$(SolutionDir)Distribution\$(ProjectName).zip"
    
-%25ZA_DIR%257za.exe a -tzip -r  "$(SolutionDir)..\Distribution\$(ProjectName).zip" "$(SolutionDir)..\Distribution\GameData"
-c:\7za\7za d -r  -x!REPOSoftTech.png -x!Glykerol.png -x!DFtoolbar.png -x!DeepFreezeOff.png -x!DeepFreezeOn.png -x!DeepFreezeEditor.png -x!alphaonly.png "$(SolutionDir)..\Distribution\$(ProjectName).zip" "*.ddsified" "*.pdb" "*.mdb" "*.png"
-xcopy /E /Y "$(SolutionDir)..\Distribution\GameData" "%25KSP_DIR%25\GameData"</PostBuildEvent>
+%25ZA_DIR%257za.exe a -tzip -r  "$(SolutionDir)Distribution\$(ProjectName).zip" "$(SolutionDir)Distribution\GameData"
+c:\7za\7za d -r  -x!REPOSoftTech.png -x!Glykerol.png -x!DFtoolbar.png -x!DeepFreezeOff.png -x!DeepFreezeOn.png -x!DeepFreezeEditor.png -x!alphaonly.png "$(SolutionDir)Distribution\$(ProjectName).zip" "*.ddsified" "*.pdb" "*.mdb" "*.png"
+xcopy /E /Y "$(SolutionDir)Distribution\GameData" "%25KSP_DIR%25\GameData"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -1,16 +1,12 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-using Debug = UnityEngine.Debug;
-
 // TODO: Change this namespace to something specific to your plugin here.
 //EG:
-// namespace MyPlugin_KACWrapper
-namespace DeepFreezeWrapper
-{    
+namespace MyPlugin_DFWrapper
+{
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // BELOW HERE SHOULD NOT BE EDITED - this links to the loaded DeepFreeze module without requiring a Hard Dependancy
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -20,11 +16,11 @@ namespace DeepFreezeWrapper
     /// </summary>
     public class DFWrapper
     {
-        protected static Type DFType;
-        protected static Type KerbalInfoType;
-        protected static Type DeepFreezerType;
-        protected static Type FrznCrewMbrType;
-        protected static Object actualDF;
+        internal static System.Type DFType;
+        internal static System.Type KerbalInfoType;
+        internal static System.Type DeepFreezerType;
+        internal static System.Type FrznCrewMbrType;
+        internal static Object actualDF = null;
 
         /// <summary>
         /// This is the DeepFreeze object
@@ -38,14 +34,14 @@ namespace DeepFreezeWrapper
         ///
         /// SET AFTER INIT
         /// </summary>
-        public static Boolean AssemblyExists { get { return DFType != null; } }
+        public static Boolean AssemblyExists { get { return (DFType != null); } }
 
         /// <summary>
         /// Whether we managed to hook the running Instance from the assembly.
         ///
         /// SET AFTER INIT
         /// </summary>
-        public static Boolean InstanceExists { get { return DeepFreezeAPI != null; } }
+        public static Boolean InstanceExists { get { return (DeepFreezeAPI != null); } }
 
         /// <summary>
         /// Whether we managed to wrap all the methods/functions from the instance.
@@ -73,6 +69,10 @@ namespace DeepFreezeWrapper
                 _DFWrapped = false;
                 actualDF = null;
                 DeepFreezeAPI = null;
+                DFType = null;
+                KerbalInfoType = null;
+                DeepFreezerType = null;
+                FrznCrewMbrType = null;
                 LogFormatted("Attempting to Grab DeepFreeze Types...");
 
                 //find the base type
@@ -171,12 +171,12 @@ namespace DeepFreezeWrapper
 
                     LogFormatted("Getting APIReady Object");
                     APIReadyField = DFType.GetField("APIReady", BindingFlags.Public | BindingFlags.Static);
-                    LogFormatted("Success: " + (APIReadyField != null));
+                    LogFormatted("Success: " + (APIReadyField != null).ToString());
 
                     LogFormatted("Getting FrozenKerbals Object");
                     FrozenKerbalsMethod = DFType.GetMethod("get_FrozenKerbals", BindingFlags.Public | BindingFlags.Instance);
                     actualFrozenKerbals = FrozenKerbalsMethod.Invoke(actualDFAPI, null);
-                    LogFormatted("Success: " + (actualFrozenKerbals != null));
+                    LogFormatted("Success: " + (actualFrozenKerbals != null).ToString());
                 }
                 catch (Exception ex)
                 {
@@ -207,7 +207,7 @@ namespace DeepFreezeWrapper
 
             #region Frozenkerbals
 
-            private Object actualFrozenKerbals;
+            private object actualFrozenKerbals;
             private MethodInfo FrozenKerbalsMethod;
 
             /// <summary>
@@ -220,13 +220,19 @@ namespace DeepFreezeWrapper
             {
                 get
                 {
-                    if (FrozenKerbalsMethod == null)
-                        return null;
-                    //Object tstfrozenkerbals = DFType.GetField("FrozenKerbals", BindingFlags.Public | BindingFlags.Static).GetValue(null);
-                    FieldInfo gamesettingsfield = DFType.GetField("DFgameSettings", BindingFlags.Instance | BindingFlags.NonPublic);
-                    Object gamesettings = gamesettingsfield.GetValue(actualDFAPI);
-                    actualFrozenKerbals = FrozenKerbalsMethod.Invoke(actualDFAPI, null);
                     Dictionary<string, KerbalInfo> returnvalue = new Dictionary<string, KerbalInfo>();
+                    if (FrozenKerbalsMethod == null)
+                    {
+                        LogFormatted("Error getting FrozenKerbals - Reflection Method is Null");
+                        return returnvalue;
+                    }
+                    //object actualDFtest = DFType.GetField("Instance", BindingFlags.Public | BindingFlags.Static).GetValue(null);
+                    //FieldInfo gamesettingsfield = DFType.GetField("DFgameSettings", BindingFlags.Instance | BindingFlags.NonPublic);
+                    //object gamesettings;
+                    //if (gamesettingsfield != null)
+                    //    gamesettings = gamesettingsfield.GetValue(actualDFAPI);
+                    actualFrozenKerbals = null;
+                    actualFrozenKerbals = FrozenKerbalsMethod.Invoke(actualDFAPI, null);
                     returnvalue = ExtractFrozenKerbalDict(actualFrozenKerbals);
                     return returnvalue;
                 }
@@ -236,7 +242,9 @@ namespace DeepFreezeWrapper
             /// This converts the actualFrozenKerbals actual object to a new dictionary for consumption
             /// </summary>
             /// <param name="actualFrozenKerbals"></param>
-            /// <returns>Dictionary <string, KerbalInfo> of Frozen Kerbals</returns>
+            /// <returns>
+            /// Dictionary <string, KerbalInfo> of Frozen Kerbals
+            /// </returns>
             private Dictionary<string, KerbalInfo> ExtractFrozenKerbalDict(Object actualFrozenKerbals)
             {
                 Dictionary<string, KerbalInfo> DictToReturn = new Dictionary<string, KerbalInfo>();
@@ -247,7 +255,7 @@ namespace DeepFreezeWrapper
                         var typeitem = item.GetType();
                         PropertyInfo[] itemprops = typeitem.GetProperties(BindingFlags.Instance | BindingFlags.Public);
                         string itemkey = (string)itemprops[0].GetValue(item, null);
-                        object itemvalue = itemprops[1].GetValue(item, null);
+                        object itemvalue = (object)itemprops[1].GetValue(item, null);
                         KerbalInfo itemkerbalinfo = new KerbalInfo(itemvalue);
                         DictToReturn[itemkey] = itemkerbalinfo;
                     }
@@ -293,21 +301,17 @@ namespace DeepFreezeWrapper
                 FreezerOutofEC = getFreezerOutofEC;
                 FrzrTmpMethod = DeepFreezerType.GetMethod("get_DFIFrzrTmp", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
                 FrzrTmp = getFrzrTmp;
-                FrznChargeRequiredMethod = DeepFreezerType.GetMethod("get_DFIFrznChargeRequired", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
-                FrznChargeRequired = getFrznChargeRequired;
-                FrznChargeUsageMethod = DeepFreezerType.GetMethod("get_DFIFrznChargeUsage", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
-                FrznChargeUsage = getFrznChargeUsage;
                 StoredCrewListMethod = DeepFreezerType.GetMethod("get_DFIStoredCrewList", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
                 actualStoredCrewList = StoredCrewListMethod.Invoke(actualDeepFreezer, null);
 
                 //Methods
-                LogFormatted("Getting beginFreezeKerbalMethod Method");
+                //LogFormatted("Getting beginFreezeKerbalMethod Method");
                 beginFreezeKerbalMethod = DeepFreezerType.GetMethod("beginFreezeKerbal", BindingFlags.Public | BindingFlags.Instance);
-                LogFormatted_DebugOnly("Success: " + (beginFreezeKerbalMethod != null));
+                //LogFormatted_DebugOnly("Success: " + (beginFreezeKerbalMethod != null).ToString());
 
-                LogFormatted("Getting beginThawKerbalMethod Method");
+                //LogFormatted("Getting beginThawKerbalMethod Method");
                 beginThawKerbalMethod = DeepFreezerType.GetMethod("beginThawKerbal", BindingFlags.Public | BindingFlags.Instance);
-                LogFormatted_DebugOnly("Success: " + (beginThawKerbalMethod != null));
+                //LogFormatted_DebugOnly("Success: " + (beginThawKerbalMethod != null).ToString());
             }
 
             private Object actualDeepFreezer;
@@ -434,30 +438,6 @@ namespace DeepFreezeWrapper
                 get { return (FrzrTmpStatus)FrzrTmpMethod.Invoke(actualDeepFreezer, null); }
             }
 
-            /// <summary>
-            /// Total EC value required to maintain a frozen kerbal per minute
-            /// </summary>
-            public Int32 FrznChargeRequired;
-
-            private MethodInfo FrznChargeRequiredMethod;
-
-            private Int32 getFrznChargeRequired
-            {
-                get { return (Int32)FrznChargeRequiredMethod.Invoke(actualDeepFreezer, null); }
-            }
-
-            /// <summary>
-            /// The current freezer temperature status of this DeepFreezer
-            /// </summary>
-            public float FrznChargeUsage;
-
-            private MethodInfo FrznChargeUsageMethod;
-
-            private float getFrznChargeUsage
-            {
-                get { return (float)FrznChargeUsageMethod.Invoke(actualDeepFreezer, null); }
-            }
-
             private Object actualStoredCrewList;
             private MethodInfo StoredCrewListMethod;
 
@@ -511,7 +491,7 @@ namespace DeepFreezeWrapper
             {
                 try
                 {
-                    beginFreezeKerbalMethod.Invoke(actualDeepFreezer, new Object[] { CrewMember });
+                    beginFreezeKerbalMethod.Invoke(actualDeepFreezer, new System.Object[] { CrewMember });
                     return true;
                 }
                 catch (Exception ex)
@@ -532,7 +512,7 @@ namespace DeepFreezeWrapper
             {
                 try
                 {
-                    beginThawKerbalMethod.Invoke(actualDeepFreezer, new Object[] { frozenkerbal });
+                    beginThawKerbalMethod.Invoke(actualDeepFreezer, new System.Object[] { frozenkerbal });
                     return true;
                 }
                 catch (Exception ex)
@@ -549,7 +529,7 @@ namespace DeepFreezeWrapper
         {
             OK = 0,
             WARN = 1,
-            RED = 2
+            RED = 2,
         }
 
         /// <summary>
@@ -747,7 +727,7 @@ namespace DeepFreezeWrapper
         /// </summary>
         /// <param name="Message">Text to be printed - can be formatted as per String.format</param>
         /// <param name="strParams">Objects to feed into a String.format</param>
-        [Conditional("DEBUG")]
+        [System.Diagnostics.Conditional("DEBUG")]
         internal static void LogFormatted_DebugOnly(String Message, params Object[] strParams)
         {
             LogFormatted(Message, strParams);
@@ -762,9 +742,9 @@ namespace DeepFreezeWrapper
         {
             Message = String.Format(Message, strParams);
             String strMessageLine = String.Format("{0},{2}-{3},{1}",
-                DateTime.Now, Message, Assembly.GetExecutingAssembly().GetName().Name,
-                MethodBase.GetCurrentMethod().DeclaringType.Name);
-            Debug.Log(strMessageLine);
+                DateTime.Now, Message, System.Reflection.Assembly.GetExecutingAssembly().GetName().Name,
+                System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name);
+            UnityEngine.Debug.Log(strMessageLine);
         }
 
         #endregion Logging Stuff
