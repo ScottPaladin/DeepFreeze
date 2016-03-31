@@ -116,7 +116,12 @@ namespace DF
             }
             Utilities.debuggingOn = DFsettings.debugging;
             APIReady = true;
-            Debug.Log("Scenario: " + HighLogic.LoadedScene + " OnLoad: \n " + gameNode + "\n" + globalNode);
+            if (Utilities.debuggingOn)
+                Debug.Log("Scenario: " + HighLogic.LoadedScene + " OnLoad: \n " + gameNode + "\n" + globalNode);
+            else
+            {
+                Debug.Log("DeepFreeze Scenario Onload Completed.");
+            }
         }
 
         public override void OnSave(ConfigNode gameNode)
@@ -130,7 +135,12 @@ namespace DF
             }
             DFsettings.Save(globalNode);
             globalNode.Save(globalConfigFilename);
-            Debug.Log("Scenario: " + HighLogic.LoadedScene + " OnSave: \n" + gameNode + "\n" + globalNode);
+            if (Utilities.debuggingOn)
+                Debug.Log("Scenario: " + HighLogic.LoadedScene + " OnSave: \n" + gameNode + "\n" + globalNode);
+            else
+            {
+                Debug.Log("DeepFreeze Scenario OnSave completed.");
+            }
         }
 
         protected void OnGameSceneLoadRequested(GameScenes gameScene)
@@ -173,7 +183,7 @@ namespace DF
             Utilities.Log("DeepFreezeEvents DeepFreezeEventRem ended");
         }
 
-        protected void onVesselRecovered(ProtoVessel vessel)
+        protected void onVesselRecovered(ProtoVessel vessel, bool notSureWhatFor)
         {
             Utilities.Log("DeepFreezeEvents onVesselRecovered " + vessel.vesselID);
             List<string> frznKerbalkeys = new List<string>(DFgameSettings.KnownFrozenKerbals.Keys);

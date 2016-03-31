@@ -22,6 +22,7 @@ using System.Text.RegularExpressions;
 using RSTUtils;
 using UnityEngine;
 using Random = System.Random;
+using KSP.UI.Screens;
 
 namespace DF
 {
@@ -144,14 +145,14 @@ namespace DF
             set
             {
                 _Visible = value;      //Set the private variable
-                if (_Visible)
-                {
-                    RenderingManager.AddToPostDrawQueue(3, onDraw);
-                }
-                else
-                {
-                    RenderingManager.RemoveFromPostDrawQueue(3, onDraw);
-                }
+                //if (_Visible)
+                //{
+                //    RenderingManager.AddToPostDrawQueue(3, onDraw);
+               // }
+                //else
+               // {
+                //    RenderingManager.RemoveFromPostDrawQueue(3, onDraw);
+               // }
             }
         }
 
@@ -300,6 +301,15 @@ namespace DF
         }
 
         #region GUI
+        private void OnGUI()
+        {
+            if (Event.current.type == EventType.Repaint || Event.current.isMouse)
+            {
+                //myPreDrawQueue(); // Your current on preDrawQueue code
+            }
+            if (GuiVisible)
+                onDraw(); // Your current on postDrawQueue code
+        }
 
         private void onDraw()
         {

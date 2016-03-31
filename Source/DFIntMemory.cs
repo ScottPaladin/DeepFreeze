@@ -18,6 +18,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using KSP.UI.Screens;
 using PreFlightTests;
 using RSTUtils;
 using UnityEngine;
@@ -108,21 +109,24 @@ namespace DF
             ChkActiveFrozenKerbals();
             DeepFreeze.Instance.DFgameSettings.DmpKnownFznKerbals();
             resetFreezerCams();
-            if (DFInstalledMods.IsTexReplacerInstalled)
+            if (Utilities.GameModeisFlight)
             {
-                TRWrapper.InitTRWrapper();
-            }
-            if (DFInstalledMods.IsUSILSInstalled)
-            {
-                USIWrapper.InitUSIWrapper();
+                if (DFInstalledMods.IsTexReplacerInstalled)
+                {
+                    TRWrapper.InitTRWrapper();
+                }
+                if (DFInstalledMods.IsUSILSInstalled)
+                {
+                    USIWrapper.InitUSIWrapper();
+                }
+                if (DFInstalledMods.IsSMInstalled)
+                {
+                    SMWrapper.InitSMWrapper();
+                }
             }
             if (DFInstalledMods.IsRTInstalled)
             {
                 RTWrapper.InitTRWrapper();
-            }
-            if (DFInstalledMods.IsSMInstalled)
-            {
-                SMWrapper.InitSMWrapper();
             }
         }
 
@@ -161,14 +165,14 @@ namespace DF
             if (HighLogic.LoadedSceneIsFlight && ActVslHasDpFrezr)
             {
                 //Check if Refresh Portraits Cam is required after two vessels are docked
-                if (refreshPortraits)
-                {
-                    if (Planetarium.GetUniversalTime() - refreshPortraitsTimer > 3)
-                    {
-                        Utilities.CheckPortraitCams(FlightGlobals.ActiveVessel);
-                        refreshPortraits = false;
-                    }
-                }
+                //if (refreshPortraits)
+                //{
+                //    if (Planetarium.GetUniversalTime() - refreshPortraitsTimer > 3)
+                //    {
+                //        Utilities.CheckPortraitCams(FlightGlobals.ActiveVessel);
+                //        refreshPortraits = false;
+                //    }
+                //}
 
                 //If user hits Modifier Key - D switch to freezer cams.
                 if (GameSettings.MODIFIER_KEY.GetKey() && Input.GetKeyDown(keyFrzrCam) && ActFrzrCams.Count > 0)
@@ -293,9 +297,9 @@ namespace DF
                         CameraManager.Instance.SetCameraFlight();
                     }
                 }
-                ScreenMessages.RemoveMessage(IVAKerbalName);
-                ScreenMessages.RemoveMessage(IVAkerbalPart);
-                ScreenMessages.RemoveMessage(IVAkerbalPod);
+                if (IVAKerbalName != null) ScreenMessages.RemoveMessage(IVAKerbalName);
+                if (IVAkerbalPart != null) ScreenMessages.RemoveMessage(IVAkerbalPart);
+                if (IVAkerbalPod != null)  ScreenMessages.RemoveMessage(IVAkerbalPod);
                 if (Utilities.IsInInternal() && ActFrzrCams.Count > 0)
                 {
                     // Set Bottom right messages for FreezerCam mode

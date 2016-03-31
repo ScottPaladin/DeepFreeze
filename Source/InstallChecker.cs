@@ -44,10 +44,11 @@ namespace DF
                     var badPaths = loadedAssemblies.Select(a => a.path).Select(p => Uri.UnescapeDataString(new Uri(Path.GetFullPath(KSPUtil.ApplicationRootPath)).MakeRelativeUri(new Uri(p)).ToString().Replace('/', Path.DirectorySeparatorChar)));
                     string badPathsString = String.Join("\n", badPaths.ToArray());
                     Utilities.Log(modName + " - Incorrectly installed, bad paths:\n" + badPathsString);
-                    PopupDialog.SpawnPopupDialog("Incorrect " + modName + " Installation",
+                    PopupDialog.SpawnPopupDialog(new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), "Incorrect " + modName + " Installation",
                         modName + " has been installed incorrectly and will not function properly. All files should be located in KSP/GameData/" + expectedPath +
                         ". Do not move any files from inside that folder.\n\nPlease Remove all old installations and invalid files, as follows.\n\nIncorrect path(s):\n" + badPathsString,
-                        "OK", false, HighLogic.Skin);
+                        "OK", false, HighLogic.UISkin);
+                    
                 }
 
                 // Check for Raster Prop Monitor, If installed must also have Module Manager Installed
@@ -56,9 +57,9 @@ namespace DF
                     if (!AssemblyLoader.loadedAssemblies.Any(a => a.assembly.GetName().Name.StartsWith("ModuleManager") && a.url == ""))
                     {
                         Utilities.Log(modName + " - Missing or incorrectly installed RPM & ModuleManager.");
-                        PopupDialog.SpawnPopupDialog("Missing Module Manager",
+                        PopupDialog.SpawnPopupDialog(new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), "Missing Module Manager",
                             modName + " requires the Module Manager mod in order to function properly with Raster Prop Monitor mod Installed.\n\nPlease download from http://forum.kerbalspaceprogram.com/threads/55219 and copy to the KSP/GameData/ directory.",
-                            "OK", false, HighLogic.Skin);
+                            "OK", false, HighLogic.UISkin);
                     }
                 }
 
@@ -89,13 +90,13 @@ namespace DF
             catch (Exception ex)
             {
                 Utilities.Log("DeepFreeze - Caught an exception:\n" + ex.Message + "\n" + ex.StackTrace);
-                PopupDialog.SpawnPopupDialog("Incorrect " + modName + " Installation",
+                PopupDialog.SpawnPopupDialog(new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), "Incorrect " + modName + " Installation",
                     "A very serious error has occurred while checking the installation of " + modName + ".\n\n" +
                     "You need to\n" +
                     "  (1) shut down KSP,\n" +
                     "  (2) send a complete copy of the entire log file to the mod developer\n" +
                     "  (3) completely delete and re-install " + modName,
-                    "OK", false, HighLogic.Skin);
+                    "OK", false, HighLogic.UISkin);
             }
         }
 

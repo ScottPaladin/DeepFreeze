@@ -19,6 +19,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using KSP.UI.Screens.Flight;
 using RSTUtils;
 using UnityEngine;
 using Object = System.Object;
@@ -497,14 +498,15 @@ namespace DF
             if (FlightGlobals.ready && vessel.loaded && partHasInternals && part.internalModel == null)
             {
                 Utilities.Log("Part " + part.name + "(" + part.flightID + ") is loaded and internalModel has disappeared, so re-instansiate it");
-                part.SpawnCrew();
+                part.vessel.SpawnCrew();
+                //part.SpawnCrew();
                 resetFrozenKerbals();
                 resetCryopods(true);
                 // If part does not have JSITransparentPod module we check the portrait cams. Otherwise JSITransparenPod will do it for us.
-                if (!hasJSITransparentPod)
-                {
-                    Utilities.CheckPortraitCams(vessel);
-                }
+                //if (!hasJSITransparentPod)
+                //{
+                //    Utilities.CheckPortraitCams(vessel);
+                //}
             }
 
             if (Time.time - lastUpdate > updatetnterval && Time.time - lastRemove > updatetnterval) // We only update every updattnterval time interval.
@@ -587,9 +589,9 @@ namespace DF
                     }
 
                     //Refresh IVA mode Messages and Bools
-                    ScreenMessages.RemoveMessage(IVAKerbalName);
-                    ScreenMessages.RemoveMessage(IVAkerbalPart);
-                    ScreenMessages.RemoveMessage(IVAkerbalPod);
+                    if (IVAKerbalName != null) ScreenMessages.RemoveMessage(IVAKerbalName);
+                    if (IVAkerbalPart != null) ScreenMessages.RemoveMessage(IVAkerbalPart);
+                    if (IVAkerbalPod != null) ScreenMessages.RemoveMessage(IVAkerbalPod);
                     if (Utilities.VesselIsInIVA(part.vessel))
                     {
                         // Utilities.Log_Debug("Vessel is in IVA mode");
@@ -621,9 +623,9 @@ namespace DF
                     }
                     else
                     {
-                        ScreenMessages.RemoveMessage(IVAKerbalName);
-                        ScreenMessages.RemoveMessage(IVAkerbalPart);
-                        ScreenMessages.RemoveMessage(IVAkerbalPod);
+                        if (IVAKerbalName != null) ScreenMessages.RemoveMessage(IVAKerbalName);
+                        if (IVAkerbalPart != null) ScreenMessages.RemoveMessage(IVAkerbalPart);
+                        if (IVAkerbalPod != null) ScreenMessages.RemoveMessage(IVAkerbalPod);
                         vesselisinIVA = false;
                         // Utilities.Log_Debug("Vessel is NOT in IVA mode");
                         if (Utilities.IsInInternal())
@@ -1055,7 +1057,7 @@ namespace DF
                     Utilities.Log_Debug("DeepFreezer Running the freezer parms currenttime = {0} timeperiod = {1} ecreqd = {2}" , currenttime.ToString(), timeperiod.ToString(), ECreqd.ToString());
                     if (requireResource(vessel, EC, ECreqd, false, out ResAvail))
                     {
-                        ScreenMessages.RemoveMessage(OnGoingECMsg);
+                        if (OnGoingECMsg != null) ScreenMessages.RemoveMessage(OnGoingECMsg);
                         //Have resource
                         requireResource(vessel, EC, ECreqd, true, out ResAvail);
                         FrznChargeUsage = (float)ResAvail;
@@ -1085,7 +1087,7 @@ namespace DF
                             partInfo.ECWarning = true;
                             deathCounter = currenttime;
                         }
-                        ScreenMessages.RemoveMessage(OnGoingECMsg);
+                        if (OnGoingECMsg != null) ScreenMessages.RemoveMessage(OnGoingECMsg);
                         OnGoingECMsg = ScreenMessages.PostScreenMessage(" Freezer Out of EC : Systems critical in " + (deathRoll - (currenttime - deathCounter)).ToString("######0") + " secs");
                         _FreezerOutofEC = true;
                         FrznChargeUsage = 0f;
@@ -1153,7 +1155,7 @@ namespace DF
                     if (part.temperature < DeepFreeze.Instance.DFsettings.RegTempMonitor)
                     {
                         Utilities.Log_Debug("DeepFreezer Temperature check is good parttemp=" + part.temperature + ",MaxTemp=" + DeepFreeze.Instance.DFsettings.RegTempMonitor);
-                        ScreenMessages.RemoveMessage(TempChkMsg);
+                        if (TempChkMsg != null) ScreenMessages.RemoveMessage(TempChkMsg);
                         _FrzrTmp = FrzrTmpStatus.OK;
                         tmpdeathCounter = currenttime;
                         // do warning if within 40 and 20 kelvin
@@ -1186,7 +1188,7 @@ namespace DF
                         }
                         _FrzrTmp = FrzrTmpStatus.RED;
                         Utilities.Log_Debug("DeepFreezer tmpdeathCounter = {0}" , tmpdeathCounter.ToString());
-                        ScreenMessages.RemoveMessage(TempChkMsg);
+                        if (TempChkMsg != null) ScreenMessages.RemoveMessage(TempChkMsg);
                         TempChkMsg = ScreenMessages.PostScreenMessage(" Freezer Over Temp : Systems critical in " + (tmpdeathRoll - (currenttime - tmpdeathCounter)).ToString("######0") + " secs");
                         if (currenttime - tmpdeathCounter > tmpdeathRoll)
                         {
@@ -1257,7 +1259,7 @@ namespace DF
             HashSet<Shader> shaders = new HashSet<Shader>();
             Resources.FindObjectsOfTypeAll<Shader>().ToList().ForEach(sh => shaders.Add(sh));
             List<Shader> listshaders = new List<Shader>(shaders);
-            TransparentSpecularShader = listshaders.Find(a => a.name == "Transparent/Specular");
+            TransparentSpecularShader = listshaders.Find(a => a.name == "Legacy Shaders/Transparent/Specular");
             KSPSpecularShader = listshaders.Find(b => b.name == "KSP/Specular");
 
             // Setup the sounds
@@ -1266,43 +1268,49 @@ namespace DF
                 mon_beep = gameObject.AddComponent<AudioSource>();
                 mon_beep.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/mon_beep");
                 mon_beep.volume = .2F;
-                mon_beep.panLevel = 0;
+                mon_beep.panStereo = 0;
+                mon_beep.spatialBlend = 0;
                 mon_beep.rolloffMode = AudioRolloffMode.Logarithmic;
-                mon_beep.audio.maxDistance = 10f;
-                mon_beep.audio.minDistance = 8f;
-                mon_beep.audio.dopplerLevel = 0f;
-                mon_beep.audio.panLevel = 0f;
-                mon_beep.audio.playOnAwake = false;
-                mon_beep.audio.priority = 255;
+                mon_beep.maxDistance = 10f;
+                mon_beep.minDistance = 8f;
+                mon_beep.dopplerLevel = 0f;
+                //mon_beep.panLevel = 0f;
+                mon_beep.playOnAwake = false;
+                mon_beep.priority = 255;
                 mon_beep.Stop();
                 flatline = gameObject.AddComponent<AudioSource>();
                 flatline.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/flatline");
                 flatline.volume = 1;
-                flatline.panLevel = 0;
+                flatline.panStereo = 0;
+                mon_beep.spatialBlend = 0;
                 flatline.rolloffMode = AudioRolloffMode.Linear;
                 flatline.Stop();
                 hatch_lock = gameObject.AddComponent<AudioSource>();
                 hatch_lock.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/hatch_lock");
                 hatch_lock.volume = .5F;
-                hatch_lock.panLevel = 0;
+                hatch_lock.panStereo = 0;
+                mon_beep.spatialBlend = 0;
                 hatch_lock.rolloffMode = AudioRolloffMode.Linear;
                 hatch_lock.Stop();
                 ice_freeze = gameObject.AddComponent<AudioSource>();
                 ice_freeze.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/ice_freeze");
                 ice_freeze.volume = 1;
-                ice_freeze.panLevel = 0;
+                ice_freeze.panStereo = 0;
+                mon_beep.spatialBlend = 0;
                 ice_freeze.rolloffMode = AudioRolloffMode.Linear;
                 ice_freeze.Stop();
                 machine_hum = gameObject.AddComponent<AudioSource>();
                 machine_hum.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/machine_hum");
                 machine_hum.volume = .2F;
-                machine_hum.panLevel = 0;
+                machine_hum.panStereo = 0;
+                mon_beep.spatialBlend = 0;
                 machine_hum.rolloffMode = AudioRolloffMode.Linear;
                 machine_hum.Stop();
                 ding_ding = gameObject.AddComponent<AudioSource>();
                 ding_ding.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/ding_ding");
                 ding_ding.volume = .4F;
-                ding_ding.panLevel = 0;
+                ding_ding.panStereo = 0;
+                mon_beep.spatialBlend = 0;
                 ding_ding.rolloffMode = AudioRolloffMode.Linear;
                 ding_ding.Stop();
                 List<UrlDir.UrlFile> databaseAudioFiles = new List<UrlDir.UrlFile>();
@@ -1310,13 +1318,15 @@ namespace DF
                 ext_door = gameObject.AddComponent<AudioSource>();
                 ext_door.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/externaldoorswitch");
                 ext_door.volume = .7F;
-                ext_door.panLevel = 0;
+                ext_door.panStereo = 0;
+                mon_beep.spatialBlend = 0;
                 ext_door.rolloffMode = AudioRolloffMode.Linear;
                 ext_door.Stop();
                 charge_up = gameObject.AddComponent<AudioSource>();
                 charge_up.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/charge_up");
                 charge_up.volume = 1;
-                charge_up.panLevel = 0;
+                charge_up.panStereo = 0;
+                mon_beep.spatialBlend = 0;
                 charge_up.rolloffMode = AudioRolloffMode.Linear;
                 charge_up.Stop();
             }
@@ -1586,7 +1596,7 @@ namespace DF
                     {
                         requireResource(vessel, EC, ChargeRate, true, out ResAvail);
                         StoredCharge = StoredCharge + ChargeRate;
-                        ScreenMessages.RemoveMessage(FreezeMsg);
+                        if (FreezeMsg != null) ScreenMessages.RemoveMessage(FreezeMsg);
                         FreezeMsg = ScreenMessages.PostScreenMessage(" Cryopod - Charging: " + StoredCharge.ToString("######0"));
                         if (DeepFreeze.Instance.DFsettings.RegTempReqd)
                         {
@@ -1595,7 +1605,7 @@ namespace DF
                         Utilities.Log_Debug("DeepFreezer Drawing Charge StoredCharge =" + StoredCharge.ToString("0000.00") + " ChargeRequired =" + ChargeRequired);
                         if (StoredCharge >= ChargeRequired)
                         {
-                            ScreenMessages.RemoveMessage(FreezeMsg);
+                            if (FreezeMsg != null) ScreenMessages.RemoveMessage(FreezeMsg);
                             if (requireResource(vessel, Glykerol, GlykerolRequired, true, out ResAvail))
                             {
                                 charge_up.Stop(); // stop the sound effects
@@ -1876,13 +1886,14 @@ namespace DF
                 UpdateCounts();  // Update the Crew counts
                 onvslchgInternal = true;
                 GameEvents.onVesselChange.Fire(vessel);
-                ScreenMessages.RemoveMessage(FreezeMsg);
+                if (FreezeMsg != null) ScreenMessages.RemoveMessage(FreezeMsg);
                 //Add them from the GUIManager Portrait cams.
-                if (!KerbalGUIManager.ActiveCrew.Contains(CrewMember.KerbalRef))
-                {
-                    KerbalGUIManager.AddActiveCrew(CrewMember.KerbalRef);
-                    KerbalGUIManager.PrintActiveCrew();
-                }
+                KerbalPortraitGallery.Instance.RegisterActiveCrew(CrewMember.KerbalRef);
+                //if (!KerbalGUIManager.ActiveCrew.Contains(CrewMember.KerbalRef)) 
+                //{
+                //    KerbalGUIManager.AddActiveCrew(CrewMember.KerbalRef);
+                //    KerbalGUIManager.PrintActiveCrew();
+                //}
             }
             catch (Exception ex)
             {
@@ -2032,7 +2043,7 @@ namespace DF
                     {
                         requireResource(vessel, EC, ChargeRate, true, out ResAvail);
                         StoredCharge = StoredCharge + ChargeRate;
-                        ScreenMessages.RemoveMessage(ThawMsg);
+                        if (ThawMsg != null) ScreenMessages.RemoveMessage(ThawMsg);
                         ThawMsg = ScreenMessages.PostScreenMessage(" Cryopod - Charging: " + StoredCharge.ToString("######0"));
 
                         if (DeepFreeze.Instance.DFsettings.RegTempReqd)
@@ -2042,7 +2053,7 @@ namespace DF
                         if (StoredCharge >= ChargeRequired)
                         {
                             Utilities.Log_Debug("Stored charge requirement met. Have EC");
-                            ScreenMessages.RemoveMessage(ThawMsg);
+                            if (ThawMsg != null) ScreenMessages.RemoveMessage(ThawMsg);
                             charge_up.Stop();
                             ThawStepInProgress = 2;
                         }
@@ -2268,9 +2279,11 @@ namespace DF
                                     }
 
                                     codestep = 3;
-                                    KerbalGUIManager.AddActiveCrew(kerbal.KerbalRef); //Add them to the portrait cams.
-                                     Utilities.Log_Debug("Just thawing crew and added to GUIManager");
-                                    KerbalGUIManager.PrintActiveCrew();
+                                    //KerbalGUIManager.AddActiveCrew(kerbal.KerbalRef); //Add them to the portrait cams.
+                                    KerbalPortraitGallery.Instance.RegisterActiveCrew(kerbal.KerbalRef);
+
+                                    Utilities.Log_Debug("Just thawing crew and added to GUIManager");
+                                    //KerbalGUIManager.PrintActiveCrew();
                                     //Utilities.setFrznKerbalLayer(kerbal, false, true);
                                      Utilities.Log_Debug("Expected condition met, kerbal already in their seat.");
                                     // If in IVA mode set the camera to watch the process.
@@ -2351,9 +2364,10 @@ namespace DF
                                 }
 
                                 codestep = 3;
-                                KerbalGUIManager.AddActiveCrew(kerbal.KerbalRef); //Add them to the portrait cams.
-                                 Utilities.Log_Debug("Just thawing crew and added to GUIManager");
-                                KerbalGUIManager.PrintActiveCrew();
+                                //KerbalGUIManager.AddActiveCrew(kerbal.KerbalRef); //Add them to the portrait cams.
+                                KerbalPortraitGallery.Instance.RegisterActiveCrew(kerbal.KerbalRef);//Add them to the portrait cams.
+                                Utilities.Log_Debug("Just thawing crew and added to GUIManager");
+                                //KerbalGUIManager.PrintActiveCrew();
                                 codestep = 4;
                                 if (vesselisinIVA || vesselisinInternal)
                                     setIVAFrzrCam(tmpcrew.SeatIdx);
@@ -2479,7 +2493,7 @@ namespace DF
             }
             //Make them invisible again
             Utilities.setFrznKerbalLayer(kerbal, false, false);
-            ScreenMessages.RemoveMessage(ThawMsg);
+            if (ThawMsg != null) ScreenMessages.RemoveMessage(ThawMsg);
              Utilities.Log_Debug("ThawkerbalAbort End");
         }
 
@@ -2640,11 +2654,12 @@ namespace DF
                 {
                     kerbal.KerbalRef.InPart = null;
                     //Remove them from the GUIManager Portrait cams.
-                    if (KerbalGUIManager.ActiveCrew.Contains(kerbal.KerbalRef))
-                    {
-                        KerbalGUIManager.RemoveActiveCrew(kerbal.KerbalRef);
-                        KerbalGUIManager.PrintActiveCrew();
-                    }
+                    //if (KerbalGUIManager.ActiveCrew.Contains(kerbal.KerbalRef))
+                    //{
+                    //    KerbalGUIManager.RemoveActiveCrew(kerbal.KerbalRef);
+                    //     KerbalGUIManager.PrintActiveCrew();
+                    //}
+                    KerbalPortraitGallery.Instance.UnregisterActiveCrew(kerbal.KerbalRef);
                 }
                 return true;
             }
@@ -2737,11 +2752,12 @@ namespace DF
                         kerbal.KerbalRef.InPart = part;
                     }
                     //Add themto the GUIManager Portrait cams.
-                    if (!KerbalGUIManager.ActiveCrew.Contains(kerbal.KerbalRef))
-                    {
-                        KerbalGUIManager.AddActiveCrew(kerbal.KerbalRef);
-                        KerbalGUIManager.PrintActiveCrew();
-                    }
+                    //if (!KerbalGUIManager.ActiveCrew.Contains(kerbal.KerbalRef))
+                    //{
+                    //    KerbalGUIManager.AddActiveCrew(kerbal.KerbalRef);
+                    //    KerbalGUIManager.PrintActiveCrew();
+                   // }
+                    KerbalPortraitGallery.Instance.RegisterActiveCrew(kerbal.KerbalRef);
                 }
                  Utilities.Log_Debug("End AddKerbal");
                 return true;
@@ -2850,8 +2866,9 @@ namespace DF
                             ScreenMessages.PostScreenMessage("Cannot enter this freezer, part is full", 5.0f,
                                 ScreenMessageStyle.UPPER_CENTER);
                             // Remove the transfer message that stock displayed.
-                            var message = new ScreenMessage(string.Empty, 15f, ScreenMessageStyle.LOWER_CENTER);
+                            /*var message = new ScreenMessage(string.Empty, 15f, ScreenMessageStyle.LOWER_CENTER);
                             var messages = FindObjectOfType<ScreenMessages>();
+                            
                             if (messages != null)
                             {
                                 var messagesToRemove =
@@ -2861,7 +2878,7 @@ namespace DF
                                             x.style == ScreenMessageStyle.LOWER_CENTER).ToList();
                                 foreach (var m in messagesToRemove)
                                     ScreenMessages.RemoveMessage(m);
-                            }
+                            }*/
                             xferisfromEVA = false;
                             xferfromPart = fromToAction.from;
                             xferfromSeat = fromToAction.host.seat;
@@ -2881,7 +2898,8 @@ namespace DF
                     if (SMWrapper.ShipManifestAPI.CrewXferActive)
                     {
                         Utilities.Log_Debug("SMXfer is running");
-                        FlightEVA.fetch.DisableInterface();
+                        //FlightEVA.fetch.DisableInterface();
+                        CrewHatchController.fetch.DisableInterface();
                         savecryopodstatepersistent();
                         saveexternaldoorstatepersistent();
                         crewXferSMActive = SMWrapper.ShipManifestAPI.CrewXferActive;
@@ -2922,7 +2940,8 @@ namespace DF
             if (fromToAction.from == part)  // if the Xfer is FROM this part
             {
                 Utilities.Log_Debug("DeepFreezer crewXferFROMActive");
-                FlightEVA.fetch.DisableInterface();
+                //FlightEVA.fetch.DisableInterface();
+                CrewHatchController.fetch.DisableInterface();
                 removeFreezeEvent(fromToAction.host.name);  // Remove the Freeze Event for the crewMember leaving the part
                 if (fromToAction.to.Modules.Cast<PartModule>().Any(x => x is KerbalEVA)) // Kerbal is going EVA
                 {
@@ -2943,7 +2962,8 @@ namespace DF
             if (fromToAction.to == part)  // if the Xfer is TO this part
             {
                 Utilities.Log_Debug("DeepFreezer crewXferTOActive");
-                FlightEVA.fetch.DisableInterface();
+                //FlightEVA.fetch.DisableInterface();
+                CrewHatchController.fetch.DisableInterface();
                 _crewXferTOActive = true; // Set a flag to know a Xfer has started and we check when it is finished in
 
                 if (fromToAction.from.Modules.Cast<PartModule>().Any(x => x is KerbalEVA)) // Kerbal is entering from EVA
@@ -2975,14 +2995,14 @@ namespace DF
                     Utilities.Log_Debug("DeepFreezer CrewXfer PartFull transfer them back, part is full - attempt to cancel stock xfer");
                     ScreenMessages.PostScreenMessage("Cannot enter this freezer, part is full", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                     // Remove the transfer message that stock displayed.
-                    var message = new ScreenMessage(string.Empty, 15f, ScreenMessageStyle.LOWER_CENTER);
+                    /*var message = new ScreenMessage(string.Empty, 15f, ScreenMessageStyle.LOWER_CENTER);
                     var messages = FindObjectOfType<ScreenMessages>();
                     if (messages != null)
                     {
                         var messagesToRemove = messages.activeMessages.Where(x => x.startTime == message.startTime && x.style == ScreenMessageStyle.LOWER_CENTER).ToList();
                         foreach (var m in messagesToRemove)
                             ScreenMessages.RemoveMessage(m);
-                    }
+                    }*/
                     xferbackwhenFull = true;
                 }
                 timecrewXferTOfired = Time.time;
@@ -2997,7 +3017,8 @@ namespace DF
             {
                 Debug.Log("Crew XferTO Active, but freezer is full, revert Xfer");
                 xferBackifPartisFull();
-                FlightEVA.fetch.EnableInterface();
+                //FlightEVA.fetch.EnableInterface();
+                CrewHatchController.fetch.EnableInterface();
                 return;
             }
 
@@ -3015,7 +3036,8 @@ namespace DF
                 _crewXferFROMActive = false;
                 crewXferSMActive = false;
                 crewXferSMStock = false;
-                FlightEVA.fetch.EnableInterface();
+                //FlightEVA.fetch.EnableInterface();
+                CrewHatchController.fetch.EnableInterface();
                 return;
             }
 
@@ -3031,7 +3053,8 @@ namespace DF
                 _crewXferTOActive = false;
                 crewXferSMActive = false;
                 crewXferSMStock = false;
-                FlightEVA.fetch.EnableInterface();
+                //FlightEVA.fetch.EnableInterface();
+                CrewHatchController.fetch.EnableInterface();
                 return;
             }
 
@@ -3054,7 +3077,8 @@ namespace DF
                     _crewXferFROMActive = false;
                     crewXferSMActive = false;
                     crewXferSMStock = false;
-                    FlightEVA.fetch.EnableInterface();
+                    //FlightEVA.fetch.EnableInterface();
+                    CrewHatchController.fetch.EnableInterface();
                     Utilities.Log_Debug("DeepFreezer CrewXferFROM SMXfer Completed");
                     return;
                 }
@@ -3069,7 +3093,8 @@ namespace DF
                     _crewXferFROMActive = false;
                     crewXferSMActive = false;
                     crewXferSMStock = false;
-                    FlightEVA.fetch.EnableInterface();
+                    //FlightEVA.fetch.EnableInterface();
+                    CrewHatchController.fetch.EnableInterface();
                     Utilities.Log_Debug("DeepFreezer CrewXferFROM Stock Completed");
                     return;
                 }
@@ -3112,7 +3137,8 @@ namespace DF
                         _crewXferTOActive = false;
                         crewXferSMActive = false;
                         crewXferSMStock = false;
-                        FlightEVA.fetch.EnableInterface();
+                        //FlightEVA.fetch.EnableInterface();
+                        CrewHatchController.fetch.EnableInterface();
                         Utilities.Log_Debug("DeepFreezer CrewXferTO SMXfer Completed");
                     }
                 }
@@ -3145,7 +3171,8 @@ namespace DF
                             if (!foundseat) //If we didn't find a seat Transfer them back.
                             {
                                 xferBackifPartisFull();
-                                FlightEVA.fetch.EnableInterface();
+                                //FlightEVA.fetch.EnableInterface();
+                                CrewHatchController.fetch.EnableInterface();
                                 return;
                             }
                         }
@@ -3180,7 +3207,8 @@ namespace DF
                         _crewXferTOActive = false;
                         crewXferSMActive = false;
                         crewXferSMStock = false;
-                        FlightEVA.fetch.EnableInterface();
+                        //FlightEVA.fetch.EnableInterface();
+                        CrewHatchController.fetch.EnableInterface();
                         Utilities.Log_Debug("DeepFreezer CrewXferTO Stock Completed");
                     }
                     else
@@ -3210,7 +3238,8 @@ namespace DF
                     resetCryopods(true);
                 }
                 xferbackwhenFull = false;
-                FlightEVA.fetch.EnableInterface();
+                //FlightEVA.fetch.EnableInterface();
+                CrewHatchController.fetch.EnableInterface();
                 xferisfromEVA = false;
                 _crewXferTOActive = false;
                 crewXferSMActive = false;
@@ -3234,14 +3263,16 @@ namespace DF
             }
             onvslchgInternal = true;
             xferbackwhenFull = false;
-            FlightEVA.fetch.EnableInterface();
+            //FlightEVA.fetch.EnableInterface();
+            CrewHatchController.fetch.EnableInterface();
             GameEvents.onVesselChange.Fire(vessel);
             ScreenMessages.PostScreenMessage("Freezer is Full, cannot enter at this time", 5.0f, ScreenMessageStyle.UPPER_CENTER);
             xferisfromEVA = false;
             _crewXferTOActive = false;
             crewXferSMActive = false;
             crewXferSMStock = false;
-            FlightEVA.fetch.EnableInterface();
+            //FlightEVA.fetch.EnableInterface();
+            CrewHatchController.fetch.EnableInterface();
             Utilities.Log_Debug("Transfer back if Part is FULL ended");
         }
 
@@ -3276,10 +3307,10 @@ namespace DF
                 loadcryopodstatepersistent();
                 loadexternaldoorstatepersistent();
                 resetFrozenKerbals();
-                if (!hasJSITransparentPod)
-                {
-                    Utilities.CheckPortraitCams(vessel);
-                }
+                //if (!hasJSITransparentPod)
+                //{
+                //    Utilities.CheckPortraitCams(vessel);
+                //}
             }
             else
             {
@@ -3401,10 +3432,11 @@ namespace DF
                     //Unregister their traits/abilities and remove them from the Portrait Cameras if they are there.
                     crewmember.UnregisterExperienceTraits(part);
                     part.protoModuleCrew.Remove(crewmember);
-                    if (KerbalGUIManager.ActiveCrew.Contains(crewmember.KerbalRef))
-                    {
-                        KerbalGUIManager.RemoveActiveCrew(crewmember.KerbalRef);
-                    }
+                    //if (KerbalGUIManager.ActiveCrew.Contains(crewmember.KerbalRef))
+                    //{
+                    //    KerbalGUIManager.RemoveActiveCrew(crewmember.KerbalRef);
+                    //}
+                    KerbalPortraitGallery.Instance.UnregisterActiveCrew(crewmember.KerbalRef);
                 }
             }
             catch (Exception ex)
@@ -3469,11 +3501,12 @@ namespace DF
                                     part.internalModel.seats[lst.SeatIdx].SpawnCrew();  // This spawns the Kerbal and sets the seat.kerbalref
                                     setseatstaticoverlay(part.internalModel.seats[lst.SeatIdx]);
                                     //Remove them from the GUIManager Portrait cams.
-                                    if (KerbalGUIManager.ActiveCrew.Contains(kerbal.KerbalRef))
-                                    {
-                                        KerbalGUIManager.RemoveActiveCrew(kerbal.KerbalRef);
-                                        KerbalGUIManager.PrintActiveCrew();
-                                    }
+                                    //if (KerbalGUIManager.ActiveCrew.Contains(kerbal.KerbalRef))
+                                    //{
+                                    //    KerbalGUIManager.RemoveActiveCrew(kerbal.KerbalRef);
+                                    //    KerbalGUIManager.PrintActiveCrew();
+                                    //}
+                                    KerbalPortraitGallery.Instance.UnregisterActiveCrew(kerbal.KerbalRef);
                                 }
                                 Utilities.setFrznKerbalLayer(kerbal, false, false);  // Double check kerbal is invisible.
                             }
@@ -4207,7 +4240,7 @@ namespace DF
 
                     if (Ecrecvd >= (float)Ecreqd * 0.99)
                     {
-                        ScreenMessages.RemoveMessage(OnGoingECMsg);
+                        if (OnGoingECMsg != null) ScreenMessages.RemoveMessage(OnGoingECMsg);
                         partInfo.timeLastElectricity = (float)currenttime;
                         partInfo.deathCounter = currenttime;
                         partInfo.outofEC = false;
@@ -4223,7 +4256,7 @@ namespace DF
                             partInfo.ECWarning = true;
                             partInfo.deathCounter = currenttime;
                         }
-                        ScreenMessages.RemoveMessage(OnGoingECMsg);
+                        if (OnGoingECMsg != null) ScreenMessages.RemoveMessage(OnGoingECMsg);
                         OnGoingECMsg = ScreenMessages.PostScreenMessage(" Freezer Out of EC : Systems critical in " + (deathRoll - (currenttime - partInfo.deathCounter)).ToString("######0") + " secs");
                         partInfo.outofEC = true;
                         if (debug) Debug.Log("FixedBackgroundUpdate deathCounter = " + partInfo.deathCounter);
