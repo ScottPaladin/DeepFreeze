@@ -379,6 +379,7 @@ namespace DF
         private Animation _windowAnimation;
         private Shader TransparentSpecularShader;
         private Shader KSPSpecularShader;
+        private object JSITransparentPodModule;
 
         private FrznCrewList _StoredCrewList = new FrznCrewList(); // This is the frozen StoredCrewList for the part
 
@@ -452,7 +453,7 @@ namespace DF
             }
 
             // If we have an external door (CRY-0300) or external pod (CRY-0300R) check RPM transparency setting and change the door settings as appropriate
-            if ((hasExternalDoor || isPodExternal) && DFInstalledMods.IsRPMInstalled && !IsFreezeActive && !IsThawActive)
+            if ((hasExternalDoor || isPodExternal) && DFInstalledMods.IsJSITransparentPodsInstalled && !IsFreezeActive && !IsThawActive)
             {
                 try
                 {
@@ -472,7 +473,7 @@ namespace DF
             // makes the transparent pod opaque. There is no way (that I can find) to know when this occurs.
             // So we look through the parts pod states for any part that is not animated (IE: CRY-0300R) any that are OPEN we
             // set their window to transparent..... Maybe we should check it first.
-            if (FlightGlobals.ready && vessel.loaded && isPodExternal && !IsFreezeActive && !IsThawActive && DFInstalledMods.IsRPMInstalled)
+            if (FlightGlobals.ready && vessel.loaded && isPodExternal && !IsFreezeActive && !IsThawActive && DFInstalledMods.IsJSITransparentPodsInstalled)
             {
                 if (_prevRPMTransparentpodSetting == "ON")
                 {
@@ -498,8 +499,7 @@ namespace DF
             if (FlightGlobals.ready && vessel.loaded && partHasInternals && part.internalModel == null)
             {
                 Utilities.Log("Part " + part.name + "(" + part.flightID + ") is loaded and internalModel has disappeared, so re-instansiate it");
-                part.vessel.SpawnCrew();
-                //part.SpawnCrew();
+                part.SpawnIVA();
                 resetFrozenKerbals();
                 resetCryopods(true);
                 // If part does not have JSITransparentPod module we check the portrait cams. Otherwise JSITransparenPod will do it for us.
@@ -610,10 +610,17 @@ namespace DF
                             if (SeatIndx != -1)
                             {
                                 SeatIndx++;
-                                IVAkerbalPod = ScreenMessages.PostScreenMessage("Pod:" + SeatIndx);
+                                IVAkerbalPod = new ScreenMessage("Pod:" + SeatIndx, 1, ScreenMessageStyle.UPPER_LEFT);
+                                IVAkerbalPod.color = Color.white;
+                                ScreenMessages.PostScreenMessage(IVAkerbalPod);
                             }
-                            IVAkerbalPart = ScreenMessages.PostScreenMessage(part.name.Substring(0, 8));
-                            IVAKerbalName = ScreenMessages.PostScreenMessage(actkerbal.name);
+                            IVAkerbalPart = new ScreenMessage(part.name.Substring(0, 8), 1, ScreenMessageStyle.UPPER_LEFT);
+                            IVAkerbalPart.color = Color.white;
+                            ScreenMessages.PostScreenMessage(IVAkerbalPart);
+                            
+                            IVAKerbalName = new ScreenMessage(actkerbal.name, 1, ScreenMessageStyle.UPPER_LEFT);
+                            IVAKerbalName.color = Color.white;
+                            ScreenMessages.PostScreenMessage(IVAKerbalName);
                             //monitoring beep
                             if (TotalFrozen > 0 && !mon_beep.isPlaying)
                             {
@@ -665,7 +672,8 @@ namespace DF
             try
             {
                 string transparentPodSetting = string.Empty;
-                object JSITransparentPodModule = part.Modules["JSITransparentPod"];
+                JSITransparentPodModule = part.Modules["JSITransparentPod"];
+                //JSITransparentPodModule = part.Modules["JSIAdvTransparentPod"];
                 if (JSITransparentPodModule != null)
                 {
                     object outputField = Utilities.GetObjectField(JSITransparentPodModule, "transparentPodSetting");
@@ -855,6 +863,8 @@ namespace DF
             }
 
             if (part.Modules.Contains("JSITransparentPod"))
+            //if (part.Modules.Contains("JSIAdvTransparentPod"))
+                
             {
                 hasJSITransparentPod = true;
             }
@@ -1346,7 +1356,7 @@ namespace DF
                 else
                 {
                     Utilities.Log_Debug("Part has external animation, check if RPM is installed and process");
-                    if (DFInstalledMods.IsRPMInstalled)
+                    if (DFInstalledMods.IsJSITransparentPodsInstalled)
                     {
                         Utilities.Log_Debug("RPM installed, set doorstate");
                         hasExternalDoor = true;
@@ -1860,7 +1870,7 @@ namespace DF
                     }
                     if (isPartAnimated)
                         openCryopod(ToFrzeKerbalSeat, float.MaxValue);
-                    if (isPartAnimated || (isPodExternal && DFInstalledMods.IsRPMInstalled && _prevRPMTransparentpodSetting == "ON"))
+                    if (isPartAnimated || (isPodExternal && DFInstalledMods.IsJSITransparentPodsInstalled && _prevRPMTransparentpodSetting == "ON"))
                         thawCryopodWindow(ToFrzeKerbalSeat, float.MaxValue);
                     cryopodstateclosed[ToFrzeKerbalSeat] = false;
                     savecryopodstatepersistent();
@@ -2070,7 +2080,7 @@ namespace DF
                             Utilities.Log_Debug("Thawing the cryopod window");
                             ice_freeze.Play();
                             ThawWindowAnimPlaying = true;
-                            if (isPartAnimated || (isPodExternal && DFInstalledMods.IsRPMInstalled && _prevRPMTransparentpodSetting == "ON"))
+                            if (isPartAnimated || (isPodExternal && DFInstalledMods.IsJSITransparentPodsInstalled && _prevRPMTransparentpodSetting == "ON"))
                                 thawCryopodWindow(ToThawKerbalSeat, 1f);
                             if (partHasStripLights && DeepFreeze.Instance.DFsettings.StripLightsActive)
                             {
@@ -3885,7 +3895,7 @@ namespace DF
 
         private void freezeCryopodWindow(int seatIndx, float speed)
         {
-            if (isPartAnimated || (isPodExternal && DFInstalledMods.IsRPMInstalled && _prevRPMTransparentpodSetting == "ON"))
+            if (isPartAnimated || (isPodExternal && DFInstalledMods.IsJSITransparentPodsInstalled && _prevRPMTransparentpodSetting == "ON"))
                 setCryopodWindowTransparent(seatIndx);
             else
                 speed = float.MaxValue;

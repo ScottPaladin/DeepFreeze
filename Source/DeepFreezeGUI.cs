@@ -301,18 +301,11 @@ namespace DF
         }
 
         #region GUI
+
         private void OnGUI()
         {
-            if (Event.current.type == EventType.Repaint || Event.current.isMouse)
-            {
-                //myPreDrawQueue(); // Your current on preDrawQueue code
-            }
-            if (GuiVisible)
-                onDraw(); // Your current on postDrawQueue code
-        }
+            if (!GuiVisible) return;
 
-        private void onDraw()
-        {
             if (showSwitchVessel)
             {
                 if (!Utilities.WindowVisibile(DFVSwindowPos))

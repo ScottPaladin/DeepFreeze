@@ -141,7 +141,7 @@ namespace DF
             GameEvents.onVesselLoaded.Remove(onVesselLoad);
             GameEvents.onVesselCreate.Remove(onVesselCreate);
             GameEvents.onPartCouple.Remove(onPartCouple);
-            GameEvents.onGUIEngineersReportReady.Remove(AddTests);            
+            GameEvents.onGUIEngineersReportReady.Remove(AddTests);   
         }
 
         private void Update()
@@ -305,20 +305,39 @@ namespace DF
                     // Set Bottom right messages for FreezerCam mode
 
                     // See if there is a kerbal seated/frozen in that seat get their reference
-
-                    IVAkerbalPod = ScreenMessages.PostScreenMessage("Pod:" + ActFrzrCams[lastFrzrCam].FrzrCamSeatIndex);
-                    IVAkerbalPart = ScreenMessages.PostScreenMessage(ActFrzrCams[lastFrzrCam].FrzrCamPartName);
+                    IVAkerbalPod = new ScreenMessage("Pod:" + ActFrzrCams[lastFrzrCam].FrzrCamSeatIndex, 1, ScreenMessageStyle.UPPER_LEFT);
+                    IVAkerbalPod.color = Color.white;
+                    ScreenMessages.PostScreenMessage(IVAkerbalPod);
+                    IVAkerbalPart = new ScreenMessage(ActFrzrCams[lastFrzrCam].FrzrCamPartName, 1, ScreenMessageStyle.UPPER_LEFT);
+                    IVAkerbalPart.color = Color.white;
+                    ScreenMessages.PostScreenMessage(IVAkerbalPart);
+                    
                     string kerbalname;
                     try
                     {
-                        kerbalname = ActFrzrCams[lastFrzrCam].FrzrCamPart.part.internalModel.seats[lastFrzrCam].kerbalRef.name;
+                        Utilities.Log("FrzrCamPart InternalModelName {0}", ActFrzrCams[lastFrzrCam].FrzrCamPart.part.internalModel.internalName);
+                        Utilities.Log("FrzrCamPart InternalSeatTransformName {0}", ActFrzrCams[lastFrzrCam].FrzrCamPart.part.internalModel.seats[lastFrzrCam].seatTransformName);
+                        if (ActFrzrCams[lastFrzrCam].FrzrCamPart.part.internalModel.seats[lastFrzrCam].kerbalRef != null)
+                        {
+                            Utilities.Log("KerbalRef is not null");
+                            Utilities.Log("Seats Kerbalref {0}", ActFrzrCams[lastFrzrCam].FrzrCamPart.part.internalModel.seats[lastFrzrCam].kerbalRef.protoCrewMember.name);
+                            Utilities.Log("Seats Kerbalref {0}", ActFrzrCams[lastFrzrCam].FrzrCamPart.part.internalModel.seats[lastFrzrCam].kerbalRef.crewMemberName);
+                        }
+                        else
+                        {
+                            Utilities.Log("Kerbalref is null");
+                        }
+                        
+                        kerbalname = ActFrzrCams[lastFrzrCam].FrzrCamPart.part.internalModel.seats[lastFrzrCam].kerbalRef.crewMemberName;
                     }
                     catch (Exception)
                     {
                         kerbalname = string.Empty;
                     }
-                    List<ProtoCrewMember> activecrew = FlightGlobals.ActiveVessel.GetVesselCrew();
-                    IVAKerbalName = ScreenMessages.PostScreenMessage(kerbalname);
+                    //List<ProtoCrewMember> activecrew = FlightGlobals.ActiveVessel.GetVesselCrew();
+                    IVAKerbalName = new ScreenMessage(kerbalname, 1, ScreenMessageStyle.UPPER_LEFT);
+                    IVAKerbalName.color = Color.white;
+                    ScreenMessages.PostScreenMessage(IVAKerbalName);
                 }
             }
         }

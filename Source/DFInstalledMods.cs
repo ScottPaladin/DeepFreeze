@@ -76,6 +76,14 @@ namespace DF
             }
         }
 
+        internal static bool IsJSITransparentPodsInstalled
+        {
+            get
+            {
+                return IsModInstalled("JSITransparentPods");
+            }
+        }
+
         internal static bool IsBGPInstalled
         {
             get
