@@ -37,7 +37,7 @@ namespace DF
 
         //internal string iconName = "R&D_node_icon_evatech";
         //create and the icons
-        private Texture2D icon_DeepFreeze_Editor = new Texture2D(32, 32);
+        private Texture2D icon_DeepFreeze_Editor = new Texture2D(32, 32, TextureFormat.ARGB32, false);
 
         internal string iconName = "DeepFreezeEditor";
         internal bool filter = true;

@@ -24,39 +24,40 @@ namespace DF
         // this class stores the DeepFreeze Settings from the config file.
         private const string configNodeName = "DFSettings";
 
-        internal float DFwindowPosX { get; set; }
-        internal float DFwindowPosY { get; set; }
-        internal float CFwindowPosX { get; set; }
-        internal float CFwindowPosY { get; set; }
-        internal float DFKACwindowPosX { get; set; }
-        internal float DFKACwindowPosY { get; set; }
-        internal bool UseAppLauncher { get; set; }
-        internal bool debugging { get; set; }
-        internal bool ECreqdForFreezer { get; set; }
-        internal bool fatalOption { get; set; }
-        internal float comatoseTime { get; set; }
-        internal bool AutoRecoverFznKerbals { get; set; }
-        internal float KSCcostToThawKerbal { get; set; }
-        internal int ECReqdToFreezeThaw { get; set; }
-        internal int GlykerolReqdToFreeze { get; set; }
-        internal bool RegTempReqd { get; set; }
-        internal double RegTempFreeze { get; set; }
-        internal double RegTempMonitor { get; set; }
-        internal double heatamtMonitoringFrznKerbals { get; set; }
-        internal double heatamtThawFreezeKerbal { get; set; }
-        internal bool TempinKelvin { get; set; }
-        internal double defaultTimeoutforCrewXfer { get; set; }
-        internal double cryopodResettimeDelay { get; set; }
-        internal float DFWindowWidth { get; set; }
-        internal float CFWindowWidth { get; set; }
-        internal float KACWindowWidth { get; set; }
-        internal float WindowbaseHeight { get; set; }
-        internal float ECLowWarningTime { get; set; }
-        internal float EClowCriticalTime { get; set; }
-        internal bool StripLightsActive { get; set; }
-        internal int internalFrzrCamCode { get; set; }
-        internal int internalNxtFrzrCamCode { get; set; }
-        internal int internalPrvFrzrCamCode { get; set; }
+        internal float DFwindowPosX ;
+        internal float DFwindowPosY ;
+        internal float CFwindowPosX ;
+        internal float CFwindowPosY ;
+        internal float DFKACwindowPosX ;
+        internal float DFKACwindowPosY ;
+        internal bool UseAppLauncher ;
+        internal bool debugging ;
+        internal bool ECreqdForFreezer ;
+        internal bool fatalOption ;
+        internal float comatoseTime ;
+        internal bool AutoRecoverFznKerbals ;
+        internal float KSCcostToThawKerbal ;
+        internal int ECReqdToFreezeThaw ;
+        internal int GlykerolReqdToFreeze ;
+        internal bool RegTempReqd ;
+        internal double RegTempFreeze ;
+        internal double RegTempMonitor ;
+        internal double heatamtMonitoringFrznKerbals ;
+        internal double heatamtThawFreezeKerbal ;
+        internal bool TempinKelvin ;
+        internal double defaultTimeoutforCrewXfer ;
+        internal double cryopodResettimeDelay ;
+        internal float DFWindowWidth ;
+        internal float CFWindowWidth ;
+        internal float KACWindowWidth ;
+        internal float WindowbaseHeight ;
+        internal float ECLowWarningTime ;
+        internal float EClowCriticalTime ;
+        internal bool StripLightsActive ;
+        internal int internalFrzrCamCode ;
+        internal int internalNxtFrzrCamCode ;
+        internal int internalPrvFrzrCamCode ;
+        internal bool ToolTips ;
 
         internal DFSettings()
         {
@@ -82,7 +83,7 @@ namespace DF
             heatamtThawFreezeKerbal = 100f;
             TempinKelvin = true;
             defaultTimeoutforCrewXfer = 30;
-            cryopodResettimeDelay = 5;
+            cryopodResettimeDelay = 2;
             DFWindowWidth = 560f;
             CFWindowWidth = 340f;
             KACWindowWidth = 485f;
@@ -92,6 +93,7 @@ namespace DF
             internalFrzrCamCode = 100;
             internalNxtFrzrCamCode = 110;
             internalPrvFrzrCamCode = 98;
+            ToolTips = true;
         }
 
         //Settings Functions Follow
@@ -102,38 +104,39 @@ namespace DF
             {
                 ConfigNode DFsettingsNode = node.GetNode(configNodeName);
 
-                DFwindowPosX = Utilities.GetNodeValue(DFsettingsNode, "DFwindowPosX", DFwindowPosX);
-                DFwindowPosY = Utilities.GetNodeValue(DFsettingsNode, "DFwindowPosY", DFwindowPosY);
-                CFwindowPosX = Utilities.GetNodeValue(DFsettingsNode, "CFwindowPosX", CFwindowPosX);
-                CFwindowPosY = Utilities.GetNodeValue(DFsettingsNode, "CFwindowPosY", CFwindowPosY);
-                DFKACwindowPosX = Utilities.GetNodeValue(DFsettingsNode, "DFKACwindowPosX", DFKACwindowPosX);
-                DFKACwindowPosY = Utilities.GetNodeValue(DFsettingsNode, "DFKACwindowPosY", DFKACwindowPosY);
-                ECreqdForFreezer = Utilities.GetNodeValue(DFsettingsNode, "ECreqdForFreezer", ECreqdForFreezer);
-                fatalOption = Utilities.GetNodeValue(DFsettingsNode, "fatalOption", fatalOption);
-                comatoseTime = Utilities.GetNodeValue(DFsettingsNode, "comatoseTime", comatoseTime);
-                UseAppLauncher = Utilities.GetNodeValue(DFsettingsNode, "UseAppLauncher", UseAppLauncher);
-                debugging = Utilities.GetNodeValue(DFsettingsNode, "debugging", debugging);
-                AutoRecoverFznKerbals = Utilities.GetNodeValue(DFsettingsNode, "AutoRecoverFznKerbals", AutoRecoverFznKerbals);
-                KSCcostToThawKerbal = Utilities.GetNodeValue(DFsettingsNode, "KSCcostToThawKerbal", KSCcostToThawKerbal);
-                ECReqdToFreezeThaw = Utilities.GetNodeValue(DFsettingsNode, "ECReqdToFreezeThaw", ECReqdToFreezeThaw);
-                GlykerolReqdToFreeze = Utilities.GetNodeValue(DFsettingsNode, "GlykerolReqdToFreeze", GlykerolReqdToFreeze);
-                RegTempReqd = Utilities.GetNodeValue(DFsettingsNode, "RegTempReqd", RegTempReqd);
-                RegTempFreeze = Utilities.GetNodeValue(DFsettingsNode, "RegTempFreeze", RegTempFreeze);
-                RegTempMonitor = Utilities.GetNodeValue(DFsettingsNode, "RegTempMonitor", RegTempMonitor);
-                heatamtMonitoringFrznKerbals = Utilities.GetNodeValue(DFsettingsNode, "heatamtMonitoringFrznKerbals", heatamtMonitoringFrznKerbals);
-                heatamtThawFreezeKerbal = Utilities.GetNodeValue(DFsettingsNode, "heatamtThawFreezeKerbal", heatamtThawFreezeKerbal);
-                TempinKelvin = Utilities.GetNodeValue(DFsettingsNode, "TempinKelvin", TempinKelvin);
-                defaultTimeoutforCrewXfer = Utilities.GetNodeValue(DFsettingsNode, "defaultTimeoutforCrewXfer", defaultTimeoutforCrewXfer);
-                cryopodResettimeDelay = Utilities.GetNodeValue(DFsettingsNode, "cryopodResettimeDelay", cryopodResettimeDelay);
-                DFWindowWidth = Utilities.GetNodeValue(DFsettingsNode, "DFWindowWidth", DFWindowWidth);
-                CFWindowWidth = Utilities.GetNodeValue(DFsettingsNode, "CFWindowWidth", CFWindowWidth);
-                KACWindowWidth = Utilities.GetNodeValue(DFsettingsNode, "KACWindowWidth", KACWindowWidth);
-                ECLowWarningTime = Utilities.GetNodeValue(DFsettingsNode, "ECLowWarningTime", ECLowWarningTime);
-                EClowCriticalTime = Utilities.GetNodeValue(DFsettingsNode, "EClowCriticalTime", EClowCriticalTime);
-                StripLightsActive = Utilities.GetNodeValue(DFsettingsNode, "StripLightsActive", StripLightsActive);
-                internalFrzrCamCode = Utilities.GetNodeValue(DFsettingsNode, "internalFrzrCamCode", internalFrzrCamCode);
-                internalNxtFrzrCamCode = Utilities.GetNodeValue(DFsettingsNode, "internalNxtFrzrCamCode", internalNxtFrzrCamCode);
-                internalPrvFrzrCamCode = Utilities.GetNodeValue(DFsettingsNode, "internalPrvFrzrCamCode", internalPrvFrzrCamCode);
+                DFsettingsNode.TryGetValue("DFwindowPosX", ref DFwindowPosX);
+                DFsettingsNode.TryGetValue("DFwindowPosY", ref DFwindowPosY);
+                DFsettingsNode.TryGetValue("CFwindowPosX", ref CFwindowPosX);
+                DFsettingsNode.TryGetValue("CFwindowPosY", ref CFwindowPosY);
+                DFsettingsNode.TryGetValue("DFKACwindowPosX", ref DFKACwindowPosX);
+                DFsettingsNode.TryGetValue("DFKACwindowPosY", ref DFKACwindowPosY);
+                DFsettingsNode.TryGetValue("ECreqdForFreezer", ref ECreqdForFreezer);
+                DFsettingsNode.TryGetValue("fatalOption", ref fatalOption);
+                DFsettingsNode.TryGetValue("comatoseTime", ref comatoseTime);
+                DFsettingsNode.TryGetValue("UseAppLauncher", ref UseAppLauncher);
+                DFsettingsNode.TryGetValue("debugging", ref debugging);
+                DFsettingsNode.TryGetValue("ToolTips", ref ToolTips);
+                DFsettingsNode.TryGetValue("AutoRecoverFznKerbals", ref AutoRecoverFznKerbals);
+                DFsettingsNode.TryGetValue("KSCcostToThawKerbal", ref KSCcostToThawKerbal);
+                DFsettingsNode.TryGetValue("ECReqdToFreezeThaw", ref ECReqdToFreezeThaw);
+                DFsettingsNode.TryGetValue("GlykerolReqdToFreeze", ref GlykerolReqdToFreeze);
+                DFsettingsNode.TryGetValue("RegTempReqd", ref RegTempReqd);
+                DFsettingsNode.TryGetValue("RegTempFreeze", ref RegTempFreeze);
+                DFsettingsNode.TryGetValue("RegTempMonitor", ref RegTempMonitor);
+                DFsettingsNode.TryGetValue("heatamtMonitoringFrznKerbals", ref heatamtMonitoringFrznKerbals);
+                DFsettingsNode.TryGetValue("heatamtThawFreezeKerbal", ref heatamtThawFreezeKerbal);
+                DFsettingsNode.TryGetValue("TempinKelvin", ref TempinKelvin);
+                DFsettingsNode.TryGetValue("defaultTimeoutforCrewXfer", ref defaultTimeoutforCrewXfer);
+                DFsettingsNode.TryGetValue("cryopodResettimeDelay", ref cryopodResettimeDelay);
+                DFsettingsNode.TryGetValue("DFWindowWidth", ref DFWindowWidth);
+                DFsettingsNode.TryGetValue("CFWindowWidth", ref CFWindowWidth);
+                DFsettingsNode.TryGetValue("KACWindowWidth", ref KACWindowWidth);
+                DFsettingsNode.TryGetValue("ECLowWarningTime", ref ECLowWarningTime);
+                DFsettingsNode.TryGetValue("EClowCriticalTime", ref EClowCriticalTime);
+                DFsettingsNode.TryGetValue("StripLightsActive", ref StripLightsActive);
+                DFsettingsNode.TryGetValue("internalFrzrCamCode", ref internalFrzrCamCode);
+                DFsettingsNode.TryGetValue("internalNxtFrzrCamCode", ref internalNxtFrzrCamCode);
+                DFsettingsNode.TryGetValue("internalPrvFrzrCamCode", ref internalPrvFrzrCamCode);
                  Utilities.Log_Debug("DFSettings load complete");
             }
         }
@@ -162,6 +165,7 @@ namespace DF
             settingsNode.AddValue("comatoseTime", comatoseTime);
             settingsNode.AddValue("UseAppLauncher", UseAppLauncher);
             settingsNode.AddValue("debugging", debugging);
+            settingsNode.AddValue("ToolTips", ToolTips);
             settingsNode.AddValue("AutoRecoverFznKerbals", AutoRecoverFznKerbals);
             settingsNode.AddValue("KSCcostToThawKerbal", KSCcostToThawKerbal);
             settingsNode.AddValue("ECReqdToFreezeThaw", ECReqdToFreezeThaw);

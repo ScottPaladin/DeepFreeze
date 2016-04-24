@@ -68,6 +68,7 @@
     <Compile Include="..\..\REPOSoftTechKSPUtils\RSTutilities.cs">
       <Link>RSTutilities.cs</Link>
     </Compile>
+    <Compile Include="APIs\KBWrapper.cs" />
     <Compile Include="DeepFreeze.cs" />
     <Compile Include="DeepFreezerPart.cs" />
     <Compile Include="DFAlarmInfo.cs" />
@@ -82,6 +83,7 @@
     <Compile Include="InstallChecker.cs" />
     <Compile Include="APIs\KACWrapper.cs" />
     <Compile Include="KerbalInfo.cs" />
+    <Compile Include="KerbalPortraits.cs" />
     <Compile Include="PartInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="DeepFreezeGUI.cs" />
@@ -146,6 +148,7 @@
     <Compile Include="APIs\SMWrapper.cs" />
     <Compile Include="APIs\TRWrapper.cs" />
     <Compile Include="APIs\USIWrapper.cs" />
+    <Compile Include="Textures.cs" />
     <Compile Include="VesselInfo.cs" />
     <Compile Include="APIs\ToolBarManager.cs" />
   </ItemGroup>

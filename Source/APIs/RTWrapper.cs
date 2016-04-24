@@ -74,7 +74,7 @@ namespace DF
             //reset the internal objects
             _RTWrapped = false;
             actualRTAPI = null;
-            LogFormatted("Attempting to Grab Remote Tech Types...");
+            LogFormatted_DebugOnly("Attempting to Grab Remote Tech Types...");
 
             //find the base type
             RTAPIType = AssemblyLoader.loadedAssemblies
@@ -90,7 +90,7 @@ namespace DF
             LogFormatted("Remote Tech Version:{0}", RTAPIType.Assembly.GetName().Version.ToString());
 
             //now grab the running instance
-            LogFormatted("Got Assembly Types, grabbing Instances");
+            LogFormatted_DebugOnly("Got Assembly Types, grabbing Instances");
             try
             {
                 actualRTAPI = RTAPIType.GetMember("HasLocalControl", BindingFlags.Public | BindingFlags.Static);
@@ -108,7 +108,7 @@ namespace DF
             }
 
             //If we get this far we can set up the local object and its methods/functions
-            LogFormatted("Got Instance, Creating Wrapper Objects");
+            LogFormatted_DebugOnly("Got Instance, Creating Wrapper Objects");
             RTactualAPI = new RTAPI(actualRTAPI);
 
             _RTWrapped = true;
@@ -130,15 +130,15 @@ namespace DF
 
                 //WORK OUT THE STUFF WE NEED TO HOOK FOR PEOPLE HERE
                 //Methods
-                LogFormatted("Getting HasLocalControl Method");
+                LogFormatted_DebugOnly("Getting HasLocalControl Method");
                 HasLocalControlMethod = RTAPIType.GetMethod("HasLocalControl", BindingFlags.Public | BindingFlags.Static);
                 LogFormatted_DebugOnly("Success: " + (HasLocalControlMethod != null));
 
-                LogFormatted("Getting HasAnyConnection Method");
+                LogFormatted_DebugOnly("Getting HasAnyConnection Method");
                 HasAnyConnectionMethod = RTAPIType.GetMethod("HasAnyConnection", BindingFlags.Public | BindingFlags.Static);
                 LogFormatted_DebugOnly("Success: " + (HasAnyConnectionMethod != null));
 
-                LogFormatted("Getting GetShortestSignalDelay Method");
+                LogFormatted_DebugOnly("Getting GetShortestSignalDelay Method");
                 GetShortestSignalDelayMethod = RTAPIType.GetMethod("GetShortestSignalDelay", BindingFlags.Public | BindingFlags.Static);
                 LogFormatted_DebugOnly("Success: " + (GetShortestSignalDelayMethod != null));
             }
@@ -223,10 +223,10 @@ namespace DF
         /// </summary>
         /// <param name="Message">Text to be printed - can be formatted as per String.format</param>
         /// <param name="strParams">Objects to feed into a String.format</param>
-        [Conditional("DEBUG")]
         internal static void LogFormatted_DebugOnly(String Message, params Object[] strParams)
         {
-            LogFormatted(Message, strParams);
+            if (RSTUtils.Utilities.debuggingOn)
+                LogFormatted(Message, strParams);
         }
 
         /// <summary>

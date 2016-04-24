@@ -75,7 +75,7 @@ namespace DF
             //reset the internal objects
             _USIWrapped = false;
             actualUSI = null;            
-            LogFormatted("Attempting to Grab USI LS Types...");
+            LogFormatted_DebugOnly("Attempting to Grab USI LS Types...");
 
             //find the base type
             USIType = AssemblyLoader.loadedAssemblies
@@ -103,7 +103,7 @@ namespace DF
                                            
 
             //now grab the running instance
-            LogFormatted("Got Assembly Types, grabbing Instances");
+            LogFormatted_DebugOnly("Got Assembly Types, grabbing Instances");
 
             try
             {
@@ -123,7 +123,7 @@ namespace DF
                         
 
             //If we get this far we can set up the local object and its methods/functions
-            LogFormatted("Got Instance, Creating Wrapper Objects");
+            LogFormatted_DebugOnly("Got Instance, Creating Wrapper Objects");
             USIActualAPI = new USIAPI(actualUSI);
             //USIIsKerbalTracked = new USIIsKerbalTrackedAPI(actualUSIIsKerbalTracked);
 
@@ -148,19 +148,19 @@ namespace DF
 
                 //WORK OUT THE STUFF WE NEED TO HOOK FOR PEOPLE HERE
                 //Methods
-                LogFormatted("Getting UntrackKerbal Method");
+                LogFormatted_DebugOnly("Getting UntrackKerbal Method");
                 USIUntrackKerbalMethod = USILifeSupportMgrType.GetMethod("UntrackKerbal", BindingFlags.Public | BindingFlags.Instance);
                 LogFormatted_DebugOnly("Success: " + (USIUntrackKerbalMethod != null));
 
-                LogFormatted("Getting IsKerbalTracked Method");
+                LogFormatted_DebugOnly("Getting IsKerbalTracked Method");
                 USIIsKerbalTrackedMethod = USILifeSupportMgrType.GetMethod("IsKerbalTracked", BindingFlags.Public | BindingFlags.Instance);
                 LogFormatted_DebugOnly("Success: " + (USIIsKerbalTrackedMethod != null));
 
-                LogFormatted("Getting UntrackVessel Method");
+                LogFormatted_DebugOnly("Getting UntrackVessel Method");
                 USIUntrackVesselMethod = USILifeSupportMgrType.GetMethod("UntrackVessel", BindingFlags.Public | BindingFlags.Instance);
                 LogFormatted_DebugOnly("Success: " + (USIUntrackVesselMethod != null));
 
-                LogFormatted("Getting IsVesselTracked Method");
+                LogFormatted_DebugOnly("Getting IsVesselTracked Method");
                 USIIsVesselTrackedTrackedMethod = USILifeSupportMgrType.GetMethod("IsVesselTracked", BindingFlags.Public | BindingFlags.Instance);
                 LogFormatted_DebugOnly("Success: " + (USIIsVesselTrackedTrackedMethod != null));
             }
@@ -262,10 +262,10 @@ namespace DF
         /// </summary>
         /// <param name="Message">Text to be printed - can be formatted as per String.format</param>
         /// <param name="strParams">Objects to feed into a String.format</param>
-        [Conditional("DEBUG")]
         internal static void LogFormatted_DebugOnly(String Message, params Object[] strParams)
         {
-            LogFormatted(Message, strParams);
+            if (RSTUtils.Utilities.debuggingOn)
+                LogFormatted(Message, strParams);
         }
 
         /// <summary>

@@ -301,8 +301,14 @@ namespace MyPlugin_DFWrapper
                 FreezerOutofEC = getFreezerOutofEC;
                 FrzrTmpMethod = DeepFreezerType.GetMethod("get_DFIFrzrTmp", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
                 FrzrTmp = getFrzrTmp;
+                FrznChargeUsageMethod = DeepFreezerType.GetMethod("get_DFIFrznChargeUsage", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
+                FrznChargeUsage = getFrznChargeUsage;
                 StoredCrewListMethod = DeepFreezerType.GetMethod("get_DFIStoredCrewList", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
                 actualStoredCrewList = StoredCrewListMethod.Invoke(actualDeepFreezer, null);
+                ECReqdMethod = DeepFreezerType.GetMethod("get_DFIECReqd", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
+                ECReqd = getECReqd;
+                FrznChargeRequiredMethod = DeepFreezerType.GetMethod("get_DFIFrznChargeRequired", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
+                FrznChargeRequired = getFrznChargeRequired;
 
                 //Methods
                 //LogFormatted("Getting beginFreezeKerbalMethod Method");
@@ -436,6 +442,42 @@ namespace MyPlugin_DFWrapper
             private FrzrTmpStatus getFrzrTmp
             {
                 get { return (FrzrTmpStatus)FrzrTmpMethod.Invoke(actualDeepFreezer, null); }
+            }
+
+            /// <summary>
+            /// True if this DeepFreezer requires Electric Charge for frozen Kerbals
+            /// </summary>
+            public bool ECReqd;
+
+            private MethodInfo ECReqdMethod;
+
+            private bool getECReqd
+            {
+                get { return (bool)ECReqdMethod.Invoke(actualDeepFreezer, null); }
+            }
+
+            /// <summary>
+            /// The current EC Usage of this DeepFreezer
+            /// </summary>
+            public float FrznChargeUsage;
+
+            private MethodInfo FrznChargeUsageMethod;
+
+            private float getFrznChargeUsage
+            {
+                get { return (float)FrznChargeUsageMethod.Invoke(actualDeepFreezer, null); }
+            }
+
+            /// <summary>
+            /// The EC Usage of this DeepFreezer Per Kerbal per minute
+            /// </summary>
+            public int FrznChargeRequired;
+
+            private MethodInfo FrznChargeRequiredMethod;
+
+            private int getFrznChargeRequired
+            {
+                get { return (int)FrznChargeRequiredMethod.Invoke(actualDeepFreezer, null); }
             }
 
             private Object actualStoredCrewList;

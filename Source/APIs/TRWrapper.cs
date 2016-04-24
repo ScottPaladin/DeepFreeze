@@ -78,7 +78,7 @@ namespace DF
             _TRWrapped = false;
             actualTR = null;
             TexRepPersonaliser = null;
-            LogFormatted("Attempting to Grab TextureReplacer Types...");
+            LogFormatted_DebugOnly("Attempting to Grab TextureReplacer Types...");
 
             //find the base type
             TRType = AssemblyLoader.loadedAssemblies
@@ -105,7 +105,7 @@ namespace DF
             }
 
             //now grab the running instance
-            LogFormatted("Got Assembly Types, grabbing Instances");
+            LogFormatted_DebugOnly("Got Assembly Types, grabbing Instances");
             try
             {
                 actualTR = TRType.GetField("isInitialised", BindingFlags.Public | BindingFlags.Static).GetValue(null);
@@ -131,7 +131,7 @@ namespace DF
             }
 
             //If we get this far we can set up the local object and its methods/functions
-            LogFormatted("Got Instance, Creating Wrapper Objects");
+            LogFormatted_DebugOnly("Got Instance, Creating Wrapper Objects");
             TexRepPersonaliser = new TRPersonaliserAPI(actualTRPersonaliser);
 
             _TRWrapped = true;
@@ -156,7 +156,7 @@ namespace DF
 
                 //WORK OUT THE STUFF WE NEED TO HOOK FOR PEOPLE HERE
                 //Methods
-                LogFormatted("Getting personalise Method");
+                LogFormatted_DebugOnly("Getting personalise Method");
                 personaliseIvaMethod = TRPersonaliserType.GetMethod("personaliseIva", BindingFlags.Public | BindingFlags.Instance);
                 LogFormatted_DebugOnly("Success: " + (personaliseIvaMethod != null));
             }
@@ -196,10 +196,10 @@ namespace DF
         /// </summary>
         /// <param name="Message">Text to be printed - can be formatted as per String.format</param>
         /// <param name="strParams">Objects to feed into a String.format</param>
-        [Conditional("DEBUG")]
         internal static void LogFormatted_DebugOnly(String Message, params Object[] strParams)
         {
-            LogFormatted(Message, strParams);
+            if (RSTUtils.Utilities.debuggingOn)
+                LogFormatted(Message, strParams);
         }
 
         /// <summary>

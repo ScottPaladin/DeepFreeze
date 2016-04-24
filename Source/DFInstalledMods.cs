@@ -80,7 +80,7 @@ namespace DF
         {
             get
             {
-                return IsModInstalled("JSITransparentPods");
+                return IsModInstalled("JSIAdvTransparentPods");
             }
         }
 
@@ -97,6 +97,14 @@ namespace DF
             get
             {
                 return IsModInstalled("TextureReplacer");
+            }
+        }
+
+        internal static bool IskerbalismInstalled
+        {
+            get
+            {
+                return IsModInstalled("Kerbalism");
             }
         }
 
