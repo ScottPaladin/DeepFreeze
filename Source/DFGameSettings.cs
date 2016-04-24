@@ -57,7 +57,7 @@ namespace DF
             if (node.HasNode(configNodeName))
             {
                 ConfigNode DFsettingsNode = node.GetNode(configNodeName);
-                Enabled = Utilities.GetNodeValue(DFsettingsNode, "Enabled", Enabled);
+                DFsettingsNode.TryGetValue("Enabled", ref Enabled);
 
                 KnownFrozenKerbals.Clear();
                 var kerbalNodes = DFsettingsNode.GetNodes(KerbalInfo.ConfigNodeName);

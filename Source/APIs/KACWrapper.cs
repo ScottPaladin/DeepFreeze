@@ -73,7 +73,7 @@ namespace DF
             _KACWrapped = false;
             actualKAC = null;
             KAC = null;
-            LogFormatted("Attempting to Grab KAC Types...");
+            LogFormatted_DebugOnly("Attempting to Grab KAC Types...");
 
             //find the base type
             KACType = AssemblyLoader.loadedAssemblies
@@ -105,7 +105,7 @@ namespace DF
             }
 
             //now grab the running instance
-            LogFormatted("Got Assembly Types, grabbing Instance");
+            LogFormatted_DebugOnly("Got Assembly Types, grabbing Instance");
 
             try
             {
@@ -124,7 +124,7 @@ namespace DF
             }
 
             //If we get this far we can set up the local object and its methods/functions
-            LogFormatted("Got Instance, Creating Wrapper Objects");
+            LogFormatted_DebugOnly("Got Instance, Creating Wrapper Objects");
             KAC = new KACAPI(actualKAC);
             //}
             _KACWrapped = true;
@@ -143,33 +143,33 @@ namespace DF
 
                 //these sections get and store the reflection info and actual objects where required. Later in the properties we then read the values from the actual objects
                 //for events we also add a handler
-                LogFormatted("Getting APIReady Object");
+                LogFormatted_DebugOnly("Getting APIReady Object");
                 APIReadyField = KACType.GetField("APIReady", BindingFlags.Public | BindingFlags.Static);
-                LogFormatted("Success: " + (APIReadyField != null));
+                LogFormatted_DebugOnly("Success: " + (APIReadyField != null));
 
                 //WORK OUT THE STUFF WE NEED TO HOOK FOR PEOPEL HERE
-                LogFormatted("Getting Alarms Object");
+                LogFormatted_DebugOnly("Getting Alarms Object");
                 AlarmsField = KACType.GetField("alarms", BindingFlags.Public | BindingFlags.Static);
                 actualAlarms = AlarmsField.GetValue(actualKAC);
-                LogFormatted("Success: " + (actualAlarms != null));
+                LogFormatted_DebugOnly("Success: " + (actualAlarms != null));
 
                 //Events
-                LogFormatted("Getting Alarm State Change Event");
+                LogFormatted_DebugOnly("Getting Alarm State Change Event");
                 onAlarmStateChangedEvent = KACType.GetEvent("onAlarmStateChanged", BindingFlags.Public | BindingFlags.Instance);
                 LogFormatted_DebugOnly("Success: " + (onAlarmStateChangedEvent != null));
                 LogFormatted_DebugOnly("Adding Handler");
                 AddHandler(onAlarmStateChangedEvent, actualKAC, AlarmStateChanged);
 
                 //Methods
-                LogFormatted("Getting Create Method");
+                LogFormatted_DebugOnly("Getting Create Method");
                 CreateAlarmMethod = KACType.GetMethod("CreateAlarm", BindingFlags.Public | BindingFlags.Instance);
                 LogFormatted_DebugOnly("Success: " + (CreateAlarmMethod != null));
 
-                LogFormatted("Getting Delete Method");
+                LogFormatted_DebugOnly("Getting Delete Method");
                 DeleteAlarmMethod = KACType.GetMethod("DeleteAlarm", BindingFlags.Public | BindingFlags.Instance);
                 LogFormatted_DebugOnly("Success: " + (DeleteAlarmMethod != null));
 
-                LogFormatted("Getting DrawAlarmAction");
+                LogFormatted_DebugOnly("Getting DrawAlarmAction");
                 DrawAlarmActionChoiceMethod = KACType.GetMethod("DrawAlarmActionChoiceAPI", BindingFlags.Public | BindingFlags.Instance);
                 LogFormatted_DebugOnly("Success: " + (DrawAlarmActionChoiceMethod != null));
 
@@ -237,9 +237,9 @@ namespace DF
                         ListToReturn.Add(r1);
                     }
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    //LogFormatted("Arrggg: {0}", ex.Message);
+                    LogFormatted("ExtractAlarmList failed: {0}", ex.Message);
                     //throw ex;
                     //
                 }
@@ -627,10 +627,11 @@ namespace DF
         /// </summary>
         /// <param name="Message">Text to be printed - can be formatted as per String.format</param>
         /// <param name="strParams">Objects to feed into a String.format</param>
-        [Conditional("DEBUG")]
+        
         internal static void LogFormatted_DebugOnly(String Message, params Object[] strParams)
         {
-            LogFormatted(Message, strParams);
+            if (RSTUtils.Utilities.debuggingOn)
+                LogFormatted(Message, strParams);
         }
 
         /// <summary>

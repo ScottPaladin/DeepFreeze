@@ -54,26 +54,32 @@ namespace DF
             hibernating = false;
             hasextDoor = false;
             hasextDoor = false;
+            hasextPod = false;
             lastUpdate = currentTime;
         }
 
         internal static VesselInfo Load(ConfigNode node)
         {
-            string vesselName = Utilities.GetNodeValue(node, "vesselName", "Unknown");
-            double lastUpdate = Utilities.GetNodeValue(node, "lastUpdate", 0.0);
+            string vesselName = "Unknown";
+            node.TryGetValue("vesselName", ref vesselName);
+            double lastUpdate = 0f;
+            node.TryGetValue("lastUpdate", ref lastUpdate);
+            //string vesselName = Utilities.GetNodeValue(node, "vesselName", "Unknown");
+            //double lastUpdate = Utilities.GetNodeValue(node, "lastUpdate", 0.0);
 
             VesselInfo info = new VesselInfo(vesselName, lastUpdate);
-            info.numSeats = Utilities.GetNodeValue(node, "numSeats", 0);
-            info.vesselType = Utilities.GetNodeValue(node, "vesselType", VesselType.Unknown);
-            info.numCrew = Utilities.GetNodeValue(node, "numCrew", 0);
-            info.numOccupiedParts = Utilities.GetNodeValue(node, "numOccupiedParts", 0);
-            info.numFrznCrew = Utilities.GetNodeValue(node, "numFrznCrew", 0);
-            info.hibernating = Utilities.GetNodeValue(node, "hibernating", false);
-            info.hasextDoor = Utilities.GetNodeValue(node, "hasextDoor", false);
-            info.hasextPod = Utilities.GetNodeValue(node, "hasextPod", false);
-            info.storedEC = Utilities.GetNodeValue(node, "storedEC", 0d);
-            info.predictedECOut = Utilities.GetNodeValue(node, "predictedECOut", 0d);
+            node.TryGetValue("numSeats", ref info.numSeats);
+            node.TryGetValue("numCrew", ref info.numCrew);
+            node.TryGetValue("numOccupiedParts", ref info.numOccupiedParts);
+            node.TryGetValue("numFrznCrew", ref info.numFrznCrew);
+            node.TryGetValue("hibernating", ref info.hibernating);
+            node.TryGetValue("hasextDoor", ref info.hasextDoor);
+            node.TryGetValue("hasextPod", ref info.hasextPod);
+            node.TryGetValue("storedEC", ref info.storedEC);
+            node.TryGetValue("predictedECOut", ref info.predictedECOut);
 
+            info.vesselType = Utilities.GetNodeValue(node, "vesselType", VesselType.Unknown);
+            
             return info;
         }
 

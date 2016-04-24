@@ -116,7 +116,12 @@ namespace DF
             }
             Utilities.debuggingOn = DFsettings.debugging;
             APIReady = true;
-            Debug.Log("Scenario: " + HighLogic.LoadedScene + " OnLoad: \n " + gameNode + "\n" + globalNode);
+            if (Utilities.debuggingOn)
+                Debug.Log("Scenario: " + HighLogic.LoadedScene + " OnLoad: \n " + gameNode + "\n" + globalNode);
+            else
+            {
+                Debug.Log("DeepFreeze Scenario Onload Completed.");
+            }
         }
 
         public override void OnSave(ConfigNode gameNode)
@@ -130,7 +135,12 @@ namespace DF
             }
             DFsettings.Save(globalNode);
             globalNode.Save(globalConfigFilename);
-            Debug.Log("Scenario: " + HighLogic.LoadedScene + " OnSave: \n" + gameNode + "\n" + globalNode);
+            if (Utilities.debuggingOn)
+                Debug.Log("Scenario: " + HighLogic.LoadedScene + " OnSave: \n" + gameNode + "\n" + globalNode);
+            else
+            {
+                Debug.Log("DeepFreeze Scenario OnSave completed.");
+            }
         }
 
         protected void OnGameSceneLoadRequested(GameScenes gameScene)
@@ -173,7 +183,7 @@ namespace DF
             Utilities.Log("DeepFreezeEvents DeepFreezeEventRem ended");
         }
 
-        protected void onVesselRecovered(ProtoVessel vessel)
+        protected void onVesselRecovered(ProtoVessel vessel, bool notSureWhatFor)
         {
             Utilities.Log("DeepFreezeEvents onVesselRecovered " + vessel.vesselID);
             List<string> frznKerbalkeys = new List<string>(DFgameSettings.KnownFrozenKerbals.Keys);
@@ -200,7 +210,7 @@ namespace DF
                                 realkerbal.type = ProtoCrewMember.KerbalType.Unowned;
                                 realkerbal.rosterStatus = ProtoCrewMember.RosterStatus.Dead;
                                  Utilities.Log_Debug("Kerbal " + realkerbal.name + " " + realkerbal.type + " " + realkerbal.rosterStatus);
-                                ScreenMessages.PostScreenMessage(key + " was stored frozen at KSC", 5.0f, ScreenMessageStyle.UPPER_RIGHT);
+                                ScreenMessages.PostScreenMessage(key + " was stored frozen at KSC", 5.0f, ScreenMessageStyle.UPPER_LEFT);
                             }
                         }
                     }
@@ -301,7 +311,7 @@ namespace DF
                         else
                         {
                             Utilities.Log("Not enough funds to thaw kerbal");
-                            ScreenMessages.PostScreenMessage("Insufficient funds to thaw " + kerbal.name + " at this time", 5.0f, ScreenMessageStyle.UPPER_RIGHT);
+                            ScreenMessages.PostScreenMessage("Insufficient funds to thaw " + kerbal.name + " at this time", 5.0f, ScreenMessageStyle.UPPER_LEFT);
                             return;
                         }
                     }
@@ -313,7 +323,7 @@ namespace DF
                      Utilities.Log_Debug("Kerbal " + kerbal.name + " " + kerbal.type + " " + kerbal.rosterStatus);
                     if (!fundstaken)
                     {
-                        ScreenMessages.PostScreenMessage(kerbal.name + " was found and thawed out", 5.0f, ScreenMessageStyle.UPPER_RIGHT);
+                        ScreenMessages.PostScreenMessage(kerbal.name + " was found and thawed out", 5.0f, ScreenMessageStyle.UPPER_LEFT);
                     }
                     else
                     {

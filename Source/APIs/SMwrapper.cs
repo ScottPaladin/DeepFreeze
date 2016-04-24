@@ -4,9 +4,6 @@ using System.Linq;
 using System.Reflection;
 using Debug = UnityEngine.Debug;
 
-// TODO: Change this namespace to something specific to your plugin here.
-//EG:
-// namespace MyPlugin_ShipManifestWrapper
 namespace DF
 {
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -69,7 +66,7 @@ namespace DF
                 _SMWrapped = false;
                 actualSM = null;
                 ShipManifestAPI = null;
-                LogFormatted("Attempting to Grab ShipManifest Types...");
+                LogFormatted_DebugOnly("Attempting to Grab ShipManifest Types...");
 
                 //find the base type
                 SMType = AssemblyLoader.loadedAssemblies
@@ -96,7 +93,7 @@ namespace DF
                 }
 
                 //now grab the running instance
-                LogFormatted("Got Assembly Types, grabbing Instance");
+                LogFormatted_DebugOnly("Got Assembly Types, grabbing Instance");
                 try
                 {
                     actualSM = SMType.GetField("Instance", BindingFlags.Public | BindingFlags.Static).GetValue(null);
@@ -111,9 +108,9 @@ namespace DF
                     LogFormatted("Failed grabbing SMAddon Instance");
                     return false;
                 }
-                
+
                 //If we get this far we can set up the local object and its methods/functions
-                LogFormatted("Got Instance, Creating Wrapper Objects");
+                LogFormatted_DebugOnly("Got Instance, Creating Wrapper Objects");
                 ShipManifestAPI = new SMAPI(actualSM);
                 _SMWrapped = true;
                 return true;
@@ -142,61 +139,61 @@ namespace DF
                     //these sections get and store the reflection info and actual objects where required. Later in the properties we then read the values from the actual objects
                     //for events we also add a handler
 
-                    LogFormatted("Getting TransferCrew Instance");
+                    LogFormatted_DebugOnly("Getting TransferCrew Instance");
                     TransferCrewMethod = SMType.GetMethod("get_CrewTransferProcess", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
                     actualCrewTransfer = getCrewTransferProcess;
-                    LogFormatted("Success: " + (TransferCrewMethod != null));
-                    LogFormatted("Getting CrewProcessOn Instance");
+                    LogFormatted_DebugOnly("Success: " + (TransferCrewMethod != null));
+                    LogFormatted_DebugOnly("Getting CrewProcessOn Instance");
                     CrewProcessOnMethod = SMType.GetMethod("get_CrewProcessOn", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
-                    LogFormatted("Success: " + (CrewProcessOnMethod != null));
-                    LogFormatted("Getting getCrewXferActiveMethod");
+                    LogFormatted_DebugOnly("Success: " + (CrewProcessOnMethod != null));
+                    LogFormatted_DebugOnly("Getting getCrewXferActiveMethod");
                     getCrewXferActiveMethod = TransferCrewType.GetMethod("get_CrewXferActive", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
-                    LogFormatted("Success: " + (getCrewXferActiveMethod != null));
-                    LogFormatted("Getting setCrewXferActiveMethod");
+                    LogFormatted_DebugOnly("Success: " + (getCrewXferActiveMethod != null));
+                    LogFormatted_DebugOnly("Getting setCrewXferActiveMethod");
                     setCrewXferActiveMethod = TransferCrewType.GetMethod("set_CrewXferActive", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
-                    LogFormatted("Success: " + (setCrewXferActiveMethod != null));
-                    LogFormatted("Getting getIsStockXferMethod");
+                    LogFormatted_DebugOnly("Success: " + (setCrewXferActiveMethod != null));
+                    LogFormatted_DebugOnly("Getting getIsStockXferMethod");
                     getIsStockXferMethod = TransferCrewType.GetMethod("get_IsStockXfer", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
-                    LogFormatted("Success: " + (getIsStockXferMethod != null));
-                    LogFormatted("Getting getOverrideStockCrewXferMethod");
+                    LogFormatted_DebugOnly("Success: " + (getIsStockXferMethod != null));
+                    LogFormatted_DebugOnly("Getting getOverrideStockCrewXferMethod");
                     getOverrideStockCrewXferMethod = TransferCrewType.GetMethod("get_OverrideStockCrewXfer", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
-                    LogFormatted("Success: " + (getOverrideStockCrewXferMethod != null));
-                    LogFormatted("Getting getCrewXferDelaySecMethod");
+                    LogFormatted_DebugOnly("Success: " + (getOverrideStockCrewXferMethod != null));
+                    LogFormatted_DebugOnly("Getting getCrewXferDelaySecMethod");
                     getCrewXferDelaySecMethod = TransferCrewType.GetMethod("get_CrewXferDelaySec", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
-                    LogFormatted("Success: " + (getCrewXferDelaySecMethod != null));
-                    LogFormatted("Getting getIsSeat2SeatXferMethod");
+                    LogFormatted_DebugOnly("Success: " + (getCrewXferDelaySecMethod != null));
+                    LogFormatted_DebugOnly("Getting getIsSeat2SeatXferMethod");
                     getIsSeat2SeatXferMethod = TransferCrewType.GetMethod("get_IsSeat2SeatXfer", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
-                    LogFormatted("Success: " + (getIsSeat2SeatXferMethod != null));
-                    LogFormatted("Getting getSeat2SeatXferDelaySecMethod");
+                    LogFormatted_DebugOnly("Success: " + (getIsSeat2SeatXferMethod != null));
+                    LogFormatted_DebugOnly("Getting getSeat2SeatXferDelaySecMethod");
                     getSeat2SeatXferDelaySecMethod = TransferCrewType.GetMethod("get_Seat2SeatXferDelaySec", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
-                    LogFormatted("Success: " + (getSeat2SeatXferDelaySecMethod != null));
-                    LogFormatted("Getting getFromSeatMethod");
+                    LogFormatted_DebugOnly("Success: " + (getSeat2SeatXferDelaySecMethod != null));
+                    LogFormatted_DebugOnly("Getting getFromSeatMethod");
                     getFromSeatMethod = TransferCrewType.GetMethod("get_FromSeat", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
-                    LogFormatted("Success: " + (getFromSeatMethod != null));
-                    LogFormatted("Getting getToSeatMethod");
+                    LogFormatted_DebugOnly("Success: " + (getFromSeatMethod != null));
+                    LogFormatted_DebugOnly("Getting getToSeatMethod");
                     getToSeatMethod = TransferCrewType.GetMethod("get_ToSeat", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
-                    LogFormatted("Success: " + (getToSeatMethod != null));
-                    LogFormatted("Getting getXferVesselIdMethod");
+                    LogFormatted_DebugOnly("Success: " + (getToSeatMethod != null));
+                    LogFormatted_DebugOnly("Getting getXferVesselIdMethod");
                     getXferVesselIdMethod = TransferCrewType.GetMethod("get_XferVesselId", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
-                    LogFormatted("Success: " + (getXferVesselIdMethod != null));
-                    LogFormatted("Getting getIvaDelayActiveMethod");
+                    LogFormatted_DebugOnly("Success: " + (getXferVesselIdMethod != null));
+                    LogFormatted_DebugOnly("Getting getIvaDelayActiveMethod");
                     getIvaDelayActiveMethod = TransferCrewType.GetMethod("get_IvaDelayActive", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
-                    LogFormatted("Success: " + (getIvaDelayActiveMethod != null));
-                    LogFormatted("Getting getIvaPortraitDelayMethod");
+                    LogFormatted_DebugOnly("Success: " + (getIvaDelayActiveMethod != null));
+                    LogFormatted_DebugOnly("Getting getIvaPortraitDelayMethod");
                     getIvaPortraitDelayMethod = TransferCrewType.GetMethod("get_IvaPortraitDelay", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
-                    LogFormatted("Success: " + (getIvaPortraitDelayMethod != null));
-                    LogFormatted("Getting getFromPartMethod");
+                    LogFormatted_DebugOnly("Success: " + (getIvaPortraitDelayMethod != null));
+                    LogFormatted_DebugOnly("Getting getFromPartMethod");
                     getFromPartMethod = TransferCrewType.GetMethod("get_FromPart", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
-                    LogFormatted("Success: " + (getFromPartMethod != null));
-                    LogFormatted("Getting getToPartMethod");
+                    LogFormatted_DebugOnly("Success: " + (getFromPartMethod != null));
+                    LogFormatted_DebugOnly("Getting getToPartMethod");
                     getToPartMethod = TransferCrewType.GetMethod("get_ToPart", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
-                    LogFormatted("Success: " + (getToPartMethod != null));
-                    LogFormatted("Getting getFromCrewMemberMethod");
+                    LogFormatted_DebugOnly("Success: " + (getToPartMethod != null));
+                    LogFormatted_DebugOnly("Getting getFromCrewMemberMethod");
                     getFromCrewMemberMethod = TransferCrewType.GetMethod("get_FromCrewMember", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
-                    LogFormatted("Success: " + (getFromCrewMemberMethod != null));
-                    LogFormatted("Getting getToCrewMemberMethod");
+                    LogFormatted_DebugOnly("Success: " + (getFromCrewMemberMethod != null));
+                    LogFormatted_DebugOnly("Getting getToCrewMemberMethod");
                     getToCrewMemberMethod = TransferCrewType.GetMethod("get_ToCrewMember", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
-                    LogFormatted("Success: " + (getToCrewMemberMethod != null));
+                    LogFormatted_DebugOnly("Success: " + (getToCrewMemberMethod != null));
                 }
 
                 catch (Exception ex)
@@ -514,10 +511,10 @@ namespace DF
         /// </summary>
         /// <param name="Message">Text to be printed - can be formatted as per String.format</param>
         /// <param name="strParams">Objects to feed into a String.format</param>
-        [Conditional("DEBUG")]
         internal static void LogFormatted_DebugOnly(String Message, params Object[] strParams)
         {
-            LogFormatted(Message, strParams);
+            if (RSTUtils.Utilities.debuggingOn)
+                LogFormatted(Message, strParams);
         }
 
         /// <summary>

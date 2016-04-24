@@ -18,6 +18,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using KSP.UI.Screens;
 using PreFlightTests;
 using RSTUtils;
 using UnityEngine;
@@ -29,6 +30,7 @@ namespace DF
         // The DeepFreeze Internal memory class.
         // this class maintains the information in the knownVessels, knownFreezerParts and knownKACalarms dictionaries.
         // It also Executes KAC Alarms when they occur and have DeepFreeze events to execute.
+        // and controls the Alternate DeepFreeze IVA cameras and Messages when in IVA.
         public static DFIntMemory Instance { get; private set; }
 
         public class VslFrzrCams
@@ -108,21 +110,24 @@ namespace DF
             ChkActiveFrozenKerbals();
             DeepFreeze.Instance.DFgameSettings.DmpKnownFznKerbals();
             resetFreezerCams();
-            if (DFInstalledMods.IsTexReplacerInstalled)
+            if (Utilities.GameModeisFlight)
             {
-                TRWrapper.InitTRWrapper();
-            }
-            if (DFInstalledMods.IsUSILSInstalled)
-            {
-                USIWrapper.InitUSIWrapper();
+                if (DFInstalledMods.IsTexReplacerInstalled)
+                {
+                    TRWrapper.InitTRWrapper();
+                }
+                if (DFInstalledMods.IsUSILSInstalled)
+                {
+                    USIWrapper.InitUSIWrapper();
+                }
+                if (DFInstalledMods.IsSMInstalled)
+                {
+                    SMWrapper.InitSMWrapper();
+                }
             }
             if (DFInstalledMods.IsRTInstalled)
             {
                 RTWrapper.InitTRWrapper();
-            }
-            if (DFInstalledMods.IsSMInstalled)
-            {
-                SMWrapper.InitSMWrapper();
             }
         }
 
@@ -137,14 +142,14 @@ namespace DF
             GameEvents.onVesselLoaded.Remove(onVesselLoad);
             GameEvents.onVesselCreate.Remove(onVesselCreate);
             GameEvents.onPartCouple.Remove(onPartCouple);
-            GameEvents.onGUIEngineersReportReady.Remove(AddTests);            
+            GameEvents.onGUIEngineersReportReady.Remove(AddTests);   
         }
 
         private void Update()
         {
             //For some reason when we Freeze a Kerbal and switch to the Internal camera (if in IVA mode) the cameramanager gets stuck.
             //If the user hits the camera mode key while in Internal camera mode this will kick them out to flight
-            if (GameSettings.CAMERA_MODE.GetKeyDown() && Utilities.IsInInternal())
+            if (GameSettings.CAMERA_MODE.GetKeyDown() && Utilities.IsInInternal)
             {
                 CameraManager.Instance.SetCameraFlight();
             }
@@ -160,27 +165,49 @@ namespace DF
             
             if (HighLogic.LoadedSceneIsFlight && ActVslHasDpFrezr)
             {
+                /* Not required from KSP 1.1 as RefreskFrozenKerbals in each PartModule will remove the portraits for frozen kerbals.
                 //Check if Refresh Portraits Cam is required after two vessels are docked
                 if (refreshPortraits)
                 {
                     if (Planetarium.GetUniversalTime() - refreshPortraitsTimer > 3)
                     {
-                        Utilities.CheckPortraitCams(FlightGlobals.ActiveVessel);
+                        foreach (Part part in FlightGlobals.ActiveVessel.parts)
+                        {
+                            if (part.internalModel != null)
+                            {
+                                foreach (InternalSeat seat in part.internalModel.seats)
+                                {
+                                    if (seat.kerbalRef != null)
+                                    {
+                                        try
+                                        {
+                                            KerbalPortraitGallery.Instance.UnregisterActiveCrew(seat.kerbalRef);
+                                            if (!DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.ContainsKey(seat.kerbalRef.crewMemberName))
+                                                KerbalPortraitGallery.Instance.RegisterActiveCrew(seat.kerbalRef);
+                                        }
+                                        catch (Exception)
+                                        {
+                                            Utilities.Log_Debug("Unregister Portrait on inactive part failed {0}", seat.kerbalRef.crewMemberName);
+                                        }
+                                    }
+                                }
+                            }
+                        }
                         refreshPortraits = false;
                     }
-                }
+                }*/
 
                 //If user hits Modifier Key - D switch to freezer cams.
-                if (GameSettings.MODIFIER_KEY.GetKey() && Input.GetKeyDown(keyFrzrCam) && ActFrzrCams.Count > 0)
+                if (GameSettings.MODIFIER_KEY.GetKey() && Input.GetKeyDown(keyFrzrCam) && ActFrzrCams.Count > 0 && !Utilities.StockOverlayCamIsOn)
                 {
                      Utilities.Log_Debug("User hit InternalCamera modifier keys lastFrzrCam=" + lastFrzrCam);
-                    if (Utilities.IsInIVA())
+                    if (Utilities.IsInIVA)
                     {
                          Utilities.Log_Debug("Vessel is in IVA, looking for active kerbal");
                         Kerbal activeKerbal;
                         foreach (DeepFreezer frzr in DpFrzrActVsl)
                         {
-                            activeKerbal = frzr.part.FindCurrentKerbal();
+                            activeKerbal = CameraManager.Instance.IVACameraActiveKerbal;// frzr.part.FindCurrentKerbal();
                             if (activeKerbal != null)
                             {
                                 int CamIndex = -1;
@@ -223,7 +250,7 @@ namespace DF
                 }
 
                 //If user hits n while we are in internal camera mode switch to the next freezer camera.
-                if (Input.GetKeyDown(keyNxtFrzrCam) && Utilities.IsInInternal())
+                if (Input.GetKeyDown(keyNxtFrzrCam) && Utilities.IsInInternal)
                 {
                      Utilities.Log_Debug("User hit InternalCamera nextCamera key lastFrzrCam=" + lastFrzrCam);
                     if ((lastFrzrCam == ActFrzrCams.Count - 1) || (lastFrzrCam > ActFrzrCams.Count))
@@ -259,7 +286,7 @@ namespace DF
                 }
 
                 //If user hits b while we are in internal camera mode switch to the previous freezer camera.
-                if (Input.GetKeyDown(keyPrvFrzrCam) && Utilities.IsInInternal())
+                if (Input.GetKeyDown(keyPrvFrzrCam) && Utilities.IsInInternal)
                 {
                      Utilities.Log_Debug("User hit InternalCamera prevCamera key lastFrzrCam=" + lastFrzrCam);
                     if (lastFrzrCam <= 0)
@@ -293,28 +320,48 @@ namespace DF
                         CameraManager.Instance.SetCameraFlight();
                     }
                 }
-                ScreenMessages.RemoveMessage(IVAKerbalName);
-                ScreenMessages.RemoveMessage(IVAkerbalPart);
-                ScreenMessages.RemoveMessage(IVAkerbalPod);
-                if (Utilities.IsInInternal() && ActFrzrCams.Count > 0)
+
+                if (IVAKerbalName != null) ScreenMessages.RemoveMessage(IVAKerbalName);
+                if (IVAkerbalPart != null) ScreenMessages.RemoveMessage(IVAkerbalPart);
+                if (IVAkerbalPod != null)  ScreenMessages.RemoveMessage(IVAkerbalPod);
+                if (Utilities.IsInInternal && ActFrzrCams.Count > 0)
                 {
-                    // Set Bottom right messages for FreezerCam mode
+                    // Set Top Left messages for FreezerCam mode
 
                     // See if there is a kerbal seated/frozen in that seat get their reference
-
-                    IVAkerbalPod = ScreenMessages.PostScreenMessage("Pod:" + ActFrzrCams[lastFrzrCam].FrzrCamSeatIndex);
-                    IVAkerbalPart = ScreenMessages.PostScreenMessage(ActFrzrCams[lastFrzrCam].FrzrCamPartName);
+                    IVAkerbalPod = new ScreenMessage("Pod:" + ActFrzrCams[lastFrzrCam].FrzrCamSeatIndex, 1, ScreenMessageStyle.UPPER_LEFT);
+                    IVAkerbalPod.color = Color.white;
+                    ScreenMessages.PostScreenMessage(IVAkerbalPod);
+                    IVAkerbalPart = new ScreenMessage(ActFrzrCams[lastFrzrCam].FrzrCamPartName, 1, ScreenMessageStyle.UPPER_LEFT);
+                    IVAkerbalPart.color = Color.white;
+                    ScreenMessages.PostScreenMessage(IVAkerbalPart);
+                    
                     string kerbalname;
                     try
                     {
-                        kerbalname = ActFrzrCams[lastFrzrCam].FrzrCamPart.part.internalModel.seats[lastFrzrCam].kerbalRef.name;
+                        Utilities.Log("FrzrCamPart InternalModelName {0}", ActFrzrCams[lastFrzrCam].FrzrCamPart.part.internalModel.internalName);
+                        Utilities.Log("FrzrCamPart InternalSeatTransformName {0}", ActFrzrCams[lastFrzrCam].FrzrCamPart.part.internalModel.seats[lastFrzrCam].seatTransformName);
+                        if (ActFrzrCams[lastFrzrCam].FrzrCamPart.part.internalModel.seats[lastFrzrCam].kerbalRef != null)
+                        {
+                            Utilities.Log("KerbalRef is not null");
+                            Utilities.Log("Seats Kerbalref {0}", ActFrzrCams[lastFrzrCam].FrzrCamPart.part.internalModel.seats[lastFrzrCam].kerbalRef.protoCrewMember.name);
+                            Utilities.Log("Seats Kerbalref {0}", ActFrzrCams[lastFrzrCam].FrzrCamPart.part.internalModel.seats[lastFrzrCam].kerbalRef.crewMemberName);
+                        }
+                        else
+                        {
+                            Utilities.Log("Kerbalref is null");
+                        }
+                        
+                        kerbalname = ActFrzrCams[lastFrzrCam].FrzrCamPart.part.internalModel.seats[lastFrzrCam].kerbalRef.crewMemberName;
                     }
                     catch (Exception)
                     {
                         kerbalname = string.Empty;
                     }
-                    List<ProtoCrewMember> activecrew = FlightGlobals.ActiveVessel.GetVesselCrew();
-                    IVAKerbalName = ScreenMessages.PostScreenMessage(kerbalname);
+                    //List<ProtoCrewMember> activecrew = FlightGlobals.ActiveVessel.GetVesselCrew();
+                    IVAKerbalName = new ScreenMessage(kerbalname, 1, ScreenMessageStyle.UPPER_LEFT);
+                    IVAKerbalName.color = Color.white;
+                    ScreenMessages.PostScreenMessage(IVAKerbalName);
                 }
             }
         }
@@ -577,8 +624,8 @@ namespace DF
                 {
                     frzr.resetFrozenKerbals();
                 }
-                refreshPortraits = true;
-                refreshPortraitsTimer = Planetarium.GetUniversalTime();
+                //refreshPortraits = true;
+                //refreshPortraitsTimer = Planetarium.GetUniversalTime();
             }
         }
 
@@ -768,7 +815,7 @@ namespace DF
                                 DpFrzrLoadedVsl = vessel.FindPartModulesImplementing<DeepFreezer>();
                                 foreach (DeepFreezer frzr in DpFrzrLoadedVsl)
                                 {
-                                    if (frzr.hasExternalDoor || frzr.isPodExternal)
+                                    if (frzr.ExternalDoorActive || frzr.isPodExternal)
                                     {
                                          Utilities.Log_Debug("chkvslupdate loaded freezer with door or external pod, reset the cryopods");
                                         frzr.resetCryopods(false);
@@ -846,7 +893,7 @@ namespace DF
                 {
                     Utilities.Log("New Freezer Part: " + frzr.name + "(" + frzr.part.flightID + ")" + " (" + vessel.id + ")");
                     partInfo = new PartInfo(vessel.id, frzr.name, currentTime);
-                    partInfo.hasextDoor = frzr.hasExternalDoor;
+                    partInfo.hasextDoor = frzr.ExternalDoorActive;
                     partInfo.hasextPod = frzr.isPodExternal;
                     partInfo.numSeats = frzr.FreezerSize;
                     partInfo.timeLastElectricity = frzr.timeSinceLastECtaken;
@@ -867,7 +914,7 @@ namespace DF
                 }
                 else   // Update existing entry
                 {
-                    partInfo.hasextDoor = frzr.hasExternalDoor;
+                    partInfo.hasextDoor = frzr.ExternalDoorActive;
                     partInfo.hasextPod = frzr.isPodExternal;
                     partInfo.numSeats = frzr.FreezerSize;
                     partInfo.timeLastElectricity = frzr.timeSinceLastECtaken;
@@ -887,7 +934,7 @@ namespace DF
                     }
                 }
                 //now update the knownfreezerpart and any related vesselinfo field
-                if (frzr.hasExternalDoor)
+                if (frzr.ExternalDoorActive)
                     vesselInfo.hasextDoor = true;
                 if (frzr.isPodExternal)
                     vesselInfo.hasextPod = true;

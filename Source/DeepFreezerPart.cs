@@ -19,6 +19,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using DeepFreeze;
+using KSP.UI.Screens.Flight;
 using RSTUtils;
 using UnityEngine;
 using Object = System.Object;
@@ -82,9 +84,10 @@ namespace DF
         private bool crewXferSMActive;                   // set to true if CrewXfer is active and SM is installed and managing the xfer.
         private bool crewXferSMStock;                    // set to true if a Stock CrewXfer is active and SM is installed and managing the xfer.
         private bool xferbackwhenFull;                  // set to true when a CrewXfer triggers and the part is already full.
-        private int IvaUpdateFrameDelay = 5;                    // Frame delay for Iva portrait updates
-        private bool IvaUpdateActive;                   // True when an Iva update framedelay is active
-        private int IvaPortraitDelay;                       // Counter for IVA portrait delay
+        private bool crewTransferInputLock = false;     //This is turned on if a stock Xfer is started and Off when it finishes.
+        //private int IvaUpdateFrameDelay = 2;                    // Frame delay for Iva portrait updates
+        //private bool IvaUpdateActive;                   // True when an Iva update framedelay is active
+        //private int IvaPortraitDelay;                       // Counter for IVA portrait delay
         private double timecrewXferTOfired;                 // The Time.time that last crewXferTOFired so we can timeout if it takes too long.
         private double timecrewXferFROMfired;               // The Time.time that last crewXferFROMFired so we can timeout if it takes too long.
         private double crewXferSMTimeDelay;                 // crewXfer time delay used by Ship Manifest.
@@ -142,6 +145,11 @@ namespace DF
             {
                 return PartFull;
             }
+        }
+
+        public bool DFIECReqd
+        {
+            get { return DeepFreeze.Instance.DFsettings.ECreqdForFreezer; }
         }
 
         [KSPField(isPersistant = false, guiName = "R/T Connection", guiActive = false)]
@@ -271,7 +279,14 @@ namespace DF
         [KSPField]
         public string animationName = string.Empty;  //Set by part.cfg. name of external animation name for doors if equipped.
 
+        [KSPField]
+        public bool PartHasDoor = false; //Set by part.cfg. true if part has external door (CRY-0300).
+
         private Animation externalDoorAnim;
+        private Animation externalDoorAnimOccluder;
+
+        [KSPField(isPersistant = true)]
+        public bool ExternalDoorActive; //Set internal to partmodule. True if PartHasDoor and RPM/JSI TransparentPods is installed. Otherwise it is false.  Used to determine if the door is activated/enabled or not.
 
         //we persist the external door state in strings because KSP can't handle ENUMs
         [KSPField(isPersistant = true)]
@@ -286,8 +301,7 @@ namespace DF
 
         internal string _prevRPMTransparentpodSetting = string.Empty;
 
-        [KSPField(isPersistant = true)]
-        public bool hasExternalDoor;
+        
 
         [KSPField]
         public string transparentTransforms = string.Empty; //Set by part.cfg. contains list of transforms that should be transparent | separated.
@@ -301,11 +315,10 @@ namespace DF
             Utilities.Log_Debug("eventOpenDoors triggered - open the bay doors Hal");
             try
             {
-                Animation anim;
                 Animation[] animators = part.internalModel.FindModelAnimators("DOORHandle");
                 if (animators.Length > 0)
                 {
-                    anim = animators[0];
+                    var anim = animators[0];
                     anim["DOORHandle"].speed = float.MaxValue;
                     anim["DOORHandle"].normalizedTime = 0;
                     anim.Play("DOORHandle");
@@ -333,11 +346,10 @@ namespace DF
             Utilities.Log_Debug("eventOpenDoors triggered - close the bay doors Hal");
             try
             {
-                Animation anim;
                 Animation[] animators = part.internalModel.FindModelAnimators("DOORHandle");
                 if (animators.Length > 0)
                 {
-                    anim = animators[0];
+                    var anim = animators[0];
                     anim["DOORHandle"].speed = float.MinValue;
                     anim["DOORHandle"].normalizedTime = 1;
                     anim.Play("DOORHandle");
@@ -378,6 +390,7 @@ namespace DF
         private Animation _windowAnimation;
         private Shader TransparentSpecularShader;
         private Shader KSPSpecularShader;
+        private object JSITransparentPodModule;
 
         private FrznCrewList _StoredCrewList = new FrznCrewList(); // This is the frozen StoredCrewList for the part
 
@@ -450,8 +463,20 @@ namespace DF
                 onceoffSetup();
             }
 
+            //For some reason when we go on EVA or switch vessels the InternalModel is destroyed.
+            //Which causes a problem when we re-board the part as the re-boarding kerbal ends up in a frozen kerbals seat.
+            //So we check for the internalmodel existing while the vessel this part is attached to is loaded and if it isn't we re-instansiate it.
+            if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ready && vessel.loaded && partHasInternals && part.internalModel == null)
+            {
+                Utilities.Log("Part " + part.name + "(" + part.flightID + ") is loaded and internalModel has disappeared, so re-instantiate it");
+                //part.SpawnIVA();
+                Utilities.spawnInternal(part);
+                resetFrozenKerbals();
+                resetCryopods(true);
+            }
+
             // If we have an external door (CRY-0300) or external pod (CRY-0300R) check RPM transparency setting and change the door settings as appropriate
-            if ((hasExternalDoor || isPodExternal) && DFInstalledMods.IsRPMInstalled && !IsFreezeActive && !IsThawActive)
+            if ((PartHasDoor || isPodExternal) && DFInstalledMods.IsJSITransparentPodsInstalled && !IsFreezeActive && !IsThawActive)
             {
                 try
                 {
@@ -464,47 +489,72 @@ namespace DF
                 }
             }
 
+            //We have to process the occluders for the CRY-0300 and CRY-0300R for KSP 1.1
+            if (PartHasDoor || isPodExternal)
+            {
+                if (DFInstalledMods.IsJSITransparentPodsInstalled)
+                {
+                    RPMPodOccluderProcessing();
+                }
+                else
+                {
+                    noRPMPodOccluderProcessing();
+                }
+            }
+
             if (!HighLogic.LoadedSceneIsFlight) // If scene is not flight we are done with onUpdate
                 return;
 
             //This is necessary to override stock crew xfer behaviour. When the user cancels the xfer the Stock highlighting system
-            // makes the transparent pod opaque. There is no way (that I can find) to know when this occurs.
+            // makes the transparent pod opaque. The only way I can find to know if this occurs is to continually check if the crewTransfer
+            // Lock occurs and when it turns off we do this (still could be the transfer actually worked, but means we do it a LOT LOT Less times.
             // So we look through the parts pod states for any part that is not animated (IE: CRY-0300R) any that are OPEN we
-            // set their window to transparent..... Maybe we should check it first.
-            if (FlightGlobals.ready && vessel.loaded && isPodExternal && !IsFreezeActive && !IsThawActive && DFInstalledMods.IsRPMInstalled)
+            // set their window to transparent..... 
+            //If the lock is ON set the bool to true and wait until the lock is off.
+            if (InputLockManager.IsLocked(ControlTypes.ALLBUTCAMERAS) &&
+                InputLockManager.lockStack.ContainsKey("crewTransfer"))
             {
-                if (_prevRPMTransparentpodSetting == "ON")
+                crewTransferInputLock = true;
+            }
+            else  //So the lock is off was the lock previously set? If it as we process, otherwise we do nothing.
+            {
+                if (crewTransferInputLock)
                 {
-                    for (int i = 0; i < cryopodstateclosed.Length; i++)
+                    crewTransferInputLock = false;  //Reset the bool and then process.
+                    if (FlightGlobals.ready && vessel.loaded && isPodExternal && !IsFreezeActive && !IsThawActive && DFInstalledMods.IsJSITransparentPodsInstalled)
                     {
-                        if (!cryopodstateclosed[i])
+                        if (_prevRPMTransparentpodSetting == "ON")
                         {
-                            string windowname = "Cryopod-" + (i + 1) + "-Window";
-                            Renderer extwindowrenderer = part.FindModelComponent<Renderer>(windowname);
-                            if (extwindowrenderer != null)
+                            for (int i = 0; i < cryopodstateclosed.Length; i++)
                             {
-                                if (extwindowrenderer.material.shader != TransparentSpecularShader)
-                                    setCryopodWindowTransparent(i);
+                                if (!cryopodstateclosed[i])  //If there isn't a frozen kerbal inside
+                                {
+                                    string windowname = "Cryopod-" + (i + 1) + "-Window";
+                                    Renderer extwindowrenderer = part.FindModelComponent<Renderer>(windowname);
+                                    if (extwindowrenderer != null)
+                                    {
+                                        if (extwindowrenderer.material.shader != TransparentSpecularShader)
+                                        {
+                                            setCryopodWindowTransparent(i);
+                                            Utilities.SetInternalDepthMask(part, false, "External_Window_Occluder");
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 }
-            } 
+            }
 
-            //For some reason when we go on EVA or switch vessels the InternalModel is destroyed.
-            //Which causes a problem when we re-board the part as the re-boarding kerbal ends up in a frozen kerbals seat.
-            //So we check for the internmodel existing while the vessel this part is attached to is loaded and if it isn't we re-instansiate it.
-            if (FlightGlobals.ready && vessel.loaded && partHasInternals && part.internalModel == null)
+            if (PartHasDoor && Utilities.IsInIVA)  //So if we are in IVA mode (inside this loop) and in a CRY-0300 (have External door) Open the Kerbals EYES WIDER!
             {
-                Utilities.Log("Part " + part.name + "(" + part.flightID + ") is loaded and internalModel has disappeared, so re-instansiate it");
-                part.SpawnCrew();
-                resetFrozenKerbals();
-                resetCryopods(true);
-                // If part does not have JSITransparentPod module we check the portrait cams. Otherwise JSITransparenPod will do it for us.
-                if (!hasJSITransparentPod)
-                {
-                    Utilities.CheckPortraitCams(vessel);
-                }
+                //Kerbal currentKerbal = CameraManager.Instance.IVACameraActiveKerbal;
+                CameraManager.Instance.IVACameraActiveKerbal.kerbalCam.nearClipPlane = 0.01f;
+                CameraManager.Instance.IVACameraActiveKerbal.kerbalCam.fieldOfView = 95f;
+                //CameraManager.Instance.ivaFOV = 95f;
+                //Turn OFF the Door occluders so we can see outside.
+                if (_externaldoorstate != DoorState.CLOSED)
+                    Utilities.SetInternalDepthMask(part, false, "CRY_0300_Doors_Occluder");
             }
 
             if (Time.time - lastUpdate > updatetnterval && Time.time - lastRemove > updatetnterval) // We only update every updattnterval time interval.
@@ -550,7 +600,7 @@ namespace DF
                     }
 
                     // If we have an external door (CRY-0300) check if the door state has changed and then set the helmet state
-                    if (hasExternalDoor)
+                    if (ExternalDoorActive)
                     {
                         // if the current and previous door states are different we need to do checks, otherwise we do nothing.
                         if (_externaldoorstate != _prevexterndoorstate)
@@ -567,9 +617,10 @@ namespace DF
                             _prevexterndoorstate = _externaldoorstate;
                         }
                     }
-
+                    // This is now handled by a coroutine callback.
                     //If a kerbal entered the part from EVA into a frozen kerbals seat then we moved them
                     // and now we wait IvaUpdateFrameDelay frames to refresh the portraits
+                    /*
                     if (IvaUpdateActive)
                     {
                         Utilities.Log_Debug("IvaUpdateActive delay counter=" + IvaPortraitDelay);
@@ -579,54 +630,66 @@ namespace DF
                             IvaPortraitDelay = 0;
                             vessel.SpawnCrew();
                             resetFrozenKerbals();
+                            onvslchgInternal = true;
+                            GameEvents.onVesselChange.Fire(vessel);
                         }
                         else
                         {
                             IvaPortraitDelay += 1;
                         }
                     }
-
+                    */
                     //Refresh IVA mode Messages and Bools
-                    ScreenMessages.RemoveMessage(IVAKerbalName);
-                    ScreenMessages.RemoveMessage(IVAkerbalPart);
-                    ScreenMessages.RemoveMessage(IVAkerbalPod);
+                    if (IVAKerbalName != null) ScreenMessages.RemoveMessage(IVAKerbalName);
+                    if (IVAkerbalPart != null) ScreenMessages.RemoveMessage(IVAkerbalPart);
+                    if (IVAkerbalPod != null) ScreenMessages.RemoveMessage(IVAkerbalPod);
                     if (Utilities.VesselIsInIVA(part.vessel))
                     {
                         // Utilities.Log_Debug("Vessel is in IVA mode");
                         vesselisinIVA = true;
                         vesselisinInternal = false;
-                        Kerbal actkerbal = part.FindCurrentKerbal();
-                        if (actkerbal != null)
+                        //Kerbal actkerbal = CameraManager.Instance.IVACameraActiveKerbal;
+                        if (CameraManager.Instance.IVACameraActiveKerbal != null)
                         {
-                            ProtoCrewMember crew = part.protoModuleCrew.FirstOrDefault(a => a.name == actkerbal.name);
-                            int SeatIndx = -1;
-                            if (crew != null)
+                            if (Utilities.ActiveKerbalIsLocal(part))
                             {
-                                SeatIndx = crew.seatIdx;
+                                ProtoCrewMember crew = part.protoModuleCrew.FirstOrDefault(a => a.name == CameraManager.Instance.IVACameraActiveKerbal.name);
+                                int SeatIndx = -1;
+                                if (crew != null)
+                                {
+                                    SeatIndx = crew.seatIdx;
+                                }
+                                // Utilities.Log_Debug("ActiveKerbalFound, seatidx=" + SeatIndx);
+                                if (SeatIndx != -1)
+                                {
+                                    SeatIndx++;
+                                    IVAkerbalPod = new ScreenMessage("Pod:" + SeatIndx, 1, ScreenMessageStyle.UPPER_LEFT);
+                                    IVAkerbalPod.color = Color.white;
+                                    ScreenMessages.PostScreenMessage(IVAkerbalPod);
+                                }
+                                IVAkerbalPart = new ScreenMessage(part.name.Substring(0, 8), 1, ScreenMessageStyle.UPPER_LEFT);
+                                IVAkerbalPart.color = Color.white;
+                                ScreenMessages.PostScreenMessage(IVAkerbalPart);
+
+                                IVAKerbalName = new ScreenMessage(CameraManager.Instance.IVACameraActiveKerbal.crewMemberName, 1, ScreenMessageStyle.UPPER_LEFT);
+                                IVAKerbalName.color = Color.white;
+                                ScreenMessages.PostScreenMessage(IVAKerbalName);
                             }
-                            // Utilities.Log_Debug("ActiveKerbalFound, seatidx=" + SeatIndx);
-                            if (SeatIndx != -1)
-                            {
-                                SeatIndx++;
-                                IVAkerbalPod = ScreenMessages.PostScreenMessage("Pod:" + SeatIndx);
-                            }
-                            IVAkerbalPart = ScreenMessages.PostScreenMessage(part.name.Substring(0, 8));
-                            IVAKerbalName = ScreenMessages.PostScreenMessage(actkerbal.name);
-                            //monitoring beep
-                            if (TotalFrozen > 0 && !mon_beep.isPlaying)
-                            {
-                                mon_beep.Play();
-                            }
+                        }
+                        //monitoring beep
+                        if (TotalFrozen > 0 && !mon_beep.isPlaying)
+                        {
+                            mon_beep.Play();
                         }
                     }
                     else
                     {
-                        ScreenMessages.RemoveMessage(IVAKerbalName);
-                        ScreenMessages.RemoveMessage(IVAkerbalPart);
-                        ScreenMessages.RemoveMessage(IVAkerbalPod);
+                        if (IVAKerbalName != null) ScreenMessages.RemoveMessage(IVAKerbalName);
+                        if (IVAkerbalPart != null) ScreenMessages.RemoveMessage(IVAkerbalPart);
+                        if (IVAkerbalPod != null) ScreenMessages.RemoveMessage(IVAkerbalPod);
                         vesselisinIVA = false;
                         // Utilities.Log_Debug("Vessel is NOT in IVA mode");
-                        if (Utilities.IsInInternal())
+                        if (Utilities.IsActiveVessel(vessel) && Utilities.IsInInternal)
                         {
                             vesselisinInternal = true;
                             if (TotalFrozen > 0 && !mon_beep.isPlaying)
@@ -662,133 +725,309 @@ namespace DF
         {
             try
             {
-                string transparentPodSetting = string.Empty;
-                object JSITransparentPodModule = part.Modules["JSITransparentPod"];
+                //Get the TransparentPodPartModule and only proceed if we find one.
+                JSITransparentPodModule = part.Modules["JSIAdvTransparentPod"];
                 if (JSITransparentPodModule != null)
                 {
+                    //Get the transparentPodSetting (ON/OFF/AUTO) and only proceed if we got it.
                     object outputField = Utilities.GetObjectField(JSITransparentPodModule, "transparentPodSetting");
                     if (outputField != null)
                     {
-                        transparentPodSetting = outputField.ToString();
+                        string transparentPodSetting = outputField.ToString();
+                        //We only need to do this processing if the Pod Setting has CHANGED since last time we checked.
                         if (transparentPodSetting != _prevRPMTransparentpodSetting)
                         {
-                            switch (transparentPodSetting)
+                            if (PartHasDoor) //CRY-0300
                             {
-                                case "ON":
-                                    if (hasExternalDoor)  //CRY-0300
-                                    {
-                                        // If the doors are closed or closing set open doors event active
-                                        if (_externaldoorstate != DoorState.CLOSED && _externaldoorstate != DoorState.CLOSING)
-                                        {
-                                            Events["eventOpenDoors"].active = false;
-                                            Events["eventCloseDoors"].active = true;
-                                        }
-                                        else
-                                        {
-                                            //If the doors are open or opening set close doors event active
-                                            if (_externaldoorstate != DoorState.OPEN && _externaldoorstate != DoorState.OPENING)
-                                            {
-                                                Events["eventOpenDoors"].active = true;
-                                                Events["eventCloseDoors"].active = false;
-                                            }
-                                        }
-                                    }
-                                    else //CRY-0300R
-                                    {
-                                        for (int i = 0; i < FreezerSize; i++)
-                                        {
-                                            string windowname = "Cryopod-" + (i + 1) + "-Window";
-                                            Renderer extwindowrenderer = part.FindModelComponent<Renderer>(windowname);
-                                            if (extwindowrenderer != null)
-                                            {
-                                                if (HighLogic.LoadedSceneIsFlight)  //If in flight, we check the pod state
-                                                {
-                                                    if (!cryopodstateclosed[i])  //Pod is open
-                                                    {
-                                                        if (extwindowrenderer.material.shader != TransparentSpecularShader)
-                                                            setCryopodWindowTransparent(i);
-                                                    }
-                                                    else  //Pod is closed
-                                                    {
-                                                        if (extwindowrenderer.material.shader != KSPSpecularShader)
-                                                            setCryopodWindowSpecular(i);
-                                                    }
-                                                }
-                                                else  //If in editor, always transparent
-                                                {
-                                                    if (extwindowrenderer.material.shader != TransparentSpecularShader)
-                                                        setCryopodWindowTransparent(i);
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    break;
-
-                                default:
-                                    Utilities.Log_Debug("RPM set to OFF or AUTO for transparent pod");
-                                    if (hasExternalDoor)  //CRY-0300
-                                    {
-                                        //hasExternalDoor = false;
-                                        // We must close the doors if they are not or we see an empty internal.
-
-                                        DoorState actualDoorState = getdoorState();
-                                        if (actualDoorState != DoorState.CLOSED)
-                                        {
-                                            try
-                                            {
-                                                Animation anim;
-                                                Animation[] animators = part.internalModel.FindModelAnimators("DOORHandle");
-                                                if (animators.Length > 0)
-                                                {
-                                                    anim = animators[0];
-                                                    anim["DOORHandle"].speed = float.MinValue;
-                                                    anim["DOORHandle"].normalizedTime = 1;
-                                                    anim.Play("DOORHandle");
-                                                }
-                                                ext_door.Play();
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                Debug.Log("Exception trying to run the Doorhandle animation");
-                                                Debug.Log("Err: " + ex);
-                                            }
-                                            if (animationName != null)
-                                            {
-                                                externalDoorAnim[animationName].normalizedTime = 1;
-                                                externalDoorAnim[animationName].speed = float.MinValue;
-                                                externalDoorAnim.Play("Open");
-                                            }
-                                            _prevexterndoorstate = _externaldoorstate;
-                                            _externaldoorstate = DoorState.CLOSED;
-                                        }
-                                        Events["eventOpenDoors"].active = false;
-                                        Events["eventCloseDoors"].active = false;
-                                    }
-                                    else  //CRY-0300R
-                                    {
-                                        for (int i = 0; i < FreezerSize; i++)
-                                        {
-                                            string windowname = "Cryopod-" + (i + 1) + "-Window";
-                                            Renderer extwindowrenderer = part.FindModelComponent<Renderer>(windowname);
-
-                                            if (extwindowrenderer != null)
-                                            {
-                                                if (extwindowrenderer.material.shader != KSPSpecularShader)
-                                                    setCryopodWindowSpecular(i);
-                                            }
-                                        }
-                                    }
-                                    break;
+                                processRPMPodSettingsPartHasDoor(transparentPodSetting);
+                            }
+                            else
+                            {
+                                if (isPodExternal) //CRY-0300R
+                                {
+                                    processRPMPodSettingsPodisExternal(transparentPodSetting);
+                                }
                             }
                             _prevRPMTransparentpodSetting = transparentPodSetting;
                         }
+
+                        
                     }
                 }
             }
             catch (Exception)
             {
                 Utilities.Log("DeepFreezer Error checking RPM TransparentPod Setting");
+                //Utilities.Log("DeepFreezer ", ex.Message);
+            }
+        }
+
+        private void processRPMPodSettingsPartHasDoor(string transparentPodSetting)
+        {
+            switch (transparentPodSetting)
+            {
+                case "ON":
+                    // If the doors are closed or closing set open doors event active
+                    if (_externaldoorstate != DoorState.CLOSED &&
+                        _externaldoorstate != DoorState.CLOSING)
+                    {
+                        Events["eventOpenDoors"].active = false;
+                        Events["eventCloseDoors"].active = true;
+                    }
+                    else
+                    {
+                        //If the doors are open or opening set close doors event active
+                        if (_externaldoorstate != DoorState.OPEN &&
+                            _externaldoorstate != DoorState.OPENING)
+                        {
+                            Events["eventOpenDoors"].active = true;
+                            Events["eventCloseDoors"].active = false;
+                        }
+                    }
+                    break;
+
+                default:
+                    Utilities.Log_Debug("RPM set to OFF or AUTO for transparent pod");
+                    
+                    // We must close the doors if they are not or we see an empty internal.
+                    DoorState actualDoorState = getdoorState();
+                    if (actualDoorState != DoorState.CLOSED)
+                    {
+                        try
+                        {
+                        //Animate the RPM Door Handle Prop
+                        Animation anim;
+                            Animation[] animators =
+                                part.internalModel.FindModelAnimators("DOORHandle");
+                            if (animators.Length > 0)
+                            {
+                                anim = animators[0];
+                                anim["DOORHandle"].speed = float.MinValue;
+                                anim["DOORHandle"].normalizedTime = 1;
+                                anim.Play("DOORHandle");
+                            }
+                            ext_door.Play();
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.Log("Exception trying to run the Doorhandle animation");
+                            Debug.Log("Err: " + ex);
+                        }
+
+                        //Run the Close Door Animation.
+                        if (animationName != null)
+                        {
+                            if (externalDoorAnimOccluder != null)
+                            {
+                                externalDoorAnimOccluder[animationName].normalizedTime = 1;
+                                externalDoorAnimOccluder[animationName].speed = float.MinValue;
+                                externalDoorAnimOccluder.Play(animationName);
+                            }
+                            externalDoorAnim[animationName].normalizedTime = 1;
+                            externalDoorAnim[animationName].speed = float.MinValue;
+                            externalDoorAnim.Play(animationName);
+                        }
+                        _prevexterndoorstate = _externaldoorstate;
+                        _externaldoorstate = DoorState.CLOSED;
+                    }
+                    Events["eventOpenDoors"].active = false;
+                    Events["eventCloseDoors"].active = false;
+                    
+                    break;
+            }
+        }
+
+        private void processRPMPodSettingsPodisExternal(string transparentPodSetting)
+        {
+            switch (transparentPodSetting)
+            {
+                case "ON":
+                    
+                    for (int i = 0; i < FreezerSize; i++)
+                    {
+                        string windowname = "Cryopod-" + (i + 1) + "-Window";
+                        Renderer extwindowrenderer = part.FindModelComponent<Renderer>(windowname);
+                        if (extwindowrenderer != null)
+                        {
+                            if (HighLogic.LoadedSceneIsFlight)
+                            //If in flight, we check the pod state
+                            {
+                                if (!cryopodstateclosed[i]) //No frozen kerbal inside
+                                {
+                                    if (extwindowrenderer.material.shader != TransparentSpecularShader)
+                                    {
+                                        setCryopodWindowTransparent(i);
+                                    }
+                                }
+                                else //Frozen kerbal inside
+                                {
+                                    if (extwindowrenderer.material.shader != KSPSpecularShader)
+                                    {
+                                        setCryopodWindowSpecular(i);
+                                    }
+                                }
+                            }
+                            else //If in editor, always transparent
+                            {
+                                if (extwindowrenderer.material.shader != TransparentSpecularShader)
+                                {
+                                    setCryopodWindowTransparent(i);
+                                }
+                            }
+                        }
+                    }
+                    break;
+
+                default:
+                    Utilities.Log_Debug("RPM set to OFF or AUTO for transparent pod");
+                    
+                    for (int i = 0; i < FreezerSize; i++)
+                    {
+                        string windowname = "Cryopod-" + (i + 1) + "-Window";
+                        Renderer extwindowrenderer = part.FindModelComponent<Renderer>(windowname);
+
+                        if (extwindowrenderer != null)
+                        {
+                            if (extwindowrenderer.material.shader != KSPSpecularShader)
+                            {
+                                setCryopodWindowSpecular(i);
+                            }
+                        }
+                    }
+                    break;
+            }
+        }
+
+        private void RPMPodOccluderProcessing()
+        {
+            try
+            {
+                //We have to process the occluders for the CRY-0300 and CRY-0300R for KSP 1.1
+                if (HighLogic.LoadedSceneIsFlight && !Utilities.IsInIVA)
+                {
+                    //Get the TransparentPodPartModule and only proceed if we find one.
+                    JSITransparentPodModule = part.Modules["JSIAdvTransparentPod"];
+                    if (JSITransparentPodModule != null)
+                    {
+                        //Get the transparentPodSetting (ON/OFF/AUTO) and only proceed if we got it.
+                        object outputField = Utilities.GetObjectField(JSITransparentPodModule, "transparentPodSetting");
+                        if (outputField != null)
+                        {
+                            string transparentPodSetting = outputField.ToString();
+                            if (PartHasDoor) //If CRY-0300, set the door occluder ON so we see the closed/closing doors
+                            {
+                                if (transparentPodSetting == "ON")
+                                {
+                                    if (_externaldoorstate == DoorState.CLOSED ||
+                                        _externaldoorstate == DoorState.CLOSING ||
+                                        _externaldoorstate == DoorState.OPENING)
+                                        //If the Door is Closed, closing or opening
+                                    {
+                                        //If Stock Overlay is on we turn the Occluder OFF so we can see inside.
+                                        //Otherwise is it ON and we see the closed/closing/opening doors.
+                                        if (Utilities.StockOverlayCamIsOn)
+                                        {
+                                            Utilities.SetInternalDepthMask(part, false, "CRY_0300_Doors_Occluder");
+                                        }
+                                        else
+                                        {
+                                            Utilities.SetInternalDepthMask(part, true, "CRY_0300_Doors_Occluder");
+                                        }
+                                    }
+                                    else
+                                    //Door is Open we turn the Occluder OFF so we can see inside RPM style or Stock style, doesn't matter.
+                                    {
+                                        Utilities.SetInternalDepthMask(part, false, "CRY_0300_Doors_Occluder");
+                                    }
+                                }
+                                else //Podsetting is OFF or AUTO
+                                {
+                                    //If pod is OFF or AUTO the Doors are CLOSED so if Stock Overlay is on we turn the overlay OFF so we can see inside
+                                    //This will be ok and the Internal should be there because when Stock Overlay is on TransparentPods turns itself OFF
+                                    if (Utilities.StockOverlayCamIsOn)
+                                    {
+                                        Utilities.SetInternalDepthMask(part, false, "External_Window_Occluder");
+                                    }
+                                    else
+                                    //So Stock Overlay is off we want to see the CLOSED Doors so overlay is ON so we see the doors.
+                                    {
+                                        Utilities.SetInternalDepthMask(part, true, "External_Window_Occluder");
+                                    }
+                                }
+
+                            }
+                            else //CRY-0300R
+                            {
+                                //The CRY-0300R is a bit backwards. Occluders when ON will SHOW the external part.
+                                //So in the case of the CRY-0300R we want to SHOW the external PART when there is a frozen Kerbal only.
+                                //But don't cycle the Occluder if a freeze or thaw is running otherwise we interrupt the nice freeze/thaw
+                                //effect on the window glass.
+                                if (IsThawActive || IsFreezeActive)
+                                    return;
+                                if (!cryopodstateclosed[0] && transparentPodSetting == "ON") //No frozen kerbal inside
+                                {
+                                    Utilities.SetInternalDepthMask(part, false, "External_Window_Occluder");
+
+                                }
+                                else //Frozen kerbal inside or OFF or AUTO model.
+                                {
+                                    Utilities.SetInternalDepthMask(part, true, "External_Window_Occluder");
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                Utilities.Log("DeepFreezer Error setting RPM Occluders");
+                //Utilities.Log("DeepFreezer ", ex.Message);
+            }
+        }
+
+        private void noRPMPodOccluderProcessing()
+        {
+            try
+            {
+                //If RPM is not installed we need to set the depthshader occluders for the stock overlay processing.
+                //We have to process the occluders for the CRY-0300 and CRY-0300R for KSP 1.1
+                if (HighLogic.LoadedSceneIsFlight && !Utilities.IsInIVA)
+                {
+                    if (PartHasDoor)  //If CRY-0300, set the door occluder ON so we see the closed/closing doors
+                    {
+                        //If Stock Overlay is on we turn the Occluder OFF so we can see inside.
+                        //Otherwise is it ON.
+                        if (Utilities.StockOverlayCamIsOn)
+                        {
+                            Utilities.SetInternalDepthMask(part, false, "CRY_0300_Doors_Occluder");
+                        }
+                        else
+                        {
+                            Utilities.SetInternalDepthMask(part, true, "CRY_0300_Doors_Occluder");
+                        }
+                    }
+                    else //CRY-0300R
+                    {
+                        //The CRY-0300R is a bit backwards. Occluders when ON will SHOW the external part.
+                        //So in the case of the CRY-0300R we want to SHOW the external PART when there is a frozen Kerbal only.
+                        //But don't cycle the Occluder if a freeze or thaw is running otherwise we interrupt the nice freeze/thaw
+                        //effect on the window glass.
+                        
+                        if (!cryopodstateclosed[0] && (!IsThawActive || !IsFreezeActive)) //No frozen kerbal inside
+                        {
+                            Utilities.SetInternalDepthMask(part, false, "External_Window_Occluder");
+
+                        }
+                        else  //Frozen kerbal inside or freeze/thaw occuring. Can't see inside.
+                        {
+                            Utilities.SetInternalDepthMask(part, true, "External_Window_Occluder");
+                        }
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                Utilities.Log("DeepFreezer Error setting no RPM Occluders");
                 //Utilities.Log("DeepFreezer ", ex.Message);
             }
         }
@@ -852,7 +1091,7 @@ namespace DF
                 resetCryopods(true);
             }
 
-            if (part.Modules.Contains("JSITransparentPod"))
+            if (part.Modules.Contains("JSIAdvTransparentPod"))
             {
                 hasJSITransparentPod = true;
             }
@@ -867,7 +1106,7 @@ namespace DF
             }
 
             //If we have an external door (CRY-0300) enabled set the current door state and the helmet states
-            if (hasExternalDoor)
+            if (ExternalDoorActive)
             {
                 setHelmetstoDoorState();
             }
@@ -1015,7 +1254,7 @@ namespace DF
                         {
                             resetCryopods(true);
                         }
-                        if (hasExternalDoor)
+                        if (ExternalDoorActive)
                         {
                             setHelmetstoDoorState();
                             setDoorHandletoDoorState();
@@ -1055,7 +1294,7 @@ namespace DF
                     Utilities.Log_Debug("DeepFreezer Running the freezer parms currenttime = {0} timeperiod = {1} ecreqd = {2}" , currenttime.ToString(), timeperiod.ToString(), ECreqd.ToString());
                     if (requireResource(vessel, EC, ECreqd, false, out ResAvail))
                     {
-                        ScreenMessages.RemoveMessage(OnGoingECMsg);
+                        if (OnGoingECMsg != null) ScreenMessages.RemoveMessage(OnGoingECMsg);
                         //Have resource
                         requireResource(vessel, EC, ECreqd, true, out ResAvail);
                         FrznChargeUsage = (float)ResAvail;
@@ -1085,7 +1324,7 @@ namespace DF
                             partInfo.ECWarning = true;
                             deathCounter = currenttime;
                         }
-                        ScreenMessages.RemoveMessage(OnGoingECMsg);
+                        if (OnGoingECMsg != null) ScreenMessages.RemoveMessage(OnGoingECMsg);
                         OnGoingECMsg = ScreenMessages.PostScreenMessage(" Freezer Out of EC : Systems critical in " + (deathRoll - (currenttime - deathCounter)).ToString("######0") + " secs");
                         _FreezerOutofEC = true;
                         FrznChargeUsage = 0f;
@@ -1153,7 +1392,7 @@ namespace DF
                     if (part.temperature < DeepFreeze.Instance.DFsettings.RegTempMonitor)
                     {
                         Utilities.Log_Debug("DeepFreezer Temperature check is good parttemp=" + part.temperature + ",MaxTemp=" + DeepFreeze.Instance.DFsettings.RegTempMonitor);
-                        ScreenMessages.RemoveMessage(TempChkMsg);
+                        if (TempChkMsg != null) ScreenMessages.RemoveMessage(TempChkMsg);
                         _FrzrTmp = FrzrTmpStatus.OK;
                         tmpdeathCounter = currenttime;
                         // do warning if within 40 and 20 kelvin
@@ -1186,7 +1425,7 @@ namespace DF
                         }
                         _FrzrTmp = FrzrTmpStatus.RED;
                         Utilities.Log_Debug("DeepFreezer tmpdeathCounter = {0}" , tmpdeathCounter.ToString());
-                        ScreenMessages.RemoveMessage(TempChkMsg);
+                        if (TempChkMsg != null) ScreenMessages.RemoveMessage(TempChkMsg);
                         TempChkMsg = ScreenMessages.PostScreenMessage(" Freezer Over Temp : Systems critical in " + (tmpdeathRoll - (currenttime - tmpdeathCounter)).ToString("######0") + " secs");
                         if (currenttime - tmpdeathCounter > tmpdeathRoll)
                         {
@@ -1251,13 +1490,14 @@ namespace DF
                 GameEvents.onCrewBoardVessel.Add(OnCrewBoardVessel);
                 GameEvents.onCrewOnEva.Add(onCrewOnEva);
                 GameEvents.onVesselDestroy.Add(onVesselDestroy);
+                GameEvents.OnCameraChange.Add(OnCameraChange);
             }
 
             //Set Shaders for changing the Crypod Windows
             HashSet<Shader> shaders = new HashSet<Shader>();
             Resources.FindObjectsOfTypeAll<Shader>().ToList().ForEach(sh => shaders.Add(sh));
             List<Shader> listshaders = new List<Shader>(shaders);
-            TransparentSpecularShader = listshaders.Find(a => a.name == "Transparent/Specular");
+            TransparentSpecularShader = listshaders.Find(a => a.name == "Legacy Shaders/Transparent/Specular");
             KSPSpecularShader = listshaders.Find(b => b.name == "KSP/Specular");
 
             // Setup the sounds
@@ -1266,43 +1506,49 @@ namespace DF
                 mon_beep = gameObject.AddComponent<AudioSource>();
                 mon_beep.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/mon_beep");
                 mon_beep.volume = .2F;
-                mon_beep.panLevel = 0;
+                mon_beep.panStereo = 0;
+                mon_beep.spatialBlend = 0;
                 mon_beep.rolloffMode = AudioRolloffMode.Logarithmic;
-                mon_beep.audio.maxDistance = 10f;
-                mon_beep.audio.minDistance = 8f;
-                mon_beep.audio.dopplerLevel = 0f;
-                mon_beep.audio.panLevel = 0f;
-                mon_beep.audio.playOnAwake = false;
-                mon_beep.audio.priority = 255;
+                mon_beep.maxDistance = 10f;
+                mon_beep.minDistance = 8f;
+                mon_beep.dopplerLevel = 0f;
+                //mon_beep.panLevel = 0f;
+                mon_beep.playOnAwake = false;
+                mon_beep.priority = 255;
                 mon_beep.Stop();
                 flatline = gameObject.AddComponent<AudioSource>();
                 flatline.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/flatline");
                 flatline.volume = 1;
-                flatline.panLevel = 0;
+                flatline.panStereo = 0;
+                mon_beep.spatialBlend = 0;
                 flatline.rolloffMode = AudioRolloffMode.Linear;
                 flatline.Stop();
                 hatch_lock = gameObject.AddComponent<AudioSource>();
                 hatch_lock.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/hatch_lock");
                 hatch_lock.volume = .5F;
-                hatch_lock.panLevel = 0;
+                hatch_lock.panStereo = 0;
+                mon_beep.spatialBlend = 0;
                 hatch_lock.rolloffMode = AudioRolloffMode.Linear;
                 hatch_lock.Stop();
                 ice_freeze = gameObject.AddComponent<AudioSource>();
                 ice_freeze.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/ice_freeze");
                 ice_freeze.volume = 1;
-                ice_freeze.panLevel = 0;
+                ice_freeze.panStereo = 0;
+                mon_beep.spatialBlend = 0;
                 ice_freeze.rolloffMode = AudioRolloffMode.Linear;
                 ice_freeze.Stop();
                 machine_hum = gameObject.AddComponent<AudioSource>();
                 machine_hum.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/machine_hum");
                 machine_hum.volume = .2F;
-                machine_hum.panLevel = 0;
+                machine_hum.panStereo = 0;
+                mon_beep.spatialBlend = 0;
                 machine_hum.rolloffMode = AudioRolloffMode.Linear;
                 machine_hum.Stop();
                 ding_ding = gameObject.AddComponent<AudioSource>();
                 ding_ding.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/ding_ding");
                 ding_ding.volume = .4F;
-                ding_ding.panLevel = 0;
+                ding_ding.panStereo = 0;
+                mon_beep.spatialBlend = 0;
                 ding_ding.rolloffMode = AudioRolloffMode.Linear;
                 ding_ding.Stop();
                 List<UrlDir.UrlFile> databaseAudioFiles = new List<UrlDir.UrlFile>();
@@ -1310,24 +1556,26 @@ namespace DF
                 ext_door = gameObject.AddComponent<AudioSource>();
                 ext_door.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/externaldoorswitch");
                 ext_door.volume = .7F;
-                ext_door.panLevel = 0;
+                ext_door.panStereo = 0;
+                mon_beep.spatialBlend = 0;
                 ext_door.rolloffMode = AudioRolloffMode.Linear;
                 ext_door.Stop();
                 charge_up = gameObject.AddComponent<AudioSource>();
                 charge_up.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/charge_up");
                 charge_up.volume = 1;
-                charge_up.panLevel = 0;
+                charge_up.panStereo = 0;
+                mon_beep.spatialBlend = 0;
                 charge_up.rolloffMode = AudioRolloffMode.Linear;
                 charge_up.Stop();
             }
             //If we have an external door (CRY-0300) check if RPM is installed, if not disable the door, otherwise set it's current state (open/closed).
-            if (animationName != string.Empty)
+            if (animationName != string.Empty && PartHasDoor)
             {
                 externalDoorAnim = part.FindModelAnimators(animationName).FirstOrDefault();
                 if (externalDoorAnim == null)
                 {
                     Utilities.Log_Debug("Part has external animation defined but cannot find the animation on the part");
-                    hasExternalDoor = false;
+                    ExternalDoorActive = false;
                     Events["eventOpenDoors"].active = false;
                     Events["eventCloseDoors"].active = false;
                     if (transparentTransforms != string.Empty)
@@ -1335,11 +1583,20 @@ namespace DF
                 }
                 else
                 {
-                    Utilities.Log_Debug("Part has external animation, check if RPM is installed and process");
-                    if (DFInstalledMods.IsRPMInstalled)
+                    if (part.internalModel != null)
                     {
-                        Utilities.Log_Debug("RPM installed, set doorstate");
-                        hasExternalDoor = true;
+                        externalDoorAnimOccluder = part.internalModel.FindModelAnimators(animationName).FirstOrDefault();
+                    }
+                    else
+                    {
+                        externalDoorAnimOccluder = null;
+                        Utilities.Log_Debug("No InternalModel found to check for external door occluder animation");
+                    }
+                    Utilities.Log_Debug("Part has external animation, check if JSITransparentPods is installed and process");
+                    if (DFInstalledMods.IsJSITransparentPodsInstalled)
+                    {
+                        Utilities.Log_Debug("JSITransparentPods installed, set doorstate");
+                        ExternalDoorActive = true;
                         if (_externaldoorstate == DoorState.OPEN)
                         {
                             StartCoroutine(openDoors(float.MaxValue));
@@ -1351,8 +1608,8 @@ namespace DF
                     }
                     else  //RPM is not installed, disable the doors.
                     {
-                        Utilities.Log_Debug("RPM NOT installed, set transparent transforms");
-                        hasExternalDoor = false;
+                        Utilities.Log_Debug("JSITransparentPods NOT installed, set transparent transforms");
+                        ExternalDoorActive = false;
                         Events["eventOpenDoors"].active = false;
                         Events["eventCloseDoors"].active = false;
                         Utilities.Log_Debug("door actions/events off");
@@ -1393,6 +1650,7 @@ namespace DF
             GameEvents.onCrewBoardVessel.Remove(OnCrewBoardVessel);
             GameEvents.onCrewOnEva.Remove(onCrewOnEva);
             GameEvents.onVesselDestroy.Remove(onVesselDestroy);
+            GameEvents.OnCameraChange.Remove(OnCameraChange);
             Debug.Log("DeepFreezer END OnDestroy");
         }
 
@@ -1586,7 +1844,7 @@ namespace DF
                     {
                         requireResource(vessel, EC, ChargeRate, true, out ResAvail);
                         StoredCharge = StoredCharge + ChargeRate;
-                        ScreenMessages.RemoveMessage(FreezeMsg);
+                        if (FreezeMsg != null) ScreenMessages.RemoveMessage(FreezeMsg);
                         FreezeMsg = ScreenMessages.PostScreenMessage(" Cryopod - Charging: " + StoredCharge.ToString("######0"));
                         if (DeepFreeze.Instance.DFsettings.RegTempReqd)
                         {
@@ -1595,7 +1853,7 @@ namespace DF
                         Utilities.Log_Debug("DeepFreezer Drawing Charge StoredCharge =" + StoredCharge.ToString("0000.00") + " ChargeRequired =" + ChargeRequired);
                         if (StoredCharge >= ChargeRequired)
                         {
-                            ScreenMessages.RemoveMessage(FreezeMsg);
+                            if (FreezeMsg != null) ScreenMessages.RemoveMessage(FreezeMsg);
                             if (requireResource(vessel, Glykerol, GlykerolRequired, true, out ResAvail))
                             {
                                 charge_up.Stop(); // stop the sound effects
@@ -1613,6 +1871,7 @@ namespace DF
                 case 2:
                     //close the Pod door Hal
                     Utilities.Log_Debug("Freeze Step 2");
+                    
                     if (partHasInternals && isPodExternal)
                     // Part has no animated cryopods but has internals. skip to step 3.
                     {                        
@@ -1841,7 +2100,7 @@ namespace DF
             {
                 Utilities.Log_Debug("FreezeKerbalAbort " + CrewMember.name + " seat " + ToFrzeKerbalSeat);
                 ScreenMessages.PostScreenMessage("Freezing Aborted", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-                Utilities.setFrznKerbalLayer(CrewMember, true, false);
+                Utilities.setFrznKerbalLayer(part, CrewMember, true);
                 if (partHasInternals)
                 {
                     if (vesselisinIVA || vesselisinInternal)
@@ -1850,8 +2109,12 @@ namespace DF
                     }
                     if (isPartAnimated)
                         openCryopod(ToFrzeKerbalSeat, float.MaxValue);
-                    if (isPartAnimated || (isPodExternal && DFInstalledMods.IsRPMInstalled && _prevRPMTransparentpodSetting == "ON"))
+                    if (isPartAnimated || (isPodExternal && DFInstalledMods.IsJSITransparentPodsInstalled && _prevRPMTransparentpodSetting == "ON"))
                         thawCryopodWindow(ToFrzeKerbalSeat, float.MaxValue);
+                    if (isPodExternal && !DFInstalledMods.IsJSITransparentPodsInstalled)
+                    {
+                        
+                    }
                     cryopodstateclosed[ToFrzeKerbalSeat] = false;
                     savecryopodstatepersistent();
                     if (partHasStripLights && DeepFreeze.Instance.DFsettings.StripLightsActive)
@@ -1864,7 +2127,6 @@ namespace DF
                 {
                     Debug.Log("FreezeKerbalAbort Procedure FAILED! Critical error");
                 }
-
                 IsFreezeActive = false; // Turn the Freezer actively freezing mode off
                 FreezeStepInProgress = 0;
                 ClosePodAnimPlaying = false;
@@ -1874,15 +2136,10 @@ namespace DF
                 charge_up.Stop();
                 StoredCharge = 0; // Discharge all EC stored
                 UpdateCounts();  // Update the Crew counts
-                onvslchgInternal = true;
-                GameEvents.onVesselChange.Fire(vessel);
-                ScreenMessages.RemoveMessage(FreezeMsg);
-                //Add them from the GUIManager Portrait cams.
-                if (!KerbalGUIManager.ActiveCrew.Contains(CrewMember.KerbalRef))
-                {
-                    KerbalGUIManager.AddActiveCrew(CrewMember.KerbalRef);
-                    KerbalGUIManager.PrintActiveCrew();
-                }
+                //Add them to the portrait cams.
+                //Portraits.RestorePortrait(part, CrewMember.KerbalRef);
+                base.StartCoroutine(CallbackUtil.DelayedCallback(1, new Callback(this.fireOnVesselChange)));
+                if (FreezeMsg != null) ScreenMessages.RemoveMessage(FreezeMsg);
             }
             catch (Exception ex)
             {
@@ -1902,7 +2159,7 @@ namespace DF
             //Make them invisible
             if (partHasInternals)
             {
-                Utilities.setFrznKerbalLayer(CrewMember, false, false);
+                Utilities.setFrznKerbalLayer(part, CrewMember, false);
             }
             //Remove them
             if (!RemoveKerbal(CrewMember, ToFrzeKerbalSeat))
@@ -1942,6 +2199,19 @@ namespace DF
                         Utilities.Log("DeepFreeze Err: " + ex);
                     }
                 }
+                if (DFInstalledMods.IskerbalismInstalled) // IF Kerbalism Installed, remove tracking.
+                {
+                    Utilities.Log_Debug("kerbalism installed untrack kerbal=" + CrewMember.name);
+                    try
+                    {
+                        KBDisableKerbal(CrewMember.name, true);
+                    }
+                    catch (Exception ex)
+                    {
+                        Utilities.Log("DeepFreeze Exception attempting to untrack a kerbal in Kerbalism. Report this error on the Forum Thread.");
+                        Utilities.Log("DeepFreeze Err: " + ex);
+                    }
+                }
                 ScreenMessages.PostScreenMessage(CrewMember.name + " frozen", 5.0f, ScreenMessageStyle.UPPER_CENTER);
 
                 onvslchgInternal = true;
@@ -1967,6 +2237,19 @@ namespace DF
             else
             {
                 Debug.Log("DeepFreeze has been unable to connect to USI LS mod. API is not ready. Report this error on the Forum Thread.");
+            }
+        }
+
+        private void KBDisableKerbal(string crewmember, bool disable)
+        //This will remove tracking of a frozen kerbal from USI Life Support MOD, so that they don't consume resources when they are thawed.
+        {
+            if (KBWrapper.APIReady)
+            {
+                KBWrapper.KBActualAPI.DisableKerbal(crewmember, disable);
+            }
+            else
+            {
+                Debug.Log("DeepFreeze has been unable to connect to Kerbalism mod. API is not ready. Report this error on the Forum Thread.");
             }
         }
 
@@ -2032,7 +2315,7 @@ namespace DF
                     {
                         requireResource(vessel, EC, ChargeRate, true, out ResAvail);
                         StoredCharge = StoredCharge + ChargeRate;
-                        ScreenMessages.RemoveMessage(ThawMsg);
+                        if (ThawMsg != null) ScreenMessages.RemoveMessage(ThawMsg);
                         ThawMsg = ScreenMessages.PostScreenMessage(" Cryopod - Charging: " + StoredCharge.ToString("######0"));
 
                         if (DeepFreeze.Instance.DFsettings.RegTempReqd)
@@ -2042,7 +2325,7 @@ namespace DF
                         if (StoredCharge >= ChargeRequired)
                         {
                             Utilities.Log_Debug("Stored charge requirement met. Have EC");
-                            ScreenMessages.RemoveMessage(ThawMsg);
+                            if (ThawMsg != null) ScreenMessages.RemoveMessage(ThawMsg);
                             charge_up.Stop();
                             ThawStepInProgress = 2;
                         }
@@ -2059,7 +2342,7 @@ namespace DF
                             Utilities.Log_Debug("Thawing the cryopod window");
                             ice_freeze.Play();
                             ThawWindowAnimPlaying = true;
-                            if (isPartAnimated || (isPodExternal && DFInstalledMods.IsRPMInstalled && _prevRPMTransparentpodSetting == "ON"))
+                            if (isPartAnimated || (isPodExternal && DFInstalledMods.IsJSITransparentPodsInstalled && _prevRPMTransparentpodSetting == "ON"))
                                 thawCryopodWindow(ToThawKerbalSeat, 1f);
                             if (partHasStripLights && DeepFreeze.Instance.DFsettings.StripLightsActive)
                             {
@@ -2250,10 +2533,16 @@ namespace DF
                                     {
                                         Utilities.subdueIVAKerbalAnimations(kerbal.KerbalRef);
                                     }
-                                    Utilities.setFrznKerbalLayer(kerbal, true, false);  //Set the Kerbal renderer layers on so they are visible again.
+                                    Utilities.setFrznKerbalLayer(part, kerbal, true);  //Set the Kerbal renderer layers on so they are visible again.
                                     kerbal.KerbalRef.InPart = part; //Put their kerbalref back in the part.
                                     kerbal.KerbalRef.rosterStatus = ProtoCrewMember.RosterStatus.Assigned;
                                     codestep = 2;
+                                    //Add them to the portrait cams.
+                                    Portraits.RestorePortrait(part, kerbal.KerbalRef);
+                                    base.StartCoroutine(CallbackUtil.DelayedCallback(1, new Callback(this.fireOnVesselChange)));
+                                    base.StartCoroutine(CallbackUtil.DelayedCallback<Kerbal>(5, new Callback<Kerbal>(this.checkPortraitRegistered), kerbal.KerbalRef));
+                                    Utilities.Log_Debug("Expected condition met, kerbal already in their seat.");
+                                    codestep = 3;
                                     try
                                     {
                                         if (DFInstalledMods.IsTexReplacerInstalled)
@@ -2266,19 +2555,12 @@ namespace DF
                                         Debug.Log("Exception attempting to restore Kerbals Texture Replacer mod customisations. Report this error on the Forum Thread.");
                                         Debug.Log("Err: " + ex);
                                     }
-
-                                    codestep = 3;
-                                    KerbalGUIManager.AddActiveCrew(kerbal.KerbalRef); //Add them to the portrait cams.
-                                     Utilities.Log_Debug("Just thawing crew and added to GUIManager");
-                                    KerbalGUIManager.PrintActiveCrew();
-                                    //Utilities.setFrznKerbalLayer(kerbal, false, true);
-                                     Utilities.Log_Debug("Expected condition met, kerbal already in their seat.");
+                                    codestep = 4;
                                     // If in IVA mode set the camera to watch the process.
                                     if (vesselisinIVA || vesselisinInternal)
                                         setIVAFrzrCam(tmpcrew.SeatIdx);
-
-                                    codestep = 4;
-                                    if (hasExternalDoor)
+                                    codestep = 5;
+                                    if (ExternalDoorActive)
                                     {
                                         //now set the helmet state depending on the external door state.
                                         if (_externaldoorstate == DoorState.CLOSED)
@@ -2291,7 +2573,6 @@ namespace DF
                                         }
                                     }
                                      Utilities.Log_Debug("Finishing ThawKerbalStep0");
-                                    // Utilities.Log_Debug("Reference part after add=" + this.vessel.GetReferenceTransformPart().name + ",flightid=" + this.vessel.GetReferenceTransformPart().flightID);
                                 }
                                 catch (Exception ex)
                                 {
@@ -2302,7 +2583,7 @@ namespace DF
                                     ThawKerbalAbort(frozenkerbal);
                                 }
                             }
-                            else  //Seat is taken, but not by our frozen KErbal, we can't continue.
+                            else  //Seat is taken, but not by our frozen Kerbal, we can't continue.
                             {
                                  Utilities.Log_Debug("Seat taken by someone else, Abort");
                                 Debug.Log("Could not start kerbal Thaw process as seat is taken by another kerbal. Very Very Bad. Report this to Mod thread");
@@ -2320,23 +2601,29 @@ namespace DF
                             try
                             {
                                 part.internalModel.SitKerbalAt(kerbal, part.internalModel.seats[tmpcrew.SeatIdx]);
-                                if (hasExternalDoor)
+                                if (ExternalDoorActive)
                                 {
                                     //set the seat to allow helmet, this will cause the helmet to appear
                                     kerbal.seat.allowCrewHelmet = true;
                                 }
                                 codestep = 1;
                                 kerbal.seat.SpawnCrew();
-                                setseatstaticoverlay(part.internalModel.seats[tmpcrew.SeatIdx]);
                                 // Think this will get rid of the static that appears on the portrait camera
+                                setseatstaticoverlay(part.internalModel.seats[tmpcrew.SeatIdx]);
                                 if (kerbal.KerbalRef != null)
                                 {
                                     Utilities.subdueIVAKerbalAnimations(kerbal.KerbalRef);
                                 }
-                                Utilities.setFrznKerbalLayer(kerbal, true, false);  //Set the Kerbal renderer layers on so they are visible again.
+                                Utilities.setFrznKerbalLayer(part, kerbal, true);  //Set the Kerbal renderer layers on so they are visible again.
                                 kerbal.KerbalRef.InPart = part; //Put their kerbalref back in the part.
                                 kerbal.KerbalRef.rosterStatus = ProtoCrewMember.RosterStatus.Assigned;
                                 codestep = 2;
+                                //Add them to the portrait cams.
+                                Portraits.RestorePortrait(part, kerbal.KerbalRef);
+                                base.StartCoroutine(CallbackUtil.DelayedCallback(1, new Callback(this.fireOnVesselChange)));
+                                base.StartCoroutine(CallbackUtil.DelayedCallback<Kerbal>(5, new Callback<Kerbal>(this.checkPortraitRegistered), kerbal.KerbalRef));
+                                Utilities.Log_Debug("Just thawing crew and added to GUIManager");
+                                codestep = 3;
                                 try
                                 {
                                     if (DFInstalledMods.IsTexReplacerInstalled)
@@ -2349,16 +2636,11 @@ namespace DF
                                     Debug.Log("Exception attempting to restore Kerbals Texture Replacer mod customisations. Report this error on the Forum Thread.");
                                     Debug.Log("Err: " + ex);
                                 }
-
-                                codestep = 3;
-                                KerbalGUIManager.AddActiveCrew(kerbal.KerbalRef); //Add them to the portrait cams.
-                                 Utilities.Log_Debug("Just thawing crew and added to GUIManager");
-                                KerbalGUIManager.PrintActiveCrew();
                                 codestep = 4;
                                 if (vesselisinIVA || vesselisinInternal)
                                     setIVAFrzrCam(tmpcrew.SeatIdx);
                                 codestep = 5;
-                                if (hasExternalDoor)
+                                if (ExternalDoorActive)
                                 {
                                     //now set the helmet state depending on the external door state.
                                     if (_externaldoorstate == DoorState.CLOSED)
@@ -2467,9 +2749,9 @@ namespace DF
             {
                 if (isPartAnimated)
                     closeCryopod(ToThawKerbalSeat, float.MaxValue);
-                 Utilities.Log_Debug("Time freezewindow started " + Planetarium.GetUniversalTime());
+                // Utilities.Log_Debug("Time freezewindow started " + Planetarium.GetUniversalTime());
                 freezeCryopodWindow(ToThawKerbalSeat, float.MaxValue);
-                 Utilities.Log_Debug("Time freezewindow finished make them invisible " + Planetarium.GetUniversalTime());
+                // Utilities.Log_Debug("Time freezewindow finished make them invisible " + Planetarium.GetUniversalTime());
                 cryopodstateclosed[ToThawKerbalSeat] = true;
                 savecryopodstatepersistent();
                 if (partHasStripLights && DeepFreeze.Instance.DFsettings.StripLightsActive)
@@ -2478,8 +2760,8 @@ namespace DF
                 }
             }
             //Make them invisible again
-            Utilities.setFrznKerbalLayer(kerbal, false, false);
-            ScreenMessages.RemoveMessage(ThawMsg);
+            Utilities.setFrznKerbalLayer(part, kerbal, false);
+            if (ThawMsg != null) ScreenMessages.RemoveMessage(ThawMsg);
              Utilities.Log_Debug("ThawkerbalAbort End");
         }
 
@@ -2559,6 +2841,19 @@ namespace DF
             ding_ding.Play();
             OpenPodAnimPlaying = false;
             onvslchgInternal = true;
+            if (DFInstalledMods.IskerbalismInstalled) // IF Kerbalism Installed, add tracking.
+            {
+                Utilities.Log_Debug("kerbalism installed track kerbal=" + frozenkerbal);
+                try
+                {
+                    KBDisableKerbal(frozenkerbal, false);
+                }
+                catch (Exception ex)
+                {
+                    Utilities.Log("DeepFreeze Exception attempting to track a kerbal in Kerbalism. Report this error on the Forum Thread.");
+                    Utilities.Log("DeepFreeze Err: " + ex);
+                }
+            }
             GameEvents.onVesselChange.Fire(vessel);
             GameEvents.onVesselWasModified.Fire(vessel);
              Utilities.Log_Debug("ThawKerbalConfirm End");
@@ -2618,7 +2913,7 @@ namespace DF
                     ScreenMessages.PostScreenMessage("DeepFreezer mechanical failure", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                     return false;
                 }
-                if (partHasInternals && hasExternalDoor)
+                if (partHasInternals && ExternalDoorActive)
                     Utilities.setHelmetshaders(kerbal.KerbalRef, true);
                 // remove the CrewMember from the part crewlist and unregister their traits, because they are frozen, and this is the only way to trick the game.
                 kerbal.UnregisterExperienceTraits(part);
@@ -2633,19 +2928,14 @@ namespace DF
                     part.internalModel.seats[SeatIndx].taken = true; // Set their seat to Taken, because they are really still there. :)
                     seatTakenbyFrznKerbal[SeatIndx] = true;
                 }
+                if (kerbal.KerbalRef != null)
+                {
+                    //Remove them from the GUIManager Portrait cams.
+                    Portraits.DestroyPortrait(kerbal.KerbalRef);
+                }
                 // Set our newly frozen Popsicle, er Kerbal, to Unowned type (usually a Crew) and Dead status.
                 kerbal.type = ProtoCrewMember.KerbalType.Unowned;
                 kerbal.rosterStatus = ProtoCrewMember.RosterStatus.Dead;
-                if (kerbal.KerbalRef != null)
-                {
-                    kerbal.KerbalRef.InPart = null;
-                    //Remove them from the GUIManager Portrait cams.
-                    if (KerbalGUIManager.ActiveCrew.Contains(kerbal.KerbalRef))
-                    {
-                        KerbalGUIManager.RemoveActiveCrew(kerbal.KerbalRef);
-                        KerbalGUIManager.PrintActiveCrew();
-                    }
-                }
                 return true;
             }
             catch (Exception ex)
@@ -2662,7 +2952,6 @@ namespace DF
              Utilities.Log_Debug("Start AddKerbal " + kerbal.name);
             try
             {
-                //FrznCrewMbr tmpcrew = new FrznCrewMbr(kerbal.name, SeatIndx, this.vessel.id, this.vessel.name);
                 try
                 {
                     FrznCrewMbr tmpcrew = _StoredCrewList.Find(a => a.CrewName == kerbal.name);  // Find the thawed kerbal in the frozen kerbal list.
@@ -2697,7 +2986,7 @@ namespace DF
                     ScreenMessages.PostScreenMessage("DeepFreezer mechanical failure", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                     return false;
                 }
-                if (partHasInternals && hasExternalDoor)
+                if (partHasInternals && ExternalDoorActive)
                     Utilities.setHelmetshaders(kerbal.KerbalRef, true);
                 // add the CrewMember to the part crewlist and register their traits.
                 kerbal.RegisterExperienceTraits(part);
@@ -2730,19 +3019,15 @@ namespace DF
                     }
                     seatTakenbyFrznKerbal[SeatIndx] = false;
                 }
-                if (kerbal.KerbalRef != null)
+                /*if (kerbal.KerbalRef != null)
                 {
                     if (kerbal.KerbalRef.InPart == null)
                     {
                         kerbal.KerbalRef.InPart = part;
                     }
                     //Add themto the GUIManager Portrait cams.
-                    if (!KerbalGUIManager.ActiveCrew.Contains(kerbal.KerbalRef))
-                    {
-                        KerbalGUIManager.AddActiveCrew(kerbal.KerbalRef);
-                        KerbalGUIManager.PrintActiveCrew();
-                    }
-                }
+                    Portraits.RestorePortrait(kerbal.KerbalRef);
+                }*/
                  Utilities.Log_Debug("End AddKerbal");
                 return true;
             }
@@ -2751,6 +3036,16 @@ namespace DF
                 Debug.Log("Add Kerbal " + kerbal.name + " for DeepFreeze failed");
                 Debug.Log("Err: " + ex);
                 return false;
+            }
+        }
+
+        internal void checkPortraitRegistered(Kerbal kerbal)
+        {
+            List<KerbalPortrait> portraits = KerbalPortraitGallery.Instance.gameObject.GetComponentsInChildren<KerbalPortrait>().Where(a => a.crewMemberName == kerbal.crewMemberName).ToList();
+            if (!portraits.Any())
+            {
+                vessel.DespawnCrew();
+                base.StartCoroutine(CallbackUtil.DelayedCallback(3, new Callback(this.delayedSpawCrew)));
             }
         }
 
@@ -2847,21 +3142,9 @@ namespace DF
                             saveexternaldoorstatepersistent();
                             Utilities.Log_Debug(
                                 "DeepFreezer CrewXfer PartFull transfer them back, part is full - attempt to cancel stock xfer");
+                            Utilities.DeleteScreenMessages("", "UC");
                             ScreenMessages.PostScreenMessage("Cannot enter this freezer, part is full", 5.0f,
                                 ScreenMessageStyle.UPPER_CENTER);
-                            // Remove the transfer message that stock displayed.
-                            var message = new ScreenMessage(string.Empty, 15f, ScreenMessageStyle.LOWER_CENTER);
-                            var messages = FindObjectOfType<ScreenMessages>();
-                            if (messages != null)
-                            {
-                                var messagesToRemove =
-                                    messages.activeMessages.Where(
-                                        x =>
-                                            x.startTime == message.startTime &&
-                                            x.style == ScreenMessageStyle.LOWER_CENTER).ToList();
-                                foreach (var m in messagesToRemove)
-                                    ScreenMessages.RemoveMessage(m);
-                            }
                             xferisfromEVA = false;
                             xferfromPart = fromToAction.from;
                             xferfromSeat = fromToAction.host.seat;
@@ -2881,7 +3164,7 @@ namespace DF
                     if (SMWrapper.ShipManifestAPI.CrewXferActive)
                     {
                         Utilities.Log_Debug("SMXfer is running");
-                        FlightEVA.fetch.DisableInterface();
+                        CrewHatchController.fetch.DisableInterface();
                         savecryopodstatepersistent();
                         saveexternaldoorstatepersistent();
                         crewXferSMActive = SMWrapper.ShipManifestAPI.CrewXferActive;
@@ -2922,7 +3205,7 @@ namespace DF
             if (fromToAction.from == part)  // if the Xfer is FROM this part
             {
                 Utilities.Log_Debug("DeepFreezer crewXferFROMActive");
-                FlightEVA.fetch.DisableInterface();
+                CrewHatchController.fetch.DisableInterface();
                 removeFreezeEvent(fromToAction.host.name);  // Remove the Freeze Event for the crewMember leaving the part
                 if (fromToAction.to.Modules.Cast<PartModule>().Any(x => x is KerbalEVA)) // Kerbal is going EVA
                 {
@@ -2943,7 +3226,7 @@ namespace DF
             if (fromToAction.to == part)  // if the Xfer is TO this part
             {
                 Utilities.Log_Debug("DeepFreezer crewXferTOActive");
-                FlightEVA.fetch.DisableInterface();
+                CrewHatchController.fetch.DisableInterface();
                 _crewXferTOActive = true; // Set a flag to know a Xfer has started and we check when it is finished in
 
                 if (fromToAction.from.Modules.Cast<PartModule>().Any(x => x is KerbalEVA)) // Kerbal is entering from EVA
@@ -2973,16 +3256,8 @@ namespace DF
                 if (PartFull)  // If there is no free seats for this Kerbal we kick them back out.
                 {
                     Utilities.Log_Debug("DeepFreezer CrewXfer PartFull transfer them back, part is full - attempt to cancel stock xfer");
+                    Utilities.DeleteScreenMessages("","UC");
                     ScreenMessages.PostScreenMessage("Cannot enter this freezer, part is full", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-                    // Remove the transfer message that stock displayed.
-                    var message = new ScreenMessage(string.Empty, 15f, ScreenMessageStyle.LOWER_CENTER);
-                    var messages = FindObjectOfType<ScreenMessages>();
-                    if (messages != null)
-                    {
-                        var messagesToRemove = messages.activeMessages.Where(x => x.startTime == message.startTime && x.style == ScreenMessageStyle.LOWER_CENTER).ToList();
-                        foreach (var m in messagesToRemove)
-                            ScreenMessages.RemoveMessage(m);
-                    }
                     xferbackwhenFull = true;
                 }
                 timecrewXferTOfired = Time.time;
@@ -2997,7 +3272,7 @@ namespace DF
             {
                 Debug.Log("Crew XferTO Active, but freezer is full, revert Xfer");
                 xferBackifPartisFull();
-                FlightEVA.fetch.EnableInterface();
+                CrewHatchController.fetch.EnableInterface();
                 return;
             }
 
@@ -3015,7 +3290,7 @@ namespace DF
                 _crewXferFROMActive = false;
                 crewXferSMActive = false;
                 crewXferSMStock = false;
-                FlightEVA.fetch.EnableInterface();
+                CrewHatchController.fetch.EnableInterface();
                 return;
             }
 
@@ -3031,7 +3306,7 @@ namespace DF
                 _crewXferTOActive = false;
                 crewXferSMActive = false;
                 crewXferSMStock = false;
-                FlightEVA.fetch.EnableInterface();
+                CrewHatchController.fetch.EnableInterface();
                 return;
             }
 
@@ -3054,7 +3329,7 @@ namespace DF
                     _crewXferFROMActive = false;
                     crewXferSMActive = false;
                     crewXferSMStock = false;
-                    FlightEVA.fetch.EnableInterface();
+                    CrewHatchController.fetch.EnableInterface();
                     Utilities.Log_Debug("DeepFreezer CrewXferFROM SMXfer Completed");
                     return;
                 }
@@ -3069,7 +3344,7 @@ namespace DF
                     _crewXferFROMActive = false;
                     crewXferSMActive = false;
                     crewXferSMStock = false;
-                    FlightEVA.fetch.EnableInterface();
+                    CrewHatchController.fetch.EnableInterface();
                     Utilities.Log_Debug("DeepFreezer CrewXferFROM Stock Completed");
                     return;
                 }
@@ -3112,7 +3387,7 @@ namespace DF
                         _crewXferTOActive = false;
                         crewXferSMActive = false;
                         crewXferSMStock = false;
-                        FlightEVA.fetch.EnableInterface();
+                        CrewHatchController.fetch.EnableInterface();
                         Utilities.Log_Debug("DeepFreezer CrewXferTO SMXfer Completed");
                     }
                 }
@@ -3137,15 +3412,15 @@ namespace DF
                                     foundseat = true;
                                     part.RemoveCrewmember(xfercrew);
                                     part.AddCrewmemberAt(xfercrew, i);
-                                    IvaUpdateActive = true;
-                                    IvaPortraitDelay = 0;
+                                    //IvaUpdateActive = true;
+                                    //IvaPortraitDelay = 0;
                                     break;
                                 }
                             }
                             if (!foundseat) //If we didn't find a seat Transfer them back.
                             {
                                 xferBackifPartisFull();
-                                FlightEVA.fetch.EnableInterface();
+                                CrewHatchController.fetch.EnableInterface();
                                 return;
                             }
                         }
@@ -3155,7 +3430,7 @@ namespace DF
                         resetFrozenKerbals();
                         if (xferisfromEVA)
                         {
-                            if (hasExternalDoor)
+                            if (ExternalDoorActive)
                             {
                                 setHelmetstoDoorState();
                                 setDoorHandletoDoorState();
@@ -3180,7 +3455,7 @@ namespace DF
                         _crewXferTOActive = false;
                         crewXferSMActive = false;
                         crewXferSMStock = false;
-                        FlightEVA.fetch.EnableInterface();
+                        CrewHatchController.fetch.EnableInterface();
                         Utilities.Log_Debug("DeepFreezer CrewXferTO Stock Completed");
                     }
                     else
@@ -3199,7 +3474,7 @@ namespace DF
             if (xferisfromEVA)  // if it was from EVA send them back outside.
             {
                 Utilities.Log_Debug("DeepFreezer CrewXfer xferisfromEVA = true kick them out to EVA");
-                if (hasExternalDoor)
+                if (ExternalDoorActive)
                 {
                     setHelmetstoDoorState();
                     setDoorHandletoDoorState();
@@ -3209,8 +3484,8 @@ namespace DF
                 {
                     resetCryopods(true);
                 }
-                xferbackwhenFull = false;
-                FlightEVA.fetch.EnableInterface();
+                xferbackwhenFull = false;;
+                CrewHatchController.fetch.EnableInterface();
                 xferisfromEVA = false;
                 _crewXferTOActive = false;
                 crewXferSMActive = false;
@@ -3221,28 +3496,59 @@ namespace DF
             else // it wasn't from EVA so send them back to the part they came from.
             {
                 Utilities.Log_Debug("DeepFreezer CrewXfer xferisfromEVA = false kick them out to from part");
-                part.RemoveCrewmember(xfercrew);
-                xferfromPart.AddCrewmember(xfercrew);
+                xfercrew.UnregisterExperienceTraits(part);
+                part.protoModuleCrew.Remove(xfercrew);
+                if (part.internalModel != null)
+                {
+                    part.internalModel.UnseatKerbal(xfercrew);
+                }
+                xferfromPart.protoModuleCrew.Add(xfercrew);
+                xfercrew.RegisterExperienceTraits(xferfromPart);
+                if (xferfromPart.internalModel != null)
+                {
+                    InternalSeat seat = xferfromPart.internalModel.GetNextAvailableSeat();
+                    xferfromPart.internalModel.SitKerbalAt(xfercrew, seat);
+                }
+                else
+                {
+                    xfercrew.seatIdx = -1;
+                    xfercrew.seat = null;
+                }
                 setseatstaticoverlay(xfercrew.seat);
                 resetFrozenKerbals();
                 if (partHasInternals)
                 {
                     resetCryopods(true);
                 }
-                IvaUpdateActive = true;
-                IvaPortraitDelay = 0;
+                base.StartCoroutine(CallbackUtil.DelayedCallback(3, new Callback(this.delayedSpawCrew)));
             }
             onvslchgInternal = true;
             xferbackwhenFull = false;
-            FlightEVA.fetch.EnableInterface();
+            CrewHatchController.fetch.EnableInterface();
             GameEvents.onVesselChange.Fire(vessel);
             ScreenMessages.PostScreenMessage("Freezer is Full, cannot enter at this time", 5.0f, ScreenMessageStyle.UPPER_CENTER);
             xferisfromEVA = false;
             _crewXferTOActive = false;
             crewXferSMActive = false;
             crewXferSMStock = false;
-            FlightEVA.fetch.EnableInterface();
+            CrewHatchController.fetch.EnableInterface();
             Utilities.Log_Debug("Transfer back if Part is FULL ended");
+        }
+
+        //Delayed corountine to fire an internal onvesselchange, this forces the portraits system to refresh
+        internal void fireOnVesselChange()
+        {
+            onvslchgInternal = true;
+            GameEvents.onVesselChange.Fire(vessel);
+        }
+
+        //For crew Xfer borked by a full freezer and we transfer them back we have to spawn the vessel crew then fire the onvesselchange to get the 
+        // portraits system to refresh
+        internal void delayedSpawCrew()
+        {
+            vessel.SpawnCrew();
+            resetFrozenKerbals();
+            fireOnVesselChange();
         }
 
         // this is called when a vessel change event fires.
@@ -3276,10 +3582,7 @@ namespace DF
                 loadcryopodstatepersistent();
                 loadexternaldoorstatepersistent();
                 resetFrozenKerbals();
-                if (!hasJSITransparentPod)
-                {
-                    Utilities.CheckPortraitCams(vessel);
-                }
+                resetCryopods(true); 
             }
             else
             {
@@ -3290,6 +3593,12 @@ namespace DF
                     mon_beep.Stop();
                 }
             }
+        }
+
+        // when the camera mode changes reset the frozen kerbal portrait cams.
+        private void OnCameraChange(CameraManager.CameraMode cammode)
+        {
+            resetFrozenPortraits();
         }
 
         // this is called when vessel is destroyed.
@@ -3312,17 +3621,40 @@ namespace DF
                 FreezeKerbalAbort(ActiveFrzKerbal);
             }
         }
+        
+        /// <summary>
+        /// This Method will get a list of all frozen kerbals in this part and remove their Portrait Cameras from the PortraitGallery if there is one.
+        /// It is called when GameEvent OnCameraChange is fired.
+        /// </summary>
+        internal void resetFrozenPortraits()
+        {
+            // create a list of kerbal that are in this part in this vessel & they are not comatose/tourist
+            List<KeyValuePair<string, KerbalInfo>> FrznKerbalsinPart =
+                DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.Where(
+                    e =>
+                        e.Value.partID == CrntPartID && e.Value.vesselID == CrntVslID &&
+                        e.Value.type != ProtoCrewMember.KerbalType.Tourist).ToList();
+            for (int i = 0; i < FrznKerbalsinPart.Count; i++)
+            {
+                ProtoCrewMember crewmember = HighLogic.CurrentGame.CrewRoster.Unowned.FirstOrDefault(a => a.name == FrznKerbalsinPart[i].Key);
+                if (crewmember != null)
+                {
+                    Portraits.DestroyPortrait(crewmember.KerbalRef);
+                }
+            }
+        }
 
         internal void resetFrozenKerbals()
         {
             try
             {
-                // Create a list of kerbals that are in InvSeats (SeatIndx == -1 where kerbal is in this part in this vessel & they are not comatose/tourist
+                // Create a list of kerbals that are in Invalid Seats (SeatIndx == -1 where kerbal is in this part in this vessel & they are not comatose/tourist
                 List<KeyValuePair<string, KerbalInfo>> kerbalsInvSeats = DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.Where(e => e.Value.partID == CrntPartID && e.Value.vesselID == CrntVslID && e.Value.type != ProtoCrewMember.KerbalType.Tourist && e.Value.seatIdx == -1).ToList();
                 // create a list of kerbal that are in this part in this vessel & they are not comatose/tourist
                 List<KeyValuePair<string, KerbalInfo>> FrznKerbalsinPart = DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.Where(e => e.Value.partID == CrntPartID && e.Value.vesselID == CrntVslID && e.Value.type != ProtoCrewMember.KerbalType.Tourist).ToList();
-
-                if (kerbalsInvSeats.Any()) //If we found any Invalid Seat assignments we need to find them empty seats
+                
+                //If we found any Invalid Seat assignments we need to find them empty seats
+                if (kerbalsInvSeats.Any()) 
                 {
                     bool[] seatIndxs = new bool[FreezerSize];  //Create a bool array to store whether seats are taken or not
                                                                //go through all the frozen kerbals in the part that don't have invalid seats and set bool array seat index to true (taken) for each
@@ -3352,6 +3684,7 @@ namespace DF
                         }
                     }
                 }
+
                 // Iterate through the dictionary of all known frozen kerbals where kerbal is in this part in this vessel & they are not comatose/tourist
                 foreach (KeyValuePair<string, KerbalInfo> kerbal in FrznKerbalsinPart)
                 {
@@ -3365,45 +3698,50 @@ namespace DF
                         _StoredCrewList.Add(fzncrew);
                     }
 
-                    //check if they are in part spawned, if not do so.
+                    //check if they are in the part and spawned, if not do so.
                     ProtoCrewMember crewmember = HighLogic.CurrentGame.CrewRoster.Unowned.FirstOrDefault(a => a.name == kerbal.Key);
-                    if (partHasInternals)
+                    if (crewmember != null)
                     {
-                        crewmember.seatIdx = kerbal.Value.seatIdx;
-                        if (crewmember.seatIdx != -1 && crewmember.seatIdx < FreezerSize)
-                            crewmember.seat = part.internalModel.seats[crewmember.seatIdx];
-                        if (crewmember.KerbalRef == null)
+                        if (partHasInternals)
                         {
-                            crewmember.Spawn();
+                            crewmember.seatIdx = kerbal.Value.seatIdx;
+                            if (crewmember.seatIdx != -1 && crewmember.seatIdx < FreezerSize)
+                                crewmember.seat = part.internalModel.seats[crewmember.seatIdx];
+                            if (crewmember.KerbalRef == null)
+                            {
+                                crewmember.Spawn();
+                            }
+                            crewmember.KerbalRef.transform.parent =
+                                part.internalModel.seats[crewmember.seatIdx].seatTransform;
+                            crewmember.KerbalRef.transform.localPosition = Vector3.zero;
+                            crewmember.KerbalRef.transform.localRotation = Quaternion.identity;
+                            crewmember.KerbalRef.InPart = null;
+                            if (ExternalDoorActive)
+                            {
+                                //set the seat to allow helmet, this will cause the helmet to appear
+                                crewmember.KerbalRef.showHelmet = true;
+                            }
+                            else
+                            {
+                                crewmember.KerbalRef.showHelmet = false;
+                                crewmember.KerbalRef.ShowHelmet(false);
+                            }
+                            seatTakenbyFrznKerbal[crewmember.seatIdx] = true;
+                            //setup seat and part settings for frozen kerbal.
+                            Utilities.setFrznKerbalLayer(part, crewmember, false);
+                            part.internalModel.seats[crewmember.seatIdx].taken = true;
+                            part.internalModel.seats[crewmember.seatIdx].kerbalRef = crewmember.KerbalRef;
+                            part.internalModel.seats[crewmember.seatIdx].crew = crewmember;
+                            setseatstaticoverlay(part.internalModel.seats[crewmember.seatIdx]);
                         }
-                        crewmember.KerbalRef.transform.parent = part.internalModel.seats[crewmember.seatIdx].seatTransform;
-                        crewmember.KerbalRef.transform.localPosition = Vector3.zero;
-                        crewmember.KerbalRef.transform.localRotation = Quaternion.identity;
-                        crewmember.KerbalRef.InPart = null;
-                        if (hasExternalDoor)
-                        {
-                            //set the seat to allow helmet, this will cause the helmet to appear
-                            crewmember.KerbalRef.showHelmet = true;
-                        }
-                        else
-                        {
-                            crewmember.KerbalRef.showHelmet = false;
-                            crewmember.KerbalRef.ShowHelmet(false);
-                        }
-                        seatTakenbyFrznKerbal[crewmember.seatIdx] = true;
-                        //setup seat and part settings for frozen kerbal.
-                        Utilities.setFrznKerbalLayer(crewmember, false, false);
-                        part.internalModel.seats[crewmember.seatIdx].taken = true;
-                        part.internalModel.seats[crewmember.seatIdx].kerbalRef = crewmember.KerbalRef;
-                        part.internalModel.seats[crewmember.seatIdx].crew = crewmember;
-                        setseatstaticoverlay(part.internalModel.seats[crewmember.seatIdx]);
+                        //Unregister their traits/abilities and remove them from the Portrait Cameras if they are there.
+                        crewmember.UnregisterExperienceTraits(part);
+                        part.protoModuleCrew.Remove(crewmember);
+                        Portraits.DestroyPortrait(crewmember.KerbalRef);
                     }
-                    //Unregister their traits/abilities and remove them from the Portrait Cameras if they are there.
-                    crewmember.UnregisterExperienceTraits(part);
-                    part.protoModuleCrew.Remove(crewmember);
-                    if (KerbalGUIManager.ActiveCrew.Contains(crewmember.KerbalRef))
+                    else
                     {
-                        KerbalGUIManager.RemoveActiveCrew(crewmember.KerbalRef);
+                        Utilities.Log("DeepFreezer Error attempting to resetFrozenKerbal {0}, cannot find them in the Roster", kerbal.Key);
                     }
                 }
             }
@@ -3445,14 +3783,15 @@ namespace DF
                         // reset seats to TAKEN for all frozen kerbals in the part, check KerbalRef is still in place or re-instantiate it and check frozen kerbals
                         // are not appearing in the Portrait Cameras, if they are remove them.
                         //Utilities.Log_Debug("DeepFreezer StoredCrewList");
-                        foreach (FrznCrewMbr lst in _StoredCrewList)
+                        for (int i = 0; i < _StoredCrewList.Count; i++)
+                        //{
+                        //    foreach (FrznCrewMbr lst in _StoredCrewList)
                         {
+                            FrznCrewMbr lst = _StoredCrewList[i];
                             part.internalModel.seats[lst.SeatIdx].taken = true;
-                            seatTakenbyFrznKerbal[lst.SeatIdx] = true;                            
-                            if (partHasInternals)
-                            {
-                                setCryopodWindowSpecular(lst.SeatIdx);
-                            }
+                            seatTakenbyFrznKerbal[lst.SeatIdx] = true;                          
+                            setCryopodWindowSpecular(lst.SeatIdx);
+                            
                             ProtoCrewMember kerbal = HighLogic.CurrentGame.CrewRoster.Unowned.FirstOrDefault(a => a.name == lst.CrewName);
                             if (kerbal == null)
                             {
@@ -3463,24 +3802,17 @@ namespace DF
                                 if (kerbal.KerbalRef == null)  // Check if the KerbalRef is null, as this causes issues with CrewXfers, if it is, respawn it.
                                 {
                                      Utilities.Log_Debug("Kerbalref = null");
-                                    kerbal.rosterStatus = ProtoCrewMember.RosterStatus.Dead;
-                                    kerbal.type = ProtoCrewMember.KerbalType.Unowned;
                                     part.internalModel.seats[lst.SeatIdx].crew = kerbal;
                                     part.internalModel.seats[lst.SeatIdx].SpawnCrew();  // This spawns the Kerbal and sets the seat.kerbalref
                                     setseatstaticoverlay(part.internalModel.seats[lst.SeatIdx]);
-                                    //Remove them from the GUIManager Portrait cams.
-                                    if (KerbalGUIManager.ActiveCrew.Contains(kerbal.KerbalRef))
-                                    {
-                                        KerbalGUIManager.RemoveActiveCrew(kerbal.KerbalRef);
-                                        KerbalGUIManager.PrintActiveCrew();
-                                    }
+                                    kerbal.KerbalRef.InPart = null;
+                                    kerbal.rosterStatus = ProtoCrewMember.RosterStatus.Dead;
+                                    kerbal.type = ProtoCrewMember.KerbalType.Unowned;
                                 }
-                                Utilities.setFrznKerbalLayer(kerbal, false, false);  // Double check kerbal is invisible.
+                                //Remove them from the GUIManager Portrait cams.
+                                Portraits.DestroyPortrait(kerbal.KerbalRef);
+                                Utilities.setFrznKerbalLayer(part, kerbal, false);  // Double check kerbal is invisible.
                             }
-                            string kerblrefstring;
-                            if (part.internalModel.seats[lst.SeatIdx].kerbalRef == null) kerblrefstring = "kerbalref not found";
-                            else kerblrefstring = part.internalModel.seats[lst.SeatIdx].kerbalRef.crewMemberName;
-                            //Utilities.Log_Debug("DeepFreezer Frozen Crew SeatIdx= " + lst.SeatIdx + ",Seattaken=" + this.part.internalModel.seats[lst.SeatIdx].taken + ",KerbalRef=" + kerblrefstring);
                         }
                     }
                     //Utilities.Log_Debug("DeepFreezer UpdateCounts end");
@@ -3556,7 +3888,7 @@ namespace DF
                             cryopodstateclosed[i] = bool.Parse(cryopodstatestring[i]);
                         }
                     }
-                    Debug.Log("Load cryopodstatepersistent value " + cryopodstateclosedstring);
+                    //Debug.Log("Load cryopodstatepersistent value " + cryopodstateclosedstring);
                 }
                 catch (Exception ex)
                 {
@@ -3574,7 +3906,7 @@ namespace DF
                 {
                     cryopodstateclosedstring = string.Empty;
                     cryopodstateclosedstring = string.Join(", ", cryopodstateclosed.Select(b => b.ToString()).ToArray());
-                    Debug.Log("Save cryopodstatepersistent value " + cryopodstateclosedstring);
+                    //Debug.Log("Save cryopodstatepersistent value " + cryopodstateclosedstring);
                 }
                 catch (Exception ex)
                 {
@@ -3589,7 +3921,7 @@ namespace DF
             try
             {
                 // If resetall is true we check the last time a resetall was done, if it is within cryopodREsettimeDelay seconds
-                // we skil this resetcryopods call (so we don't see flickering).
+                // we skip this resetcryopods call (so we don't see flickering).
                 //Otherwise we set all cryopodstatclosed to true which will force processing further down to open pods that
                 // may already be open , regardless.
                 if (resetall)
@@ -3628,9 +3960,7 @@ namespace DF
                             if (isPartAnimated)
                                 closeCryopod(i, float.MaxValue);
                             cryopodstateclosed[i] = true;
-                            // Utilities.Log_Debug("Time freezewindow started " + Planetarium.GetUniversalTime());
                             freezeCryopodWindow(i, float.MaxValue);
-                            // Utilities.Log_Debug("Time freezewindow finished make them invisible " + Planetarium.GetUniversalTime());
                         }
                         else
                         {
@@ -3647,13 +3977,15 @@ namespace DF
                             {                                
                                 openCryopod(i, float.MaxValue);
                             }
-                            thawCryopodWindow(i, float.MaxValue);                            
+                            if (isPartAnimated || (isPodExternal && DFInstalledMods.IsJSITransparentPodsInstalled && _prevRPMTransparentpodSetting == "ON"))
+                                thawCryopodWindow(i, float.MaxValue);
                             cryopodstateclosed[i] = false;
                         }
                         else
                         {
-                             Utilities.Log_Debug("pod is already open");                            
-                            thawCryopodWindow(i, float.MaxValue);
+                             Utilities.Log_Debug("pod is already open");
+                            if (isPartAnimated || (isPodExternal && DFInstalledMods.IsJSITransparentPodsInstalled && _prevRPMTransparentpodSetting == "ON"))
+                                thawCryopodWindow(i, float.MaxValue);
                         }
                     }
                     setseatstaticoverlay(part.internalModel.seats[i]);
@@ -3670,7 +4002,6 @@ namespace DF
         private void openCryopod(int seatIndx, float speed) //only called for animated internal parts
         {
             string podname = "Animated-Cryopod-" + (seatIndx + 1);
-            string windowname = "Animated-Cryopod-" + (seatIndx + 1) + "-Window";
             try
             {
                 _animation = part.internalModel.FindModelComponent<Animation>(podname);
@@ -3708,6 +4039,7 @@ namespace DF
             if (isPodExternal)
             {
                 _extwindowAnimation = part.FindModelComponent<Animation>(windowname);
+                Utilities.SetInternalDepthMask(part, false, "External_Window_Occluder"); //Set window occluder off
             }
 
             if (_windowAnimation == null)
@@ -3718,11 +4050,11 @@ namespace DF
             {
                 _windowAnimation["CryopodWindowOpen"].speed = speed;
                 _windowAnimation.Play("CryopodWindowOpen");
-                if (isPodExternal && _extwindowAnimation != null)
-                {
-                    _extwindowAnimation["CryopodWindowOpen"].speed = speed;
-                    _extwindowAnimation.Play("CryopodWindowOpen");
-                }
+            }
+            if (isPodExternal && _extwindowAnimation != null)
+            {
+                _extwindowAnimation["CryopodWindowOpen"].speed = speed;
+                _extwindowAnimation.Play("CryopodWindowOpen");
             }
         }
 
@@ -3736,6 +4068,7 @@ namespace DF
                     windowname = "Animated-Cryopod-" + (seatIndx + 1) + "-Window";
                 else
                     windowname = "Cryopod-" + (seatIndx + 1) + "-Window";
+                
                 Renderer windowrenderer = part.internalModel.FindModelComponent<Renderer>(windowname);
                 if (windowrenderer != null)
                 {
@@ -3772,15 +4105,18 @@ namespace DF
                 if (isPartAnimated)
                     windowname = "Animated-Cryopod-" + (seatIndx + 1) + "-Window";
                 else
-                    windowname = "Cryopod-" + (seatIndx + 1) + "-Window";
+                    windowname = "Cryopod-" + (seatIndx + 1) + "-Window"; 
 
                 Renderer windowrenderer = part.internalModel.FindModelComponent<Renderer>(windowname);
                 Renderer extwindowrenderer = null;
                 if (isPodExternal)
                     extwindowrenderer = part.FindModelComponent<Renderer>(windowname);
 
-                if (windowrenderer != null && windowrenderer.material.shader != KSPSpecularShader)
-                    windowrenderer.material.shader = KSPSpecularShader;
+                if (windowrenderer != null)
+                {
+                    if (windowrenderer.material.shader != KSPSpecularShader)
+                        windowrenderer.material.shader = KSPSpecularShader;
+                }
                 
                 if (isPodExternal && extwindowrenderer != null)
                 {
@@ -3852,7 +4188,7 @@ namespace DF
 
         private void freezeCryopodWindow(int seatIndx, float speed)
         {
-            if (isPartAnimated || (isPodExternal && DFInstalledMods.IsRPMInstalled && _prevRPMTransparentpodSetting == "ON"))
+            if (isPartAnimated || (isPodExternal && DFInstalledMods.IsJSITransparentPodsInstalled && _prevRPMTransparentpodSetting == "ON"))
                 setCryopodWindowTransparent(seatIndx);
             else
                 speed = float.MaxValue;
@@ -3867,6 +4203,7 @@ namespace DF
             if (isPodExternal)
             {
                 _extwindowAnimation = part.FindModelComponent<Animation>(windowname);
+                Utilities.SetInternalDepthMask(part, true, "External_Window_Occluder"); //Set window occluder visible (block internals)
             }
 
             if (_windowAnimation == null)
@@ -3877,11 +4214,11 @@ namespace DF
             {
                 _windowAnimation["CryopodWindowClose"].speed = speed;
                 _windowAnimation.Play("CryopodWindowClose");
-                if (isPodExternal && _extwindowAnimation != null)
-                {
-                    _extwindowAnimation["CryopodWindowClose"].speed = speed;
-                    _extwindowAnimation.Play("CryopodWindowClose");
-                }
+            }
+            if (isPodExternal && _extwindowAnimation != null)
+            {
+                _extwindowAnimation["CryopodWindowClose"].speed = speed;
+                _extwindowAnimation.Play("CryopodWindowClose");
             }
         }
 
@@ -3895,11 +4232,14 @@ namespace DF
                     windowname = "Animated-Cryopod-" + (seatIndx + 1) + "-Window";
                 else
                     windowname = "Cryopod-" + (seatIndx + 1) + "-Window";
-                Renderer windowrenderer = part.internalModel.FindModelComponent<Renderer>(windowname);                
+                Renderer windowrenderer = part.internalModel.FindModelComponent<Renderer>(windowname);
+                if (windowrenderer != null)
+                {
                     windowrenderer.material.shader = TransparentSpecularShader;
                     Color savedwindowcolor = windowrenderer.material.color;
                     savedwindowcolor.a = 0.3f;
                     windowrenderer.material.color = savedwindowcolor;
+                }
                 
                 if (isPodExternal)
                 {
@@ -3999,8 +4339,14 @@ namespace DF
             {
                 externalDoorAnim[animationName].normalizedTime = 0;
                 externalDoorAnim[animationName].speed = speed;
-                externalDoorAnim.Play("Open");
-                IEnumerator wait = Utilities.WaitForAnimation(externalDoorAnim, "Open");
+                if (externalDoorAnimOccluder != null)
+                {
+                    externalDoorAnimOccluder[animationName].normalizedTime = 0;
+                    externalDoorAnimOccluder[animationName].speed = speed;
+                    externalDoorAnimOccluder.Play(animationName);
+                }
+                externalDoorAnim.Play(animationName);
+                IEnumerator wait = Utilities.WaitForAnimation(externalDoorAnim, animationName);
                 while (wait.MoveNext()) yield return null;
             }
             Events["eventCloseDoors"].active = true;
@@ -4018,8 +4364,14 @@ namespace DF
             {
                 externalDoorAnim[animationName].normalizedTime = 1;
                 externalDoorAnim[animationName].speed = speed;
-                externalDoorAnim.Play("Open");
-                IEnumerator wait = Utilities.WaitForAnimation(externalDoorAnim, "Open");
+                if (externalDoorAnimOccluder != null)
+                {
+                    externalDoorAnimOccluder[animationName].normalizedTime = 1;
+                    externalDoorAnimOccluder[animationName].speed = speed;
+                    externalDoorAnimOccluder.Play(animationName);
+                }
+                externalDoorAnim.Play(animationName);
+                IEnumerator wait = Utilities.WaitForAnimation(externalDoorAnim, animationName);
                 while (wait.MoveNext()) yield return null;
             }
             Events["eventOpenDoors"].active = true;
@@ -4045,11 +4397,10 @@ namespace DF
             {
                 try
                 {
-                    Animation anim;
                     Animation[] animators = part.internalModel.FindModelAnimators("DOORHandle");
                     if (animators.Length > 0)
                     {
-                        anim = animators[0];
+                        var anim = animators[0];
                         anim["DOORHandle"].speed = float.MaxValue;
                         anim["DOORHandle"].normalizedTime = 0;
                         anim.Play("DOORHandle");
@@ -4104,7 +4455,7 @@ namespace DF
                     strexternaldoorstate = "CLOSED";
                 }
                 if (_prevexterndoorstate == DoorState.OPEN || _externaldoorstate == DoorState.OPENING)
-                {
+                { 
                     strprevexterndoorstate = "OPEN";
                 }
                 else
@@ -4207,7 +4558,7 @@ namespace DF
 
                     if (Ecrecvd >= (float)Ecreqd * 0.99)
                     {
-                        ScreenMessages.RemoveMessage(OnGoingECMsg);
+                        if (OnGoingECMsg != null) ScreenMessages.RemoveMessage(OnGoingECMsg);
                         partInfo.timeLastElectricity = (float)currenttime;
                         partInfo.deathCounter = currenttime;
                         partInfo.outofEC = false;
@@ -4223,7 +4574,7 @@ namespace DF
                             partInfo.ECWarning = true;
                             partInfo.deathCounter = currenttime;
                         }
-                        ScreenMessages.RemoveMessage(OnGoingECMsg);
+                        if (OnGoingECMsg != null) ScreenMessages.RemoveMessage(OnGoingECMsg);
                         OnGoingECMsg = ScreenMessages.PostScreenMessage(" Freezer Out of EC : Systems critical in " + (deathRoll - (currenttime - partInfo.deathCounter)).ToString("######0") + " secs");
                         partInfo.outofEC = true;
                         if (debug) Debug.Log("FixedBackgroundUpdate deathCounter = " + partInfo.deathCounter);
@@ -4299,7 +4650,7 @@ namespace DF
                 Utilities.Log_Debug("DFExtDoorMgr buttonExtDoorState set part " + part.name);
             }
             if (Freezer == null) return; // If freezer is still null just return
-            if (!Freezer.hasExternalDoor) return;  // if freezer doesn't have an external door just return.
+            if (!Freezer.ExternalDoorActive) return;  // if freezer doesn't have an external door just return.
 
             if (Freezer._externaldoorstate == DoorState.OPEN)
             {
@@ -4332,7 +4683,7 @@ namespace DF
                 Utilities.Log_Debug("DFExtDoorMgr buttonExtDoorState set part " + part.name);
             }
             if (Freezer == null) return false; // if freezer still null return false
-            if (!Freezer.hasExternalDoor) return false; // if freezer doesn't have an external door just return.
+            if (!Freezer.ExternalDoorActive) return false; // if freezer doesn't have an external door just return.
             if (Freezer._externaldoorstate == DoorState.CLOSED || Freezer._externaldoorstate == DoorState.CLOSING || Freezer._externaldoorstate == DoorState.UNKNOWN)
             {
                 Utilities.Log_Debug("DFExtDoorMgr Door is closed or closing or unknown return state false");

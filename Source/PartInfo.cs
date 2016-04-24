@@ -85,9 +85,12 @@ namespace DF
 
         internal static PartInfo Load(ConfigNode node)
         {
-            string PartName = Utilities.GetNodeValue(node, "PartName", "Unknown");
-            double lastUpdate = Utilities.GetNodeValue(node, "lastUpdate", 0.0);
-            string tmpvesselID = Utilities.GetNodeValue(node, "vesselID", "");
+            string PartName = "Unknown";
+            node.TryGetValue("PartName", ref PartName);
+            double lastUpdate = 0.0;
+            node.TryGetValue("lastUpdate", ref lastUpdate);
+            string tmpvesselID = "";
+            node.TryGetValue("vesselID", ref tmpvesselID);
             Guid vesselID = Guid.Empty;
             try
             {
@@ -99,9 +102,12 @@ namespace DF
                 Debug.Log("DFInterface - Load of GUID VesselID for known part failed Err: " + ex);
             }
             PartInfo info = new PartInfo(vesselID, PartName, lastUpdate);
-            info.numSeats = Utilities.GetNodeValue(node, "numSeats", 0);
-            info.numCrew = Utilities.GetNodeValue(node, "numCrew", 0);
-            string CrewString = Utilities.GetNodeValue(node, "crewMembers", string.Empty);
+            node.TryGetValue("numSeats", ref info.numSeats);
+            node.TryGetValue("numCrew", ref info.numCrew);
+
+            string CrewString = "";
+            node.TryGetValue("crewMembers", ref CrewString);
+            
             string[] CrewStrings = CrewString.Split(',');
             if (CrewStrings.Length > 0)
             {
@@ -110,7 +116,8 @@ namespace DF
                     info.crewMembers.Add(CrewStrings[i]);
                 }
             }
-            string CrewTraitString = Utilities.GetNodeValue(node, "crewMemberTraits", string.Empty);
+            string CrewTraitString = "";
+            node.TryGetValue("crewMemberTraits", ref CrewTraitString);
             string[] CrewTStrings = CrewTraitString.Split(',');
             if (CrewTStrings.Length > 0)
             {
@@ -119,21 +126,21 @@ namespace DF
                     info.crewMemberTraits.Add(CrewTStrings[i]);
                 }
             }
-            info.numFrznCrew = Utilities.GetNodeValue(node, "numFrznCrew", 0);
-            info.hibernating = Utilities.GetNodeValue(node, "hibernating", false);
-            info.hasextDoor = Utilities.GetNodeValue(node, "hasextDoor", false);
-            info.hasextPod = Utilities.GetNodeValue(node, "hasextPod", false);
-            info.timeLastElectricity = Utilities.GetNodeValue(node, "timeLastElectricity", lastUpdate);
-            info.frznChargeRequired = Utilities.GetNodeValue(node, "frznChargeRequired", 0d);
-            info.timeLastTempCheck = Utilities.GetNodeValue(node, "timeLastTempCheck", lastUpdate);
-            info.deathCounter = Utilities.GetNodeValue(node, "deathCounter", 0d);
-            info.tmpdeathCounter = Utilities.GetNodeValue(node, "tmpdeathCounter", 0d);
-            info.outofEC = Utilities.GetNodeValue(node, "outofEC", false);
+            node.TryGetValue("numFrznCrew", ref info.numFrznCrew);
+            node.TryGetValue("hibernating", ref info.hibernating);
+            node.TryGetValue("hasextDoor", ref info.hasextDoor);
+            node.TryGetValue("hasextPod", ref info.hasextPod);
+            node.TryGetValue("timeLastElectricity", ref info.timeLastElectricity);
+            node.TryGetValue("frznChargeRequired", ref info.frznChargeRequired);
+            node.TryGetValue("timeLastTempCheck", ref info.timeLastTempCheck);
+            node.TryGetValue("deathCounter", ref info.deathCounter);
+            node.TryGetValue("tmpdeathCounter", ref info.tmpdeathCounter);
+            node.TryGetValue("outofEC", ref info.outofEC);
             info.TmpStatus = Utilities.GetNodeValue(node, "TmpStatus", FrzrTmpStatus.OK);
-            info.cabinTemp = Utilities.GetNodeValue(node, "cabinTemp", 0f);
-            info.ECWarning = Utilities.GetNodeValue(node, "ECWarning", false);
-            info.TempWarning = Utilities.GetNodeValue(node, "TempWarning", false);
-
+            node.TryGetValue("cabinTemp", ref info.cabinTemp);
+            node.TryGetValue("ECWarning", ref info.ECWarning);
+            node.TryGetValue("TempWarning", ref info.TempWarning);
+            
             return info;
         }
 

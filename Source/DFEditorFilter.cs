@@ -17,6 +17,7 @@
 
 using System.Collections.Generic;
 using System.IO;
+using KSP.UI.Screens;
 using RUI.Icons.Selectable;
 using UnityEngine;
 
@@ -36,7 +37,7 @@ namespace DF
 
         //internal string iconName = "R&D_node_icon_evatech";
         //create and the icons
-        private Texture2D icon_DeepFreeze_Editor = new Texture2D(32, 32);
+        private Texture2D icon_DeepFreeze_Editor = new Texture2D(32, 32, TextureFormat.ARGB32, false);
 
         internal string iconName = "DeepFreezeEditor";
         internal bool filter = true;
@@ -83,9 +84,9 @@ namespace DF
             Icon filterDeepFreeze = new Icon("DeepFreezeEditor", icon_DeepFreeze_Editor, icon_DeepFreeze_Editor, true);
             PartCategorizer.Category Filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == category);
             PartCategorizer.AddCustomSubcategoryFilter(Filter, subCategoryTitle, filterDeepFreeze, p => EditorItemsFilter(p));
-            RUIToggleButtonTyped button = Filter.button.activeButton;
-            button.SetFalse(button, RUIToggleButtonTyped.ClickType.FORCED);
-            button.SetTrue(button, RUIToggleButtonTyped.ClickType.FORCED);
+            //RUIToggleButtonTyped button = Filter.button.activeButton;
+            //button.SetFalse(button, RUIToggleButtonTyped.ClickType.FORCED);
+            //button.SetTrue(button, RUIToggleButtonTyped.ClickType.FORCED);
         }
     }
 }
