@@ -20,7 +20,7 @@ There is no version of TAC LS for KSP 1.1 - so it is not currently supported.
 
 V0.21.0.2 "KSP 1.1 Experimentals build 1196"
 V0.21.0.1 "KSP 1.1 First Cut Pre-Release"
-Working in KSP 1.1 Experimentals build 1172.
+Working in KSP 1.1 Experimentals build 1172. 
 V0.20.4.0 "More Fixes"
 Fixed bug when using EC for frozen kerbals is turned ON and BackgroundProcessor is not installed. When you switch back to a vessel after a long period of time and you don't
 have enough EC to catch-up on the EC usage DeepFreeze was not correctly consuming 95% of remanining EC and was executing the Kill/Emergency Thaw procedure.
