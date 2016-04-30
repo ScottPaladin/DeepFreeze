@@ -28,7 +28,8 @@ namespace RSTUtils
 		FLIGHT = 0,
 		EDITOR = 1,
 		EVA = 2,
-		SPACECENTER = 3
+		SPACECENTER = 3,
+        OTHER = 4
 	}
 
 	internal static class Utilities
@@ -98,19 +99,23 @@ namespace RSTUtils
 			{
 				return GameState.SPACECENTER;
 			}
-			if (FlightGlobals.fetch != null && FlightGlobals.ActiveVessel != null)  // Check if in flight
+			//if (FlightGlobals.fetch != null && FlightGlobals.ActiveVessel != null)  // Check if in flight
+            if (HighLogic.LoadedSceneIsFlight)
 			{
-				if (FlightGlobals.ActiveVessel.isEVA) // EVA kerbal, do nothing
-				{
-					return GameState.EVA;
-				}
+			    if (FlightGlobals.fetch != null && FlightGlobals.ActiveVessel != null)
+			    {
+                    if (FlightGlobals.ActiveVessel.isEVA) // EVA kerbal
+                    {
+                        return GameState.EVA;
+                    }
+                }
 				return GameState.FLIGHT;
 			}
 			if (EditorLogic.fetch != null) // Check if in editor
 			{
 				return GameState.EDITOR;
 			}
-			return GameState.EVA;
+			return GameState.OTHER;
 		}
 		
 		#region GeometryandSpace
@@ -128,10 +133,43 @@ namespace RSTUtils
 			return DstFrmHome;
 		}
 
-		#endregion GeometryandSpace  
+	    public static bool CelestialBodyDistancetoSun(CelestialBody cb, out Vector3d sun_dir, out double sun_dist)
+	    {
+	        // bodies traced against
+	        CelestialBody sun = FlightGlobals.Bodies[0];
+	        if (cb == sun) //If we have passed in the sun as the cb we default to a distance of 700000Km
+	        {
+                sun_dir = Vector3d.forward;
+                sun_dist = sun.Radius + 700000000;
+                sun_dir /= sun_dist;
+                return true;
+	        }
+	        sun_dir = sun.position - cb.position;
+	        sun_dist = sun_dir.magnitude;
+	        sun_dir /= sun_dist;
+	        sun_dist -= sun.Radius;
+	        return true;
+	    }
 
-		#region ObjectsandTransforms
-		public static void PrintTransform(Transform t, string title = "")
+        // return sun luminosity
+        public static double SolarLuminosity
+        {
+            get
+            {
+                // note: it is 0 before loading first vessel in a game session, we compute it in that case
+                if (PhysicsGlobals.SolarLuminosity <= double.Epsilon)
+                {
+                    double A = FlightGlobals.GetHomeBody().orbit.semiMajorAxis;
+                    return A * A * 12.566370614359172 * PhysicsGlobals.SolarLuminosityAtHome;
+                }
+                return PhysicsGlobals.SolarLuminosity;
+            }
+        }
+
+        #endregion GeometryandSpace  
+
+        #region ObjectsandTransforms
+        public static void PrintTransform(Transform t, string title = "")
 		{
 			Log_Debug("------" + title + "------");
 			Log_Debug("Position: " + t.localPosition);
@@ -1013,6 +1051,7 @@ namespace RSTUtils
 					break;
 			}
 			//Loop through all the mesages we found.
+		    List<ScreenMessage> activemessagelist = ScreenMessages.Instance.ActiveMessages;
 			foreach (var msgtext in messagetexts)
 			{
 				//If the user specified text to search for only delete messages that contain that text.

@@ -63,8 +63,8 @@ namespace DF
         private KeyCode keyNxtFrzrCam = (KeyCode)110;                       //Keycode for next frzrcam. Loaded from settings. Default is n
         private KeyCode keyPrvFrzrCam = (KeyCode)98;                       //Keycode for previous frzrcam. Loaded from settings. Default is b
         internal ScreenMessage IVAKerbalName, IVAkerbalPart, IVAkerbalPod;  // used for the bottom right screen messages
-        private bool refreshPortraits;                              // set to true after a vessel coupling has occurred, a timer waits 3 secnds then refreshes the portraits cams.
-        private double refreshPortraitsTimer;                          // the timer for the previous var
+        //private bool refreshPortraits;                              // set to true after a vessel coupling has occurred, a timer waits 3 secnds then refreshes the portraits cams.
+        //private double refreshPortraitsTimer;                          // the timer for the previous var
         private int AllVslsErrorCount;                                  //stop log spam
 
         protected DFIntMemory()
@@ -339,26 +339,20 @@ namespace DF
                     string kerbalname;
                     try
                     {
-                        Utilities.Log("FrzrCamPart InternalModelName {0}", ActFrzrCams[lastFrzrCam].FrzrCamPart.part.internalModel.internalName);
-                        Utilities.Log("FrzrCamPart InternalSeatTransformName {0}", ActFrzrCams[lastFrzrCam].FrzrCamPart.part.internalModel.seats[lastFrzrCam].seatTransformName);
-                        if (ActFrzrCams[lastFrzrCam].FrzrCamPart.part.internalModel.seats[lastFrzrCam].kerbalRef != null)
+                        if (ActFrzrCams[lastFrzrCam].FrzrCamPart.part.internalModel.seats[ActFrzrCams[lastFrzrCam].FrzrCamSeatIndex - 1].kerbalRef != null)
                         {
-                            Utilities.Log("KerbalRef is not null");
-                            Utilities.Log("Seats Kerbalref {0}", ActFrzrCams[lastFrzrCam].FrzrCamPart.part.internalModel.seats[lastFrzrCam].kerbalRef.protoCrewMember.name);
-                            Utilities.Log("Seats Kerbalref {0}", ActFrzrCams[lastFrzrCam].FrzrCamPart.part.internalModel.seats[lastFrzrCam].kerbalRef.crewMemberName);
+                            kerbalname = ActFrzrCams[lastFrzrCam].FrzrCamPart.part.internalModel.seats[ActFrzrCams[lastFrzrCam].FrzrCamSeatIndex - 1].kerbalRef.crewMemberName;
                         }
                         else
                         {
-                            Utilities.Log("Kerbalref is null");
+                            Utilities.Log_Debug("Kerbalref is null");
+                            kerbalname = string.Empty;
                         }
-                        
-                        kerbalname = ActFrzrCams[lastFrzrCam].FrzrCamPart.part.internalModel.seats[lastFrzrCam].kerbalRef.crewMemberName;
                     }
                     catch (Exception)
                     {
                         kerbalname = string.Empty;
                     }
-                    //List<ProtoCrewMember> activecrew = FlightGlobals.ActiveVessel.GetVesselCrew();
                     IVAKerbalName = new ScreenMessage(kerbalname, 1, ScreenMessageStyle.UPPER_LEFT);
                     IVAKerbalName.color = Color.white;
                     ScreenMessages.PostScreenMessage(IVAKerbalName);
@@ -698,7 +692,7 @@ namespace DF
                             Transform frzrcam = Frzr.part.internalModel.FindModelComponent<Transform>(frzrcamname);
                             if (frzrcam != null)
                             {
-                                VslFrzrCams vslfrzrcam = new VslFrzrCams(frzrcam, Frzr.part.internalModel, i + 1, Frzr.part.name.Substring(0, 8), Frzr);
+                                VslFrzrCams vslfrzrcam = new VslFrzrCams(frzrcam, Frzr.part.internalModel, i + 1, Frzr.part.name.Substring(8, 1) == "R" ? Frzr.part.name.Substring(0, 9) : Frzr.part.name.Substring(0, 8), Frzr);
                                 ActFrzrCams.Add(vslfrzrcam);
                                  Utilities.Log_Debug("Adding ActFrzrCams " + vslfrzrcam.FrzrCamModel.internalName + " " + vslfrzrcam.FrzrCamTransform.name);
                             }
