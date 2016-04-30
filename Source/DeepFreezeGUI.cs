@@ -51,6 +51,7 @@ namespace DF
         private Vector2 GUIscrollViewVector, GUIscrollViewVector2, GUIscrollViewVectorSettings,
             GUIscrollViewVectorKAC, GUIscrollViewVectorKACKerbals = Vector2.zero;
         private bool mouseDownDF;
+        private bool mouseDownCF;
         private bool mouseDownKAC;
         private float DFtxtWdthName;
         private float DFtxtWdthProf;
@@ -185,26 +186,55 @@ namespace DF
                 stockToolbarButton.SetTexture(GameDatabase.Instance.GetTexture(GuiVisible ? "REPOSoftTech/DeepFreeze/Icons/DeepFreezeOn" : "REPOSoftTech/DeepFreeze/Icons/DeepFreezeOff", false));
         }
 
-        #endregion AppLauncher
-
-        internal void OnDestroy()
+        private void DestroyToolBar()
         {
-            if (ToolbarManager.ToolbarAvailable && Useapplauncher == false)
+            if (ToolbarManager.ToolbarAvailable)
             {
                 if (button1 != null)
                     button1.Destroy();
             }
-            else
+        }
+
+        private void CreateToolBar()
+        {
+            if (ToolbarManager.ToolbarAvailable)
             {
-                // Set up the stock toolbar
-                Utilities.Log("DeepFreezeGUI Removing onGUIAppLauncher callbacks");
-                GameEvents.onGUIApplicationLauncherReady.Remove(OnGUIAppLauncherReady);
-                if (stockToolbarButton != null)
-                {
-                    ApplicationLauncher.Instance.RemoveModApplication(stockToolbarButton);
-                    stockToolbarButton = null;
-                }
+                button1 = ToolbarManager.Instance.add("DeepFreeze", "button1");
+                button1.TexturePath = "REPOSoftTech/DeepFreeze/Icons/DFtoolbar";
+                button1.ToolTip = "DeepFreeze";
+                button1.Visibility = new GameScenesVisibility(GameScenes.FLIGHT, GameScenes.EDITOR, GameScenes.SPACECENTER, GameScenes.TRACKSTATION);
+                button1.OnClick += e => GuiVisible = !GuiVisible;
             }
+        }
+
+        private void DestroyStockButton()
+        {
+            GameEvents.onGUIApplicationLauncherReady.Remove(OnGUIAppLauncherReady);
+            if (stockToolbarButton != null)
+            {
+                ApplicationLauncher.Instance.RemoveModApplication(stockToolbarButton);
+                stockToolbarButton = null;
+            }
+        }
+
+        private void CreateStockButton()
+        {
+            Utilities.Log_Debug("Adding onGUIAppLauncher callbacks");
+            if (ApplicationLauncher.Ready)
+            {
+                if (stockToolbarButton == null)
+                    OnGUIAppLauncherReady();
+            }
+            else
+                GameEvents.onGUIApplicationLauncherReady.Add(OnGUIAppLauncherReady);
+        }
+
+        #endregion AppLauncher
+
+        internal void OnDestroy()
+        {
+            DestroyToolBar();
+            DestroyStockButton();
             if (GuiVisible) GuiVisible = !GuiVisible;
             GameEvents.onGamePause.Remove(GamePaused);
             GameEvents.onGameUnpause.Remove(GameUnPaused);
@@ -224,25 +254,25 @@ namespace DF
             DFKACwindowPos = new Rect(600, Screen.height / 2 - 100, KACWINDOW_WIDTH, WINDOW_BASE_HEIGHT);
             DFVSwindowPos = new Rect(Screen.width / 2 - VSWINDOW_WIDTH / 2, Screen.height / 2 - 100, VSWINDOW_WIDTH, WINDOW_BASE_HEIGHT);
             DFVSFwindowPos = new Rect(Screen.width / 2 - VSWINDOW_WIDTH / 2, Screen.height / 2 - 100, VSWINDOW_WIDTH, WINDOW_BASE_HEIGHT);
-            DFtxtWdthName = Mathf.Round((DFWINDOW_WIDTH - 28f) / 3.5f);
-            DFtxtWdthProf = Mathf.Round((DFWINDOW_WIDTH - 28f) / 4.8f);
-            DFtxtWdthVslN = Mathf.Round((DFWINDOW_WIDTH - 28f) / 3.5f);
+            DFtxtWdthName = Mathf.Round((DFWINDOW_WIDTH - 28f) * .28f);
+            DFtxtWdthProf = Mathf.Round((DFWINDOW_WIDTH - 28f) * .2f);
+            DFtxtWdthVslN = Mathf.Round((DFWINDOW_WIDTH - 28f) * .28f);
 
-            KACtxtWdthName = Mathf.Round((KACWINDOW_WIDTH - 38f) / 3.5f);
-            KACtxtWdthAtyp = Mathf.Round((KACWINDOW_WIDTH - 38f) / 6f);
-            KACtxtWdthATme = Mathf.Round((KACWINDOW_WIDTH - 38f) / 5f);
-            KACtxtWdthKName = Mathf.Round((KACWINDOW_WIDTH - 48f) / 3f);
-            KACtxtWdthKTyp = Mathf.Round((KACWINDOW_WIDTH - 48f) / 5f);
-            KACtxtWdthKTg1 = Mathf.Round((KACWINDOW_WIDTH - 48f) / 6f);
-            KACtxtWdthKTg2 = Mathf.Round((KACWINDOW_WIDTH - 48f) / 6f);
+            KACtxtWdthName = Mathf.Round((KACWINDOW_WIDTH - 38f) * .2f);
+            KACtxtWdthAtyp = Mathf.Round((KACWINDOW_WIDTH - 38f) * .1f);
+            KACtxtWdthATme = Mathf.Round((KACWINDOW_WIDTH - 38f) * .2f);
+            KACtxtWdthKName = Mathf.Round((KACWINDOW_WIDTH - 48f) * .2f);
+            KACtxtWdthKTyp = Mathf.Round((KACWINDOW_WIDTH - 48f) * .2f);
+            KACtxtWdthKTg1 = Mathf.Round((KACWINDOW_WIDTH - 48f) * .16f);
+            KACtxtWdthKTg2 = Mathf.Round((KACWINDOW_WIDTH - 48f) * .16f);
 
-            DFvslWdthName = Mathf.Round((DFWINDOW_WIDTH - 28f) / 4.2f);
-            DFvslPrtName = Mathf.Round((DFWINDOW_WIDTH - 28f) / 6.3f);
-            DFvslPrtTmp = Mathf.Round((DFWINDOW_WIDTH - 28f) / 11f);
-            DFvslPrtElec = Mathf.Round((DFWINDOW_WIDTH - 28f) / 12.3f);
-            DFvslAlarms = Mathf.Round((DFWINDOW_WIDTH - 28f) / 8f);
-            DFvslLstUpd = Mathf.Round((DFWINDOW_WIDTH - 28f) / 5.5f);
-            DFvslRT = Mathf.Round((DFWINDOW_WIDTH - 28f) / 12.3f);
+            DFvslWdthName = Mathf.Round((DFWINDOW_WIDTH - 28f) * .28f);
+            DFvslPrtName = Mathf.Round((DFWINDOW_WIDTH - 28f) * .2f);
+            DFvslPrtTmp = Mathf.Round((DFWINDOW_WIDTH - 28f) * .1f);
+            DFvslPrtElec = Mathf.Round((DFWINDOW_WIDTH - 28f) * .1f);
+            DFvslAlarms = Mathf.Round((DFWINDOW_WIDTH - 28f) * .12f);
+            DFvslLstUpd = Mathf.Round((DFWINDOW_WIDTH - 28f) * .18f);
+            DFvslRT = Mathf.Round((DFWINDOW_WIDTH - 28f) * .12f);
 
             Utilities.setScaledScreen();
 
@@ -250,22 +280,12 @@ namespace DF
 
             if (ToolbarManager.ToolbarAvailable && Useapplauncher == false)
             {
-                button1 = ToolbarManager.Instance.add("DeepFreeze", "button1");
-                button1.TexturePath = "REPOSoftTech/DeepFreeze/Icons/DFtoolbar";
-                button1.ToolTip = "DeepFreeze";
-                button1.Visibility = new GameScenesVisibility(GameScenes.FLIGHT, GameScenes.EDITOR, GameScenes.SPACECENTER, GameScenes.TRACKSTATION);
-                button1.OnClick += e => GuiVisible = !GuiVisible;
+                CreateToolBar();
             }
             else
             {
                 // Set up the stock toolbar
-                Utilities.Log_Debug("Adding onGUIAppLauncher callbacks");
-                if (ApplicationLauncher.Ready)
-                {
-                    OnGUIAppLauncherReady();
-                }
-                else
-                    GameEvents.onGUIApplicationLauncherReady.Add(OnGUIAppLauncherReady);
+                CreateStockButton();
             }
             GameEvents.onGamePause.Add(GamePaused);
             GameEvents.onGameUnpause.Add(GameUnPaused);
@@ -364,8 +384,8 @@ namespace DF
                     }
                     if (!Utilities.WindowVisibile(CFwindowPos))
                         Utilities.MakeWindowVisible(CFwindowPos);
-                    CFwindowPos = GUILayout.Window(CFwindowID, CFwindowPos, windowCF, "DeepFreeze Settings", GUILayout.ExpandWidth(false),
-                        GUILayout.ExpandHeight(true), GUILayout.Width(550), GUILayout.Height(500));
+                    CFwindowPos = GUILayout.Window(CFwindowID, CFwindowPos, windowCF, "DeepFreeze Settings", GUILayout.ExpandWidth(true),
+                        GUILayout.ExpandHeight(true), GUILayout.MinWidth(400), GUILayout.MinHeight(300));
                 }
                 if (showKACGUI)
                 {
@@ -787,7 +807,7 @@ namespace DF
 
             GUILayout.BeginVertical();
 
-            GUIscrollViewVectorSettings = GUILayout.BeginScrollView(GUIscrollViewVectorSettings, false, false, GUILayout.Height(450));
+            GUIscrollViewVectorSettings = GUILayout.BeginScrollView(GUIscrollViewVectorSettings, false, false);
 
             GUILayout.BeginHorizontal();
             GUILayout.Box(new GUIContent("ElectricCharge Required to run Freezers", "If on, EC is required to run freezers"), Textures.statusStyle, GUILayout.Width(280));
@@ -901,9 +921,17 @@ namespace DF
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            GUILayout.Box(new GUIContent("Use Stock Launcher Icon (restart required)", "If on uses AppLauncher, If Off Uses Toolbar"), Textures.statusStyle, GUILayout.Width(280));
+            GUIContent btntext = new GUIContent("Use Stock Launcher Icon", "If on uses AppLauncher, If Off Uses Toolbar");
+            if (!ToolbarManager.ToolbarAvailable) //Toolbar not available or not installed
+            {
+                InputAppL = true;
+                btntext = new GUIContent("Toolbar Unavailable", "Cannot switch Icon between Toolbar and Stock as toolbar mod is unavailable");
+                GUI.enabled = false;
+            }
+            GUILayout.Box(btntext, Textures.statusStyle, GUILayout.Width(280));
             InputAppL = GUILayout.Toggle(InputAppL, "", GUILayout.MinWidth(30.0F)); //you can play with the width of the text box
             GUILayout.EndHorizontal();
+            GUI.enabled = true;
 
             GUILayout.BeginHorizontal();
             GUILayout.Box(new GUIContent("Freezer Strip Lights On", "Turn off if you do not want the internal freezer strip lights to function"), Textures.statusStyle, GUILayout.Width(280));
@@ -925,7 +953,32 @@ namespace DF
             GUILayout.BeginHorizontal();
             if (GUILayout.Button(new GUIContent("Save & Exit Settings", "Exit this menu and Save Settings"), GUILayout.Width(155f)))
             {
-                Useapplauncher = InputAppL;
+                if (Useapplauncher != InputAppL)
+                {
+                    if (InputAppL == true)  //Use stock
+                    {
+                        Useapplauncher = InputAppL;
+                        DestroyToolBar();
+                        CreateStockButton();
+                    }
+                    else  //Use toolbar
+                    {
+                        if (ToolbarManager.ToolbarAvailable) //Is it available?
+                        {
+                            Useapplauncher = InputAppL;
+                            DestroyStockButton();
+                            CreateToolBar();
+                        }
+                        else //Otherwise use stock.
+                        {
+                            Useapplauncher = true;
+                            DestroyToolBar();
+                            CreateStockButton();
+                        }
+                            
+                    }
+                }
+                
                 if (ECreqdForFreezer != InputVECReqd)
                 {
                     chgECHeatsettings = true;
@@ -964,6 +1017,13 @@ namespace DF
             }
             GUILayout.EndHorizontal();
             GUILayout.EndVertical();
+
+            GUIContent resizeContent = new GUIContent(Textures.BtnResize, "Resize Window");
+            Rect resizeRect = new Rect(CFwindowPos.width - 21, CFwindowPos.height - 22, 16, 16);
+            GUI.Label(resizeRect, resizeContent, Textures.ResizeStyle);
+
+            HandleResizeEventsCF(resizeRect);
+
             if (DeepFreeze.Instance.DFsettings.ToolTips)
                 Utilities.SetTooltipText();
             GUI.DragWindow();
@@ -1332,16 +1392,16 @@ namespace DF
 
                         DFwindowPos.width = Mathf.Clamp(Input.mousePosition.x - DFwindowPos.x + resizeRect.width / 2, 50, Screen.width - DFwindowPos.x);
                         DFwindowPos.height = Mathf.Clamp(mouseY - DFwindowPos.y + resizeRect.height / 2, 50, Screen.height - DFwindowPos.y);
-                        DFtxtWdthName = Mathf.Round((DFwindowPos.width - 28f) / 4.2f);
-                        DFtxtWdthProf = Mathf.Round((DFwindowPos.width - 28f) / 4.8f);
-                        DFtxtWdthVslN = Mathf.Round((DFwindowPos.width - 28f) / 3.5f);
-                        DFvslWdthName = Mathf.Round((DFwindowPos.width - 28f) / 4.2f);
-                        DFvslPrtName = Mathf.Round((DFwindowPos.width - 28f) / 6.3f);
-                        DFvslPrtTmp = Mathf.Round((DFwindowPos.width - 28f) / 11f);
-                        DFvslPrtElec = Mathf.Round((DFwindowPos.width - 28f) / 12.3f);
-                        DFvslAlarms = Mathf.Round((DFwindowPos.width - 28f) / 8f);
-                        DFvslLstUpd = Mathf.Round((DFwindowPos.width - 28f) / 5.5f);
-                        DFvslRT = Mathf.Round((DFwindowPos.width - 28f) / 12.3f);
+                        DFtxtWdthName = Mathf.Round((DFWINDOW_WIDTH - 28f) * .28f);
+                        DFtxtWdthProf = Mathf.Round((DFWINDOW_WIDTH - 28f) * .2f);
+                        DFtxtWdthVslN = Mathf.Round((DFWINDOW_WIDTH - 28f) * .28f);
+                        DFvslWdthName = Mathf.Round((DFWINDOW_WIDTH - 28f) * .28f);
+                        DFvslPrtName = Mathf.Round((DFWINDOW_WIDTH - 28f) * .2f);
+                        DFvslPrtTmp = Mathf.Round((DFWINDOW_WIDTH - 28f) * .1f);
+                        DFvslPrtElec = Mathf.Round((DFWINDOW_WIDTH - 28f) * .1f);
+                        DFvslAlarms = Mathf.Round((DFWINDOW_WIDTH - 28f) * .12f);
+                        DFvslLstUpd = Mathf.Round((DFWINDOW_WIDTH - 28f) * .18f);
+                        DFvslRT = Mathf.Round((DFWINDOW_WIDTH - 28f) * .12f);
                     }
                     else
                     {
@@ -1350,6 +1410,38 @@ namespace DF
                 }
             }
         }
+
+        private void HandleResizeEventsCF(Rect resizeRect)
+        {
+            var theEvent = Event.current;
+            if (theEvent != null)
+            {
+                if (!mouseDownCF)
+                {
+                    if (theEvent.type == EventType.MouseDown && theEvent.button == 0 && resizeRect.Contains(theEvent.mousePosition))
+                    {
+                        mouseDownCF = true;
+                        theEvent.Use();
+                    }
+                }
+                else if (theEvent.type != EventType.Layout)
+                {
+                    if (Input.GetMouseButton(0))
+                    {
+                        // Flip the mouse Y so that 0 is at the top
+                        float mouseY = Screen.height - Input.mousePosition.y;
+
+                        CFwindowPos.width = Mathf.Clamp(Input.mousePosition.x - CFwindowPos.x + resizeRect.width / 2, 50, Screen.width - CFwindowPos.x);
+                        CFwindowPos.height = Mathf.Clamp(mouseY - CFwindowPos.y + resizeRect.height / 2, 50, Screen.height - CFwindowPos.y);
+                    }
+                    else
+                    {
+                        mouseDownCF = false;
+                    }
+                }
+            }
+        }
+
 
         private void HandleResizeEventsKAC(Rect resizeRect)
         {
@@ -1373,13 +1465,13 @@ namespace DF
 
                         DFKACwindowPos.width = Mathf.Clamp(Input.mousePosition.x - DFKACwindowPos.x + resizeRect.width / 2, 50, Screen.width - DFKACwindowPos.x);
                         DFKACwindowPos.height = Mathf.Clamp(mouseY - DFKACwindowPos.y + resizeRect.height / 2, 50, Screen.height - DFKACwindowPos.y);
-                        KACtxtWdthName = Mathf.Round((DFKACwindowPos.width - 38f) / 3.5f);
-                        KACtxtWdthAtyp = Mathf.Round((DFKACwindowPos.width - 38f) / 6f);
-                        KACtxtWdthATme = Mathf.Round((DFKACwindowPos.width - 38f) / 5f);
-                        KACtxtWdthKName = Mathf.Round((DFKACwindowPos.width - 48f) / 3f);
-                        KACtxtWdthKTyp = Mathf.Round((DFKACwindowPos.width - 48f) / 5f);
-                        KACtxtWdthKTg1 = Mathf.Round((DFKACwindowPos.width - 48f) / 6f);
-                        KACtxtWdthKTg2 = Mathf.Round((DFKACwindowPos.width - 48f) / 6f);
+                        KACtxtWdthName = Mathf.Round((KACWINDOW_WIDTH - 38f) * .2f);
+                        KACtxtWdthAtyp = Mathf.Round((KACWINDOW_WIDTH - 38f) * .1f);
+                        KACtxtWdthATme = Mathf.Round((KACWINDOW_WIDTH - 38f) * .2f);
+                        KACtxtWdthKName = Mathf.Round((KACWINDOW_WIDTH - 48f) * .2f);
+                        KACtxtWdthKTyp = Mathf.Round((KACWINDOW_WIDTH - 48f) * .2f);
+                        KACtxtWdthKTg1 = Mathf.Round((KACWINDOW_WIDTH - 48f) * .16f);
+                        KACtxtWdthKTg2 = Mathf.Round((KACWINDOW_WIDTH - 48f) * .16f);
                     }
                     else
                     {

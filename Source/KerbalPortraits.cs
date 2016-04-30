@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using KSP.UI.Screens.Flight;
 using UnityEngine;
@@ -8,72 +9,55 @@ using UnityEngine;
 
 namespace DeepFreeze
 {
-    //This Class does not work very well. It was meant to attach to the Portrait PreFab to build our own list of Portraits.
-    //But for some reason it is resulting in duplicated portraits and I have spent hours and hours on this trying to figure it out.
-    //So I am doing a brute force approach to get the Portrait GameObjects. I am pretty sure this is breaking the EULA of KSP but pretty sure it is not
-    //as I am still ONLY accessing the PUBLIC Portraits Class and fields.
-    // I hope Squad open the list up to public as per my request in the next release: http://bugs.kerbalspaceprogram.com/issues/8993
-
     [KSPAddon(KSPAddon.Startup.Flight, false)]
-    class Portraits : MonoBehaviour
+    class DFPortraits : MonoBehaviour
     {
-        public static readonly List<KerbalPortrait> PortraitList = new List<KerbalPortrait>();
 
-        class PortraitTracker : MonoBehaviour
+        internal static BindingFlags eFlags = BindingFlags.Instance | BindingFlags.NonPublic;
+
+        //reflecting protected methods inside a public class. Until KSP 1.1.x can rectify the situation.
+        internal static void UIControlsUpdate()
         {
-            private KerbalPortrait _portrait;
+            MethodInfo UIControlsUpdateMethod = typeof(KerbalPortraitGallery).GetMethod("UIControlsUpdate", eFlags);
+            UIControlsUpdateMethod.Invoke(KerbalPortraitGallery.Instance, null);
+        }
 
-            private void Start() // Awake might be too early
+        //reflecting protected methods inside a public class. Until KSP 1.1.x can rectify the situation.
+        internal static void DespawnInactivePortraits()
+        {
+            MethodInfo DespawnInactPortMethod = typeof(KerbalPortraitGallery).GetMethod("DespawnInactivePortraits", eFlags);
+            DespawnInactPortMethod.Invoke(KerbalPortraitGallery.Instance, null);
+        }
+
+        //reflecting protected methods inside a public class. Until KSP 1.1.x can rectify the situation.
+        internal static void DespawnPortrait(Kerbal kerbal)
+        {
+            MethodInfo DespawnPortraitMethod = typeof(KerbalPortraitGallery).GetMethod("DespawnPortrait", eFlags, Type.DefaultBinder, new Type[] { typeof(Kerbal) }, null);
+            DespawnPortraitMethod.Invoke(KerbalPortraitGallery.Instance, new object[] { kerbal });
+        }
+
+        internal static bool HasPortrait(Kerbal crew, bool checkName = false)
+        {
+            if (!checkName)
             {
-                if (transform.GetComponentCached(ref _portrait) == null)
-                    Destroy(this);
-                else AddPortrait(_portrait);
+                return KerbalPortraitGallery.Instance.Portraits.Any(p => p.crewMember == crew);
             }
-
-            private void OnDestroy()
+            else
             {
-                if (_portrait == null) return; 
-
-                RemovePortrait(_portrait);
+                return KerbalPortraitGallery.Instance.Portraits.Any(p => p.crewMemberName == crew.crewMemberName);
             }
         }
 
-
-        private void Awake()
+        internal static bool InActiveCrew(Kerbal crew, bool checkName = false)
         {
-            //var kpg = KerbalPortraitGallery.Instance;
-            
-            //AddTracker(kpg.portraitPrefab);
-
-            // uncertain whether KSPAddons created before KerbalPortraits initialized
-            // pretty sure they are but too lazy to check
-            //kpg.gameObject.GetComponentsInChildren<KerbalPortrait>()
-            //    .ToList()
-            //    .ForEach(AddTracker);
-
-            //Destroy(gameObject);
-        }
-        
-        // Might only need to edit the prefab once. This will make sure we don't add duplicates
-        private static void AddTracker(KerbalPortrait portrait)
-        {
-            if (portrait.gameObject.GetComponent<PortraitTracker>() != null) return;
-
-            portrait.gameObject.AddComponent<PortraitTracker>();
-        }
-
-
-        private static void AddPortrait(KerbalPortrait portrait)
-        {
-            if (portrait == null) return;
-
-            PortraitList.AddUnique(portrait);
-            //PortraitList.Add(portrait);
-        }
-
-        private static void RemovePortrait(KerbalPortrait portrait)
-        {
-            if (PortraitList.Contains(portrait)) PortraitList.RemoveAll(a => a.crewMember == portrait.crewMember);
+            if (!checkName)
+            {
+                return KerbalPortraitGallery.Instance.ActiveCrew.Any(p => p == crew);
+            }
+            else
+            {
+                return KerbalPortraitGallery.Instance.ActiveCrew.Any(p => p.crewMemberName == crew.crewMemberName);
+            }
         }
 
         /// <summary>
@@ -82,40 +66,53 @@ namespace DeepFreeze
         /// <param name="kerbal">the Kerbal we want to delete portraits for</param>
         internal static void DestroyPortrait(Kerbal kerbal)
         {
-            //set the kerbal InPart to null - this should stop their portrait from re-spawning.
+            // set the kerbal InPart to null - this should stop their portrait from re-spawning.
             kerbal.InPart = null;
-            KerbalPortraitGallery.Instance.gameObject.GetComponentsInChildren<KerbalPortrait>().Where(a => a.crewMemberName == kerbal.crewMemberName).ToList().ForEach(x => DestroyObject(x));
-            
-            KerbalPortraitGallery.Instance.UnregisterActiveCrew(kerbal);
+            //Set them visible in portrait to false
+            kerbal.SetVisibleInPortrait(false);
+            kerbal.state = Kerbal.States.NO_SIGNAL;
+            //Loop through the ActiveCrew portrait List
+            for (int i = KerbalPortraitGallery.Instance.ActiveCrew.Count - 1; i >= 0; i--)
+            {
+                //If we find an ActiveCrew entry where the crewMemberName is equal to our kerbal's
+                if (KerbalPortraitGallery.Instance.ActiveCrew[i].crewMemberName == kerbal.crewMemberName)
+                {
+                    //we Remove them from the list.
+                    KerbalPortraitGallery.Instance.ActiveCrew.RemoveAt(i);
+                }
+            }
+            //Portraits List clean-up.
+            DespawnInactivePortraits(); //Despawn any portraits where CrewMember == null
+            DespawnPortrait(kerbal); //Despawn our Kerbal's portrait
+            UIControlsUpdate(); //Update UI controls
         }
 
         /// <summary>
-        /// Restore the Portrait for a kerbal. If Using Texture Replacer mod you must Re-initialise the Textures after this is called.
-        /// Otherwise the kerbal will revert back to stock textures.
-        /// The Kerbal's RosterStatus must NOT be DEAD if DeepFreeze Frozen otherwise the Portrait will come up as DEAD.
-        /// This method will also call: Kerbal.SetVisibleInPortrait(true) which seems to reset the kerbal's portrait camera update routine.
+        /// Restore the Portrait for a kerbal and register them to the KerbalPortraitGallery
         /// </summary>
-        /// <param name="part">The Part the kerbal is inside</param>
-        /// <param name="kerbal">The Kerbal we want to register</param>
+        /// <param name="kerbal">the kerbal we want restored</param>
+        /// <param name="part">the part the kerbal is in</param>
         internal static void RestorePortrait(Part part, Kerbal kerbal)
         {
-            // Select all KerbalPortrait in our PortraitList where the crewMember name is the kerbal we are interested in.
-            // We should NOT get any. If we do, Call DestroyPortrait first then come back.
-            //KerbalPortrait portrait = PortraitList.FirstOrDefault(a => a.crewMember == kerbal);
-            List<KerbalPortrait> portraits = KerbalPortraitGallery.Instance.gameObject.GetComponentsInChildren<KerbalPortrait>().Where(a => a.crewMemberName == kerbal.crewMemberName).ToList();
-            if (portraits.Any())
+            //We don't process DEAD, Unowned kerbals - Compatibility with DeepFreeze Mod.
+            if (kerbal.rosterStatus != ProtoCrewMember.RosterStatus.Dead &&
+                kerbal.protoCrewMember.type != ProtoCrewMember.KerbalType.Unowned)
             {
-                //This will destroy ALL Portraits and un-register them as many times as we have an entry for them.
-                DestroyPortrait(kerbal);
+                //Set the Kerbals InPart back to their part.
+                kerbal.InPart = part;
+                //Set their portrait state to ALIVE and set their portrait back to visible.
+                kerbal.state = Kerbal.States.ALIVE;
+                kerbal.SetVisibleInPortrait(true);
+                //Find an ActiveCrew entry and Portraits entry for our kerbal?
+                //If they aren't in ActiveCrew and don't have a Portrait them via the kerbal.Start method.
+                if (!InActiveCrew(kerbal) && !HasPortrait(kerbal))
+                {
+                    kerbal.staticOverlayDuration = 1f;
+                    kerbal.randomizeOnStartup = false;
+                    kerbal.Start();
+                }
+                kerbal.state = Kerbal.States.ALIVE;
             }
-            //set the kerbal InPart to the Part passed in.
-            kerbal.InPart = part;
-            //Set them visible in portrait to true
-            kerbal.SetVisibleInPortrait(true);
-            //This should reset the kerbal portrait back up for us.
-            kerbal.state = Kerbal.States.ALIVE;
-            kerbal.randomizeOnStartup = false;
-            kerbal.Start();   
         }
     }
 }

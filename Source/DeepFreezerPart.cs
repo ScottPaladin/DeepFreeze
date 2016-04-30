@@ -750,8 +750,6 @@ namespace DF
                             }
                             _prevRPMTransparentpodSetting = transparentPodSetting;
                         }
-
-                        
                     }
                 }
             }
@@ -2538,12 +2536,12 @@ namespace DF
                                     kerbal.KerbalRef.rosterStatus = ProtoCrewMember.RosterStatus.Assigned;
                                     codestep = 2;
                                     //Add them to the portrait cams.
-                                    Portraits.RestorePortrait(part, kerbal.KerbalRef);
+                                    DFPortraits.RestorePortrait(part, kerbal.KerbalRef);
                                     base.StartCoroutine(CallbackUtil.DelayedCallback(1, new Callback(this.fireOnVesselChange)));
                                     base.StartCoroutine(CallbackUtil.DelayedCallback<Kerbal>(5, new Callback<Kerbal>(this.checkPortraitRegistered), kerbal.KerbalRef));
                                     Utilities.Log_Debug("Expected condition met, kerbal already in their seat.");
                                     codestep = 3;
-                                    try
+                                    try 
                                     {
                                         if (DFInstalledMods.IsTexReplacerInstalled)
                                         {
@@ -2619,7 +2617,7 @@ namespace DF
                                 kerbal.KerbalRef.rosterStatus = ProtoCrewMember.RosterStatus.Assigned;
                                 codestep = 2;
                                 //Add them to the portrait cams.
-                                Portraits.RestorePortrait(part, kerbal.KerbalRef);
+                                DFPortraits.RestorePortrait(part, kerbal.KerbalRef);
                                 base.StartCoroutine(CallbackUtil.DelayedCallback(1, new Callback(this.fireOnVesselChange)));
                                 base.StartCoroutine(CallbackUtil.DelayedCallback<Kerbal>(5, new Callback<Kerbal>(this.checkPortraitRegistered), kerbal.KerbalRef));
                                 Utilities.Log_Debug("Just thawing crew and added to GUIManager");
@@ -2928,14 +2926,14 @@ namespace DF
                     part.internalModel.seats[SeatIndx].taken = true; // Set their seat to Taken, because they are really still there. :)
                     seatTakenbyFrznKerbal[SeatIndx] = true;
                 }
-                if (kerbal.KerbalRef != null)
-                {
-                    //Remove them from the GUIManager Portrait cams.
-                    Portraits.DestroyPortrait(kerbal.KerbalRef);
-                }
                 // Set our newly frozen Popsicle, er Kerbal, to Unowned type (usually a Crew) and Dead status.
                 kerbal.type = ProtoCrewMember.KerbalType.Unowned;
                 kerbal.rosterStatus = ProtoCrewMember.RosterStatus.Dead;
+                if (kerbal.KerbalRef != null)
+                {
+                    //Remove them from the GUIManager Portrait cams.
+                    DFPortraits.DestroyPortrait(kerbal.KerbalRef);
+                }
                 return true;
             }
             catch (Exception ex)
@@ -3041,8 +3039,7 @@ namespace DF
 
         internal void checkPortraitRegistered(Kerbal kerbal)
         {
-            List<KerbalPortrait> portraits = KerbalPortraitGallery.Instance.gameObject.GetComponentsInChildren<KerbalPortrait>().Where(a => a.crewMemberName == kerbal.crewMemberName).ToList();
-            if (!portraits.Any())
+            if (!DFPortraits.HasPortrait(kerbal, true))
             {
                 vessel.DespawnCrew();
                 base.StartCoroutine(CallbackUtil.DelayedCallback(3, new Callback(this.delayedSpawCrew)));
@@ -3639,7 +3636,7 @@ namespace DF
                 ProtoCrewMember crewmember = HighLogic.CurrentGame.CrewRoster.Unowned.FirstOrDefault(a => a.name == FrznKerbalsinPart[i].Key);
                 if (crewmember != null)
                 {
-                    Portraits.DestroyPortrait(crewmember.KerbalRef);
+                    DFPortraits.DestroyPortrait(crewmember.KerbalRef);
                 }
             }
         }
@@ -3737,7 +3734,7 @@ namespace DF
                         //Unregister their traits/abilities and remove them from the Portrait Cameras if they are there.
                         crewmember.UnregisterExperienceTraits(part);
                         part.protoModuleCrew.Remove(crewmember);
-                        Portraits.DestroyPortrait(crewmember.KerbalRef);
+                        DFPortraits.DestroyPortrait(crewmember.KerbalRef);
                     }
                     else
                     {
@@ -3810,7 +3807,7 @@ namespace DF
                                     kerbal.type = ProtoCrewMember.KerbalType.Unowned;
                                 }
                                 //Remove them from the GUIManager Portrait cams.
-                                Portraits.DestroyPortrait(kerbal.KerbalRef);
+                                DFPortraits.DestroyPortrait(kerbal.KerbalRef);
                                 Utilities.setFrznKerbalLayer(part, kerbal, false);  // Double check kerbal is invisible.
                             }
                         }
@@ -4203,7 +4200,7 @@ namespace DF
             if (isPodExternal)
             {
                 _extwindowAnimation = part.FindModelComponent<Animation>(windowname);
-                Utilities.SetInternalDepthMask(part, true, "External_Window_Occluder"); //Set window occluder visible (block internals)
+                //Utilities.SetInternalDepthMask(part, true, "External_Window_Occluder"); //Set window occluder visible (block internals)
             }
 
             if (_windowAnimation == null)
