@@ -20,6 +20,8 @@ using System.IO;
 using KSP.UI.Screens;
 using RUI.Icons.Selectable;
 using UnityEngine;
+using System.Reflection;
+using System.Linq;
 
 namespace DF
 {
@@ -46,7 +48,25 @@ namespace DF
         {
             Debug.Log("DFEditorFilter Awake");
             GameEvents.onGUIEditorToolbarReady.Add(SubCategories);
-            //ModuleManager.MMPatchLoader.addPostPatchCallback(DFMMCallBack);
+            /*
+            //Attempt to add Module Manager callback  - find the base type
+            System.Type MMType = AssemblyLoader.loadedAssemblies
+                .Select(a => a.assembly.GetExportedTypes())
+                .SelectMany(t => t)
+                .FirstOrDefault(t => t.FullName == "ModuleManager.MMPatchLoader");
+            if (MMType != null)
+            {
+                MethodInfo MMPatchLoaderInstanceMethod = MMType.GetMethod("get_Instance", BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public);
+                if (MMPatchLoaderInstanceMethod != null)
+                {
+                    object actualMM = MMPatchLoaderInstanceMethod.Invoke(null,
+                        BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static, null, null, null);
+                    MethodInfo MMaddPostPatchCallbackMethod = MMType.GetMethod("addPostPatchCallback", BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public);
+                    if (actualMM != null && MMaddPostPatchCallbackMethod != null)
+                        MMaddPostPatchCallbackMethod.Invoke(actualMM, new object[] { this.DFMMCallBack() });
+                }
+                
+            }*/
             DFMMCallBack();
             //load the icons
             icon_DeepFreeze_Editor.LoadImage(File.ReadAllBytes("GameData/REPOSoftTech/DeepFreeze/Icons/DeepFreezeEditor.png"));
@@ -54,7 +74,7 @@ namespace DF
             Debug.Log("DFEditorFilter Awake Complete");
         }
 
-        public void DFMMCallBack()
+        public bool DFMMCallBack()
         {
             Debug.Log("DFEDitorFilter DFMMCallBack");
             avPartItems.Clear();
@@ -68,6 +88,7 @@ namespace DF
                 }
             }
             Debug.Log("DFEDitorFilter DFMMCallBack end");
+            return true;
         }
 
         private bool EditorItemsFilter(AvailablePart avPart)

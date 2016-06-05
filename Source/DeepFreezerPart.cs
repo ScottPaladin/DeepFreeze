@@ -28,15 +28,6 @@ using Random = System.Random;
 
 namespace DF
 {
-    public enum DoorState
-    {
-        OPEN,
-        CLOSED,
-        OPENING,
-        CLOSING,
-        UNKNOWN
-    }
-
     public class DeepFreezer : PartModule, IResourceConsumer
     {
         private float lastUpdate;                  // time since we last updated the part menu
@@ -186,7 +177,7 @@ namespace DF
         {
             DeepFreezeGUI obj = DeepFreeze.Instance.GetComponent("DeepFreezeGUI") as DeepFreezeGUI;
             if (obj != null)
-                obj.GuiVisible = !obj.GuiVisible;
+                obj.DFMenuAppLToolBar.GuiVisible = !obj.DFMenuAppLToolBar.GuiVisible;
             else
                 Utilities.Log("DeepFreezer ToggleMenu error");
         }
@@ -1466,14 +1457,14 @@ namespace DF
 
         public override void OnLoad(ConfigNode node)
         {
-            Debug.Log("DeepFreezer onLoad");
+            //Debug.Log("DeepFreezer onLoad");
             base.OnLoad(node);
             cryopodstateclosed = new bool[FreezerSize];
             seatTakenbyFrznKerbal = new bool[FreezerSize];
             loadcryopodstatepersistent();
             loadexternaldoorstatepersistent();
-            Debug.Log("OnLoad: " + node);
-            Debug.Log("DeepFreezer end onLoad");
+            //Debug.Log("OnLoad: " + node);
+            //Debug.Log("DeepFreezer end onLoad");
         }
 
         public override void OnStart(StartState state)
@@ -1631,12 +1622,12 @@ namespace DF
 
         public override void OnSave(ConfigNode node)
         {
-            Debug.Log("DeepFreezer onSave");
+            //Debug.Log("DeepFreezer onSave");
             savecryopodstatepersistent();
             saveexternaldoorstatepersistent();
             base.OnSave(node);
-            Debug.Log("OnSave: " + node);
-            Debug.Log("DeepFreezer end onSave");
+            //Debug.Log("OnSave: " + node);
+            //Debug.Log("DeepFreezer end onSave");
         }
 
         private void OnDestroy()
@@ -4619,77 +4610,5 @@ namespace DF
 
         #endregion BackgroundProcessing
     }
-
-    #region ExtDoorMgr
-
-    public class DFExtDoorMgr : InternalModule
-    {
-        private DeepFreezer Freezer;
-
-        public override void OnUpdate()
-        {
-            base.OnUpdate();
-            if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ready && FlightGlobals.ActiveVessel != null)
-            {
-                if (Freezer == null)
-                {
-                    Freezer = part.FindModuleImplementing<DeepFreezer>();
-                    Utilities.Log_Debug("DFExtDoorMgr OnUpdate Set part " + part.name);
-                }
-            }
-        }
-
-        public void ButtonExtDoor(bool state)
-        {
-            if (Freezer == null)
-            {
-                Freezer = part.FindModuleImplementing<DeepFreezer>();
-                Utilities.Log_Debug("DFExtDoorMgr buttonExtDoorState set part " + part.name);
-            }
-            if (Freezer == null) return; // If freezer is still null just return
-            if (!Freezer.ExternalDoorActive) return;  // if freezer doesn't have an external door just return.
-
-            if (Freezer._externaldoorstate == DoorState.OPEN)
-            {
-                //Door is open so we trigger a closedoor.
-                Freezer.eventCloseDoors();
-                Utilities.Log_Debug("DFExtDoorMgr ButtonExtDoor fired triggerred eventCloseDoors");
-            }
-            else
-            {
-                if (Freezer._externaldoorstate == DoorState.CLOSED)
-                {
-                    //Door is closed so we trigger a opendoor.
-                    Freezer.eventOpenDoors();
-                    Utilities.Log_Debug("DFExtDoorMgr ButtonExtDoor fired triggerred eventOpenDoors");
-                }
-                else
-                {
-                    // door already opening or closing...
-                    Utilities.Log_Debug("DFExtDoorMgr ButtonExtDoor fired but door state is opening, closing or unknown");
-                }
-            }
-        }
-
-        public bool ButtonExtDoorState()
-        {
-            // Utilities.Log_Debug("DFExtDoorMgr ButtonExtDoorState fired");
-            if (Freezer == null)
-            {
-                Freezer = part.FindModuleImplementing<DeepFreezer>();
-                Utilities.Log_Debug("DFExtDoorMgr buttonExtDoorState set part " + part.name);
-            }
-            if (Freezer == null) return false; // if freezer still null return false
-            if (!Freezer.ExternalDoorActive) return false; // if freezer doesn't have an external door just return.
-            if (Freezer._externaldoorstate == DoorState.CLOSED || Freezer._externaldoorstate == DoorState.CLOSING || Freezer._externaldoorstate == DoorState.UNKNOWN)
-            {
-                Utilities.Log_Debug("DFExtDoorMgr Door is closed or closing or unknown return state false");
-                return false;
-            }
-            Utilities.Log_Debug("DFExtDoorMgr Door is open or opening return state true");
-            return true;
-        }
-    }
-
-    #endregion ExtDoorMgr
+   
 }

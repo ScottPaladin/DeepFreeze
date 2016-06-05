@@ -51,7 +51,7 @@ namespace DF
             APIReady = false;
             DFsettings = new DFSettings();
             DFgameSettings = new DFGameSettings();
-            globalConfigFilename = Path.Combine(_AssemblyFolder, "Config.cfg").Replace("\\", "/");
+            globalConfigFilename = Path.Combine(_AssemblyFolder, "PluginData/Config.cfg").Replace("\\", "/");
             Utilities.Log("globalConfigFilename = " + globalConfigFilename);
             DeepFreezeEventAdd();
         }
@@ -413,13 +413,13 @@ namespace DF
         /// Full Path of the executing Assembly
         /// </summary>
         internal static String _AssemblyLocation
-        { get { return Assembly.GetExecutingAssembly().Location; } }
+        { get { return Assembly.GetExecutingAssembly().Location.Replace("\\", "/");  } }
 
         /// <summary>
         /// Folder containing the executing Assembly
         /// </summary>
         internal static String _AssemblyFolder
-        { get { return Path.GetDirectoryName(_AssemblyLocation); } }
+        { get { return Path.GetDirectoryName(_AssemblyLocation).Replace("\\", "/");  } }
 
         #endregion Assembly/Class Information
     }
