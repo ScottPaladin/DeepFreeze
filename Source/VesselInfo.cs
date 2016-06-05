@@ -53,7 +53,6 @@ namespace DF
             this.vesselName = vesselName;
             hibernating = false;
             hasextDoor = false;
-            hasextDoor = false;
             hasextPod = false;
             lastUpdate = currentTime;
         }

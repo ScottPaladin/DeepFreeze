@@ -23,16 +23,14 @@ using RSTUtils;
 using UnityEngine;
 using Random = System.Random;
 using KSP.UI.Screens;
+using RSTUtils.Extensions;
 
 namespace DF
 {
     internal class DeepFreezeGUI : MonoBehaviour, Savable
     {
         //GUI Properties
-        private bool gamePaused;
-
-        private IButton button1;
-        private ApplicationLauncherButton stockToolbarButton; // Stock Toolbar Button
+        internal AppLauncherToolBar DFMenuAppLToolBar;
         private float DFWINDOW_WIDTH = 560;
         private float CFWINDOW_WIDTH = 340;
         private float KACWINDOW_WIDTH = 485;
@@ -83,7 +81,6 @@ namespace DF
 
         //settings vars for GUI
         private bool InputVautoRecover;
-
         private bool InputVdebug;
         private bool InputVToolTips;
         private bool InputVECReqd;
@@ -111,7 +108,6 @@ namespace DF
 
         //Settings vars
         private bool ECreqdForFreezer;
-
         private bool debugging;
         private bool ToolTips;
         private bool AutoRecoverFznKerbals;
@@ -130,7 +126,6 @@ namespace DF
 
         //SwitchVessel vars
         private bool showUnabletoSwitchVessel;
-
         private bool showSwitchVessel;
         private bool switchVesselManual;
         private string showSwitchVesselStr = string.Empty;
@@ -138,116 +133,23 @@ namespace DF
         private double switchVesselManualTimer;
         private bool chgECHeatsettings;
         private double chgECHeatsettingsTimer;
-
-        //GuiVisibility
-        private bool _Visible;
-
-        public Boolean GuiVisible
-        {
-            get { return _Visible; }
-            set
-            {
-                _Visible = value;      //Set the private variable
-            }
-        }
-
+        
         public bool Useapplauncher;
-
-        #region AppLauncher
-
-        private void OnGUIAppLauncherReady()
-        {
-            Utilities.Log_Debug("OnGUIAppLauncherReady");
-            if (ApplicationLauncher.Ready)
-            {
-                Utilities.Log_Debug("Adding AppLauncherButton");
-                stockToolbarButton = ApplicationLauncher.Instance.AddModApplication(
-                    onAppLaunchToggle,
-                    onAppLaunchToggle,
-                    DummyVoid,
-                    DummyVoid,
-                    DummyVoid,
-                    DummyVoid,
-                    ApplicationLauncher.AppScenes.SPACECENTER | ApplicationLauncher.AppScenes.FLIGHT |
-                                          ApplicationLauncher.AppScenes.MAPVIEW | ApplicationLauncher.AppScenes.SPH | ApplicationLauncher.AppScenes.VAB |
-                                          ApplicationLauncher.AppScenes.TRACKSTATION,
-                                          GameDatabase.Instance.GetTexture("REPOSoftTech/DeepFreeze/Icons/DeepFreezeOff", false));
-            }
-        }
-
-        private void DummyVoid()
-        {
-        }
-
-        private void onAppLaunchToggle()
-        {
-            GuiVisible = !GuiVisible;
-            if (stockToolbarButton != null)
-                stockToolbarButton.SetTexture(GameDatabase.Instance.GetTexture(GuiVisible ? "REPOSoftTech/DeepFreeze/Icons/DeepFreezeOn" : "REPOSoftTech/DeepFreeze/Icons/DeepFreezeOff", false));
-        }
-
-        private void DestroyToolBar()
-        {
-            if (ToolbarManager.ToolbarAvailable)
-            {
-                if (button1 != null)
-                    button1.Destroy();
-            }
-        }
-
-        private void CreateToolBar()
-        {
-            if (ToolbarManager.ToolbarAvailable)
-            {
-                button1 = ToolbarManager.Instance.add("DeepFreeze", "button1");
-                button1.TexturePath = "REPOSoftTech/DeepFreeze/Icons/DFtoolbar";
-                button1.ToolTip = "DeepFreeze";
-                button1.Visibility = new GameScenesVisibility(GameScenes.FLIGHT, GameScenes.EDITOR, GameScenes.SPACECENTER, GameScenes.TRACKSTATION);
-                button1.OnClick += e => GuiVisible = !GuiVisible;
-            }
-        }
-
-        private void DestroyStockButton()
-        {
-            GameEvents.onGUIApplicationLauncherReady.Remove(OnGUIAppLauncherReady);
-            if (stockToolbarButton != null)
-            {
-                ApplicationLauncher.Instance.RemoveModApplication(stockToolbarButton);
-                stockToolbarButton = null;
-            }
-        }
-
-        private void CreateStockButton()
-        {
-            Utilities.Log_Debug("Adding onGUIAppLauncher callbacks");
-            if (ApplicationLauncher.Ready)
-            {
-                if (stockToolbarButton == null)
-                    OnGUIAppLauncherReady();
-            }
-            else
-                GameEvents.onGUIApplicationLauncherReady.Add(OnGUIAppLauncherReady);
-        }
-
-        #endregion AppLauncher
-
+        private double currentTime;
+        
         internal void OnDestroy()
         {
-            DestroyToolBar();
-            DestroyStockButton();
-            if (GuiVisible) GuiVisible = !GuiVisible;
-            GameEvents.onGamePause.Remove(GamePaused);
-            GameEvents.onGameUnpause.Remove(GameUnPaused);
+            DFMenuAppLToolBar.Destroy();
         }
 
         internal void Start()
         {
             Utilities.Log_Debug("DeepFreezeGUI startup");
-            windowID = new Random().Next();
-            CFwindowID = windowID + 1;
-            KACwindowID = CFwindowID + 1;
-            VSwindowID = KACwindowID + 1;
-            VSFwindowID = VSFwindowID + 1;
+            windowID = Utilities.getnextrandomInt();
+            CFwindowID = Utilities.getnextrandomInt();
+            KACwindowID = Utilities.getnextrandomInt();
+            VSwindowID = Utilities.getnextrandomInt();
+            VSFwindowID = Utilities.getnextrandomInt();
 
             DFwindowPos = new Rect(40, Screen.height / 2 - 100, DFWINDOW_WIDTH, WINDOW_BASE_HEIGHT);
             CFwindowPos = new Rect(450, Screen.height / 2 - 100, CFWINDOW_WIDTH, 250);
@@ -275,41 +177,35 @@ namespace DF
             DFvslRT = Mathf.Round((DFWINDOW_WIDTH - 28f) * .12f);
 
             Utilities.setScaledScreen();
+            
+            DFMenuAppLToolBar = new AppLauncherToolBar("DeepFreeze", "DeepFreeze",
+                "REPOSoftTech/DeepFreeze/Icons/DFtoolbar",
+                ApplicationLauncher.AppScenes.SPACECENTER | ApplicationLauncher.AppScenes.FLIGHT |
+                ApplicationLauncher.AppScenes.MAPVIEW | ApplicationLauncher.AppScenes.SPH | ApplicationLauncher.AppScenes.VAB |
+                ApplicationLauncher.AppScenes.TRACKSTATION,
+                GameDatabase.Instance.GetTexture("REPOSoftTech/DeepFreeze/Icons/DeepFreezeOn", false),
+                GameDatabase.Instance.GetTexture("REPOSoftTech/DeepFreeze/Icons/DeepFreezeOff", false),
+                GameScenes.FLIGHT, GameScenes.EDITOR, GameScenes.SPACECENTER, GameScenes.TRACKSTATION);
 
-            // create toolbar button
+            //If Settings wants to use ToolBar mod, check it is installed and available. If not set the TST Setting to use Stock.
+            if (!ToolbarManager.ToolbarAvailable && Useapplauncher)
+            {
+                Useapplauncher = true;
+            }
 
-            if (ToolbarManager.ToolbarAvailable && Useapplauncher == false)
-            {
-                CreateToolBar();
-            }
-            else
-            {
-                // Set up the stock toolbar
-                CreateStockButton();
-            }
-            GameEvents.onGamePause.Add(GamePaused);
-            GameEvents.onGameUnpause.Add(GameUnPaused);
+            DFMenuAppLToolBar.Start(Useapplauncher);
+            
             Utilities.Log_Debug("DeepFreezeGUI END startup");
         }
-
-        private void GamePaused()
-        {
-            gamePaused = true;
-        }
-
-        private void GameUnPaused()
-        {
-            gamePaused = false;
-        }
-
+        
         private void FixedUpdate()
         {
             if (Time.timeSinceLevelLoad < 2f) return; //Wait 2 seconds on level load before executing
 
             if (chgECHeatsettings)
             {
-                double time = Planetarium.GetUniversalTime();
-                if (time - chgECHeatsettingsTimer > 2)
+                currentTime = Planetarium.GetUniversalTime();
+                if (currentTime - chgECHeatsettingsTimer > 2)
                 {
                     chgECHeatsettings = false;
                 }
@@ -320,22 +216,19 @@ namespace DF
 
         private void OnGUI()
         {
-            if (!GuiVisible) return;
-
             if (!Textures.StylesSet)
                 Textures.SetupStyles();
 
             if (showSwitchVessel)
             {
-                if (!Utilities.WindowVisibile(DFVSwindowPos))
-                    Utilities.MakeWindowVisible(DFVSwindowPos);
+
+                DFVSwindowPos.ClampToScreen();
                 DFVSwindowPos = GUILayout.Window(VSwindowID, DFVSwindowPos, windowVS, "DeepFreeze Vessel Switch", GUILayout.ExpandWidth(false),
                     GUILayout.ExpandHeight(true), GUILayout.Width(320), GUILayout.MinHeight(100));
             }
             if (showUnabletoSwitchVessel && !switchVesselManual)
             {
-                if (!Utilities.WindowVisibile(DFVSFwindowPos))
-                    Utilities.MakeWindowVisible(DFVSFwindowPos);
+                DFVSFwindowPos.ClampToScreen();
                 DFVSFwindowPos = GUILayout.Window(VSFwindowID, DFVSFwindowPos, windowVSF, "DeepFreeze Vessel Switch Failed", GUILayout.ExpandWidth(false),
                     GUILayout.ExpandHeight(true), GUILayout.Width(320), GUILayout.MinHeight(100));
             }
@@ -347,15 +240,14 @@ namespace DF
                     switchVesselManual = false;
                 }
             }
-            if (!GuiVisible || gamePaused || FlightDriver.Pause)
+            if (!DFMenuAppLToolBar.GuiVisible || DFMenuAppLToolBar.gamePaused || DFMenuAppLToolBar.hideUI)
             {
                 return;
             }
             if (HighLogic.LoadedScene == GameScenes.SPACECENTER || HighLogic.LoadedScene == GameScenes.TRACKSTATION || HighLogic.LoadedScene == GameScenes.FLIGHT)
             {
                 GUI.skin = HighLogic.Skin;
-                if (!Utilities.WindowVisibile(DFwindowPos))
-                    Utilities.MakeWindowVisible(DFwindowPos);
+                DFwindowPos.ClampInsideScreen();
                 DFwindowPos = GUILayout.Window(windowID, DFwindowPos, windowDF, "DeepFreeze Kerbals", GUILayout.ExpandWidth(true),
                         GUILayout.ExpandHeight(true), GUILayout.MinWidth(200), GUILayout.MinHeight(250));
                 if (showConfigGUI)
@@ -382,15 +274,13 @@ namespace DF
                         InputStripLightsOn = StripLightsOn;
                         LoadConfig = false;
                     }
-                    if (!Utilities.WindowVisibile(CFwindowPos))
-                        Utilities.MakeWindowVisible(CFwindowPos);
+                    CFwindowPos.ClampInsideScreen();
                     CFwindowPos = GUILayout.Window(CFwindowID, CFwindowPos, windowCF, "DeepFreeze Settings", GUILayout.ExpandWidth(true),
                         GUILayout.ExpandHeight(true), GUILayout.MinWidth(400), GUILayout.MinHeight(300));
                 }
                 if (showKACGUI)
                 {
-                    if (!Utilities.WindowVisibile(DFKACwindowPos))
-                        Utilities.MakeWindowVisible(DFKACwindowPos);
+                    DFKACwindowPos.ClampInsideScreen();
                     DFKACwindowPos = GUILayout.Window(KACwindowID, DFKACwindowPos, windowKAC, "DeepFreeze Alarms", GUILayout.ExpandWidth(true),
                         GUILayout.ExpandHeight(true), GUILayout.MinWidth(360), GUILayout.MinHeight(150));
                 }
@@ -406,7 +296,7 @@ namespace DF
             Rect closeRect = new Rect(DFwindowPos.width - 21, 4, 16, 16);
             if (GUI.Button(closeRect, closeContent, Textures.ClosebtnStyle))
             {
-                onAppLaunchToggle();
+                DFMenuAppLToolBar.onAppLaunchToggle();
                 return;
             }
 
@@ -953,30 +843,11 @@ namespace DF
             GUILayout.BeginHorizontal();
             if (GUILayout.Button(new GUIContent("Save & Exit Settings", "Exit this menu and Save Settings"), GUILayout.Width(155f)))
             {
+
                 if (Useapplauncher != InputAppL)
                 {
-                    if (InputAppL == true)  //Use stock
-                    {
-                        Useapplauncher = InputAppL;
-                        DestroyToolBar();
-                        CreateStockButton();
-                    }
-                    else  //Use toolbar
-                    {
-                        if (ToolbarManager.ToolbarAvailable) //Is it available?
-                        {
-                            Useapplauncher = InputAppL;
-                            DestroyStockButton();
-                            CreateToolBar();
-                        }
-                        else //Otherwise use stock.
-                        {
-                            Useapplauncher = true;
-                            DestroyToolBar();
-                            CreateStockButton();
-                        }
-                            
-                    }
+                    Useapplauncher = InputAppL;
+                    DFMenuAppLToolBar.chgAppIconStockToolBar(Useapplauncher);
                 }
                 
                 if (ECreqdForFreezer != InputVECReqd)

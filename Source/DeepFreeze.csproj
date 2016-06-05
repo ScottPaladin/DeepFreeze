@@ -50,6 +50,10 @@
     <Reference Include="Assembly-UnityScript-firstpass">
       <HintPath>..\..\KSPDLLs\Assembly-UnityScript-firstpass.dll</HintPath>
     </Reference>
+    <Reference Include="KSPAssets, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\KSPDLLs\KSPAssets.dll</HintPath>
+    </Reference>
     <Reference Include="KSPUtil">
       <HintPath>..\..\KSPDLLs\KSPUtil.dll</HintPath>
     </Reference>
@@ -69,14 +73,25 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\..\REPOSoftTechKSPUtils\AppLauncherToolBarExtension.cs">
+      <Link>AppLauncherToolBarExtension.cs</Link>
+    </Compile>
+    <Compile Include="..\..\REPOSoftTechKSPUtils\RectExtentions.cs">
+      <Link>RectExtentions.cs</Link>
+    </Compile>
     <Compile Include="..\..\REPOSoftTechKSPUtils\RSTutilities.cs">
       <Link>RSTutilities.cs</Link>
+    </Compile>
+    <Compile Include="..\..\REPOSoftTechKSPUtils\ToolBarManager.cs">
+      <Link>ToolBarManager.cs</Link>
     </Compile>
     <Compile Include="APIs\KBWrapper.cs" />
     <Compile Include="DeepFreeze.cs" />
     <Compile Include="DeepFreezerPart.cs" />
     <Compile Include="DFAlarmInfo.cs" />
     <Compile Include="DFEditorFilter.cs" />
+    <Compile Include="DFEnums.cs" />
+    <Compile Include="DFExtDoorMgr.cs" />
     <Compile Include="DFGameSettings.cs" />
     <Compile Include="DFInstalledMods.cs" />
     <Compile Include="DFSettings.cs" />
@@ -154,7 +169,6 @@
     <Compile Include="APIs\USIWrapper.cs" />
     <Compile Include="Textures.cs" />
     <Compile Include="VesselInfo.cs" />
-    <Compile Include="APIs\ToolBarManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Distribution\GameData\REPOSoftTech\DeepFreeze\Changelog.txt" />

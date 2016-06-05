@@ -48,7 +48,7 @@ namespace DF
         internal static Texture2D BtnRedCross = new Texture2D(16, 16, TextureFormat.ARGB32, false);
         internal static Texture2D BtnResize = new Texture2D(16, 16, TextureFormat.ARGB32, false);
 
-        internal static String PathIconsPath = System.IO.Path.Combine(DeepFreeze._AssemblyFolder.Substring(0, DeepFreeze._AssemblyFolder.IndexOf("\\DeepFreeze\\") + 11), "Icons").Replace("\\", "/");
+        internal static String PathIconsPath = System.IO.Path.Combine(DeepFreeze._AssemblyFolder.Substring(0, DeepFreeze._AssemblyFolder.IndexOf("/DeepFreeze/") + 12), "Icons").Replace("\\", "/");
         internal static String PathToolbarIconsPath = PathIconsPath.Substring(PathIconsPath.ToLower().IndexOf("/gamedata/") + 10);
 
 
@@ -89,14 +89,14 @@ namespace DF
                 }
                 else
                 {
-                    RSTUtils.Utilities.Log("TST Cannot find texture to load:" + folderPath + "(" + fileName + ")");
+                    RSTUtils.Utilities.Log("Cannot find texture to load:" + folderPath + "(" + fileName + ")");
                 }
 
 
             }
             catch (Exception ex)
             {
-                RSTUtils.Utilities.Log("TST Failed to load (are you missing a file):" + folderPath + "(" + fileName + ")");
+                RSTUtils.Utilities.Log("Failed to load (are you missing a file):" + folderPath + "(" + fileName + ")");
                 RSTUtils.Utilities.Log(ex.Message);
             }
             return blnReturn;
