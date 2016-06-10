@@ -1251,7 +1251,7 @@ namespace DF
             {
                 if (!DeepFreeze.Instance.DFgameSettings.knownKACAlarms.ContainsKey(entry.ID)) // So we don't already know about it
                 {
-                    if (entry.VesselID != string.Empty)
+                    if (entry.VesselID != string.Empty && entry.AlarmType != KACWrapper.KACAPI.AlarmTypeEnum.Crew)
                     {
                         Guid tmpid = Guid.Empty;
                         try

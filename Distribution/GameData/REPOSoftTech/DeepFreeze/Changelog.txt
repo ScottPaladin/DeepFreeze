@@ -1,4 +1,7 @@
-﻿V0.22.2.0 "Bug Fixes"
+﻿V0.22.3.0 
+Fix Bug where KAC Alarms GUI window fails if there is a KAC alarm of type "Crew"
+
+V0.22.2.0 "Bug Fixes"
 Fixed bug with Icons not loading on Linux.
 Efficiency clean-up on code modules (speed and memory use).
 Fix bug where DeepFreeze is not maintaining and updating Vessel Information for Vessels with Freezer parts, causing Exceptions in the log and vessels not

@@ -931,7 +931,7 @@ namespace DF
                 foreach (KACWrapper.KACAPI.KACAlarm alarm in KACWrapper.KAC.Alarms)
                 {
                     //Only show KAC alarms that are in the DeepFreeze known vessels list. (IE: vessels that have a freezer)
-                    if (alarm.VesselID == "")
+                    if (alarm.VesselID == "" || alarm.AlarmType == KACWrapper.KACAPI.AlarmTypeEnum.Crew)
                     {
                         continue;
                     }
