@@ -633,7 +633,7 @@ namespace DF
                         GUILayout.Label(frzr.part.vessel.vesselName, Textures.statusStyle, GUILayout.Width(DFtxtWdthVslN));
                         if (crewMember.type != ProtoCrewMember.KerbalType.Tourist)
                         {
-                            if (frzr.DFIcrewXferFROMActive || frzr.DFIcrewXferTOActive || (DFInstalledMods.IsSMInstalled && frzr.IsSMXferRunning())
+                            if (frzr.DFIcrewXferFROMActive || frzr.DFIcrewXferTOActive || (DFInstalledMods.IsSMInstalled && frzr.IsCrewXferRunning)
                                                         || frzr.IsFreezeActive || frzr.IsThawActive || (DFInstalledMods.IsRTInstalled && !DFInstalledMods.RTVesselConnected(DFIntMemory.Instance.ActVslID)))
                             {
                                 GUI.enabled = false;
