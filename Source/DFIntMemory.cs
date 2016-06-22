@@ -185,38 +185,6 @@ namespace DF
             
             if (HighLogic.LoadedSceneIsFlight && ActVslHasDpFrezr)
             {
-                /* Not required from KSP 1.1 as RefreskFrozenKerbals in each PartModule will remove the portraits for frozen kerbals.
-                //Check if Refresh Portraits Cam is required after two vessels are docked
-                if (refreshPortraits)
-                {
-                    if (Planetarium.GetUniversalTime() - refreshPortraitsTimer > 3)
-                    {
-                        foreach (Part part in FlightGlobals.ActiveVessel.parts)
-                        {
-                            if (part.internalModel != null)
-                            {
-                                foreach (InternalSeat seat in part.internalModel.seats)
-                                {
-                                    if (seat.kerbalRef != null)
-                                    {
-                                        try
-                                        {
-                                            KerbalPortraitGallery.Instance.UnregisterActiveCrew(seat.kerbalRef);
-                                            if (!DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.ContainsKey(seat.kerbalRef.crewMemberName))
-                                                KerbalPortraitGallery.Instance.RegisterActiveCrew(seat.kerbalRef);
-                                        }
-                                        catch (Exception)
-                                        {
-                                            Utilities.Log_Debug("Unregister Portrait on inactive part failed {0}", seat.kerbalRef.crewMemberName);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        refreshPortraits = false;
-                    }
-                }*/
-
                 //If user hits Modifier Key - D switch to freezer cams.
                 if (GameSettings.MODIFIER_KEY.GetKey() && Input.GetKeyDown(keyFrzrCam) && ActFrzrCams.Count > 0 && !Utilities.StockOverlayCamIsOn)
                 {
