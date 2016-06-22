@@ -45,7 +45,7 @@ namespace RSTUtils
 			return _nextrandomInt;
 		}
 
-	    private static GameState state;
+		private static GameState state;
 
 		//Set the Game State mode indicator, 0 = inflight, 1 = editor, 2 on EVA or F2
 		public static bool GameModeisFlight
@@ -140,21 +140,21 @@ namespace RSTUtils
 			return DstFrmHome;
 		}
 
-        public static double DistanceFromHomeWorld(string bodyname)
-        {
-            CelestialBody body = FlightGlobals.Bodies.FirstOrDefault(a => a.name == bodyname);
-            if (body == null) body = Planetarium.fetch.Home;
-            Vector3d bodyPos = body.getPositionAtUT(0);
-            CelestialBody HmePlanet = Planetarium.fetch.Home;
-            Log_Debug("Home = " + HmePlanet.name + " Pos = " + HmePlanet.getPositionAtUT(0));
-            Log_Debug("Body Pos = " + bodyPos);
-            Vector3d hmeplntPos = HmePlanet.getPositionAtUT(0);
-            double DstFrmHome = Math.Sqrt(Math.Pow(bodyPos.x - hmeplntPos.x, 2) + Math.Pow(bodyPos.y - hmeplntPos.y, 2) + Math.Pow(bodyPos.z - hmeplntPos.z, 2));
-            Log_Debug("Distance from Home Planet = " + DstFrmHome);
-            return DstFrmHome;
-        }
+		public static double DistanceFromHomeWorld(string bodyname)
+		{
+			CelestialBody body = FlightGlobals.Bodies.FirstOrDefault(a => a.name == bodyname);
+			if (body == null) body = Planetarium.fetch.Home;
+			Vector3d bodyPos = body.getPositionAtUT(0);
+			CelestialBody HmePlanet = Planetarium.fetch.Home;
+			Log_Debug("Home = " + HmePlanet.name + " Pos = " + HmePlanet.getPositionAtUT(0));
+			Log_Debug("Body Pos = " + bodyPos);
+			Vector3d hmeplntPos = HmePlanet.getPositionAtUT(0);
+			double DstFrmHome = Math.Sqrt(Math.Pow(bodyPos.x - hmeplntPos.x, 2) + Math.Pow(bodyPos.y - hmeplntPos.y, 2) + Math.Pow(bodyPos.z - hmeplntPos.z, 2));
+			Log_Debug("Distance from Home Planet = " + DstFrmHome);
+			return DstFrmHome;
+		}
 
-        public static bool CelestialBodyDistancetoSun(CelestialBody cb, out Vector3d sun_dir, out double sun_dist)
+		public static bool CelestialBodyDistancetoSun(CelestialBody cb, out Vector3d sun_dir, out double sun_dist)
 		{
 			// bodies traced against
 			CelestialBody sun = FlightGlobals.Bodies[0];
@@ -383,17 +383,17 @@ namespace RSTUtils
 
 			Debug.Log("--------------------------------------");
 		}
-        
-        public static Camera findCameraByName(string camera)
+		
+		public static Camera findCameraByName(string camera)
 		{
 			return Camera.allCameras.FirstOrDefault(cam => cam.name == camera);
 		}
 
-	    private static Camera StockOverlayCamera;
-        /// <summary>
-        /// Returns True if the Stock Overlay Camera Mode is on, otherwise will return false.
-        /// </summary>
-        public static bool StockOverlayCamIsOn
+		private static Camera StockOverlayCamera;
+		/// <summary>
+		/// Returns True if the Stock Overlay Camera Mode is on, otherwise will return false.
+		/// </summary>
+		public static bool StockOverlayCamIsOn
 		{
 			get
 			{
@@ -586,7 +586,7 @@ namespace RSTUtils
 		}
 
 		private static RuntimeAnimatorController kerbalIVAController, myController;
-	    private static AnimatorOverrideController myOverrideController;
+		private static AnimatorOverrideController myOverrideController;
 
 		internal static void subdueIVAKerbalAnimations(Kerbal kerbal)
 		{
@@ -841,7 +841,7 @@ namespace RSTUtils
 
 		#region Resources
 
-	    private static List<PartResource> resources;
+		private static List<PartResource> resources;
 		//Resources
 		public static double GetAvailableResource(Part part, String resourceName)
 		{
@@ -852,9 +852,9 @@ namespace RSTUtils
 
 		public const int MAX_TRANSFER_ATTEMPTS = 4;
 
-	    private static double totalReceived;
-	    private static double requestAmount;
-	    private static double received;
+		private static double totalReceived;
+		private static double requestAmount;
+		private static double received;
 		public static double RequestResource(Part cvp, String name, double amount)
 		{
 			if (amount <= 0.0)
@@ -1136,11 +1136,11 @@ namespace RSTUtils
 		#region Time
 		//Formatting time functions
 
-	    private static int y, d, h, m;
-        private static List<string> parts = new List<string>();
-        //Format a Time double variable into format "xxxx:year xxxx:days xxxx:hours xxxx:mins x:xx:secs"
-        //Future expansion required to format to different formats.
-        public static String formatTime(double seconds)
+		private static int y, d, h, m;
+		private static List<string> parts = new List<string>();
+		//Format a Time double variable into format "xxxx:year xxxx:days xxxx:hours xxxx:mins x:xx:secs"
+		//Future expansion required to format to different formats.
+		public static String formatTime(double seconds)
 		{
 			y = (int)(seconds / (6.0 * 60.0 * 60.0 * 426.08));
 			seconds = seconds % (6.0 * 60.0 * 60.0 * 426.08);
@@ -1152,7 +1152,7 @@ namespace RSTUtils
 			seconds = seconds % 60.0;
 
 			//List<string> parts = new List<string>();
-            parts.Clear();
+			parts.Clear();
 
 			if (y > 0)
 			{
@@ -1186,8 +1186,8 @@ namespace RSTUtils
 			return "0s";
 		}
 
-	    private static string outputstring;
-        private static int[] datestructure = new int[5];
+		private static string outputstring;
+		private static int[] datestructure = new int[5];
 		//Format a Time double variable into format "YxxxxDxxxhh:mm:ss"
 		//Future expansion required to format to different formats.
 		internal static string FormatDateString(double time)
@@ -1252,7 +1252,7 @@ namespace RSTUtils
 			OutputFull
 		}
 
-	    private static ISRUStatus returnStatus;
+		private static ISRUStatus returnStatus;
 		/// <summary>
 		/// Returns a Status Indicating the Status of a ISRU ModuleResourceConverter, given that it's actual status can be active, but not actually doing anything.
 		/// </summary>
@@ -1314,6 +1314,15 @@ namespace RSTUtils
 			}
 		}
 
+	    internal static bool IsEVEInstalled
+	    {
+	        get
+	        {
+	            return IsModInstalled("EVEManager");
+	            
+	        }
+	    }
+
 		internal static bool IsOPMInstalled
 		{
 			get
@@ -1327,20 +1336,20 @@ namespace RSTUtils
 			}
 		}
 
-        internal static bool IsNHInstalled
-        {
-            get
-            {
-                CelestialBody sonnah = FlightGlobals.Bodies.FirstOrDefault(a => a.name == "Sonnah");
-                if (sonnah != null)
-                {
-                    return true;
-                }
-                return false;
-            }
-        }
+		internal static bool IsNHInstalled
+		{
+			get
+			{
+				CelestialBody sonnah = FlightGlobals.Bodies.FirstOrDefault(a => a.name == "Sonnah");
+				if (sonnah != null)
+				{
+					return true;
+				}
+				return false;
+			}
+		}
 
-        internal static bool IsModInstalled(string assemblyName)
+		internal static bool IsModInstalled(string assemblyName)
 		{
 			Assembly assembly = (from a in assemblies
 								 where a.FullName.Contains(assemblyName)

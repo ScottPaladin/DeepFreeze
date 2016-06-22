@@ -633,7 +633,7 @@ namespace DF
                         GUILayout.Label(frzr.part.vessel.vesselName, Textures.statusStyle, GUILayout.Width(DFtxtWdthVslN));
                         if (crewMember.type != ProtoCrewMember.KerbalType.Tourist)
                         {
-                            if (frzr.DFIcrewXferFROMActive || frzr.DFIcrewXferTOActive || (DFInstalledMods.IsSMInstalled && frzr.IsSMXferRunning())
+                            if (frzr.DFIcrewXferFROMActive || frzr.DFIcrewXferTOActive || (DFInstalledMods.IsSMInstalled && frzr.IsCrewXferRunning)
                                                         || frzr.IsFreezeActive || frzr.IsThawActive || (DFInstalledMods.IsRTInstalled && !DFInstalledMods.RTVesselConnected(DFIntMemory.Instance.ActVslID)))
                             {
                                 GUI.enabled = false;
@@ -931,7 +931,7 @@ namespace DF
                 foreach (KACWrapper.KACAPI.KACAlarm alarm in KACWrapper.KAC.Alarms)
                 {
                     //Only show KAC alarms that are in the DeepFreeze known vessels list. (IE: vessels that have a freezer)
-                    if (alarm.VesselID == "")
+                    if (alarm.VesselID == "" || alarm.AlarmType == KACWrapper.KACAPI.AlarmTypeEnum.Crew)
                     {
                         continue;
                     }

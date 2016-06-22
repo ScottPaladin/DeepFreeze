@@ -56,6 +56,9 @@ namespace DF
         {
             try
             {
+                Utilities.Log("DeepFreeze AssemblyFolder = " + DeepFreeze._AssemblyFolder);
+                Utilities.Log("PathIconsPath = " + PathIconsPath);
+                Utilities.Log("PathToolbarIconsPath = " + PathToolbarIconsPath);
                 LoadImageFromFile(ref TooltipBox, "DFToolTipBox.png", PathIconsPath);
                 LoadImageFromFile(ref BtnRedCross, "DFbtnRedCross.png", PathIconsPath);
                 LoadImageFromFile(ref BtnResize, "DFbtnResize.png", PathIconsPath);
