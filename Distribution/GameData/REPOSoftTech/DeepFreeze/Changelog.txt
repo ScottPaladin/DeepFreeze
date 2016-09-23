@@ -1,4 +1,11 @@
-﻿V0.22.3.0 
+﻿V0.23.0.0
+Update for KSP 1.2
+Fix Coma Kerbals to register/unregister their traits at the correct time and handle Tourist kerbals.
+Added Setting in the menu that allows you to turn on/off the VAB/SPH Deepfreeze Parts Category Icon.
+Converted all Settings to new Stock Difficulty/Settings Integration. DeepFreeze Settings are now set in the Difficulty window (stock) when starting a new game
+and other settings can be changed in-game by bringing up the Settings Menu in-game ane selecting the Difficulty settings button at the top of the window.
+Changed the mass of the CRY-0300 from 2,5t to 1.5t to align with other parts.
+V0.22.3.0 
 Fix Bug where KAC Alarms GUI window fails if there is a KAC alarm of type "Crew"
 Adjustments to internal code for 1.1.3 API changes for Crew Transfers.
 Removed Glykerol Defintion from DeepFreeze distribution. Glykerol will now be defined as part of the Community Resource Pack (CRP) V0.5.4.0 and up.

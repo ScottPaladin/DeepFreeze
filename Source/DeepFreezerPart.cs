@@ -2461,7 +2461,7 @@ namespace DF
                                          Utilities.Log_Debug("Kerbal kerbalref is still null, respawn");
                                         kerbal.seat = part.internalModel.seats[tmpcrew.SeatIdx];
                                         kerbal.seatIdx = tmpcrew.SeatIdx;
-                                        kerbal.Spawn();
+                                        ProtoCrewMember.Spawn(kerbal);
                                          Utilities.Log_Debug("Kerbal kerbalref = " + kerbal.KerbalRef.GetInstanceID());
                                     }
                                     codestep = 1;
@@ -2736,7 +2736,7 @@ namespace DF
             {
                 ScreenMessages.PostScreenMessage(frozenkerbal + " was thawed out due to lack of Electrical Charge to run cryogenics", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                 Debug.Log("DeepFreezer - kerbal " + frozenkerbal + " was thawed out due to lack of Electrical charge to run cryogenics");
-                DeepFreeze.Instance.setComatoseKerbal(kerbal, ProtoCrewMember.KerbalType.Tourist);
+                DeepFreeze.Instance.setComatoseKerbal(part, kerbal, ProtoCrewMember.KerbalType.Tourist, true);
 
                 // Update the saved frozen kerbals dictionary
                 KerbalInfo kerbalInfo = new KerbalInfo(Planetarium.GetUniversalTime());
@@ -3042,11 +3042,10 @@ namespace DF
         /// If it is move it from the OK list to the NOT OK list so the user can't select this part.
         /// </summary>
         /// <param name="fromToAction">List<Part>, List<Part>> fromToAction two lists of parts.</param>
-        private void onCrewTransferPartListCreated(
-            GameEvents.FromToAction<List<Part>, List<Part>> fromToAction)
+        private void onCrewTransferPartListCreated(GameEvents.HostedFromToAction<Part, List<Part>> HostedFromTo)
         {
             CrewMoveList.Clear();
-            foreach (Part p in fromToAction.from)
+            foreach (Part p in HostedFromTo.from)
             {
                 if (p == part && PartFull)
                 {
@@ -3054,8 +3053,8 @@ namespace DF
                 }
             }
 
-            CrewMoveList.ForEach(id => fromToAction.from.Remove(id));
-            CrewMoveList.ForEach(id => fromToAction.to.Add(id));
+            CrewMoveList.ForEach(id => HostedFromTo.from.Remove(id));
+            CrewMoveList.ForEach(id => HostedFromTo.to.Add(id));
             crewTransferInputLock = true;
         }
         
@@ -3238,7 +3237,7 @@ namespace DF
                                 crewmember.seat = part.internalModel.seats[crewmember.seatIdx];
                             if (crewmember.KerbalRef == null)
                             {
-                                crewmember.Spawn();
+                                ProtoCrewMember.Spawn(crewmember);
                             }
                             crewmember.KerbalRef.transform.parent =
                                 part.internalModel.seats[crewmember.seatIdx].seatTransform;
@@ -3372,8 +3371,7 @@ namespace DF
                 Utilities.Log(ex.Message);
             }
         }
-
-        // Simple bool for resource checking and usage.  Returns true and optionally uses resource if resAmount of res is available. - Credit TMarkos https://github.com/TMarkos/ as this is lifted verbatim from his Beacon's pack. Mad modify as needed.
+        
         private bool requireResource(Vessel craft, string res, double resAmount, bool consumeResource, out double resavail)
         {
             if (!craft.loaded)
@@ -3381,40 +3379,20 @@ namespace DF
                 resavail = 0;
                 return false; // Unloaded resource checking is unreliable.
             }
-            Dictionary<PartResource, double> toDraw = new Dictionary<PartResource, double>();
-            double resRemaining = resAmount;
-            foreach (Part cPart in craft.Parts)
+            double amount, maxamount;
+            craft.resourcePartSet.GetConnectedResourceTotals(PartResourceLibrary.Instance.GetDefinition(res).id,out amount, out maxamount, true);
+            if (amount < resAmount)
             {
-                foreach (PartResource cRes in cPart.Resources)
-                {
-                    if (cRes.resourceName != res) continue;
-                    if (cRes.amount == 0) continue;
-                    if (cRes.amount >= resRemaining)
-                    {
-                        toDraw.Add(cRes, resRemaining);
-                        resRemaining = 0;
-                    }
-                    else
-                    {
-                        toDraw.Add(cRes, cRes.amount);
-                        resRemaining -= cRes.amount;
-                    }
-                }
-                if (resRemaining <= 0) break;
-            }
-            if (resRemaining > 0)
-            {
-                resavail = resAmount - resRemaining;
+                resavail = amount;
                 return false;
             }
-            if (consumeResource)
+            var amountdrawn = craft.RequestResource(craft.rootPart, PartResourceLibrary.Instance.GetDefinition(res).id, resAmount, true);
+            if (amountdrawn < resAmount*0.99)
             {
-                foreach (KeyValuePair<PartResource, double> drawSource in toDraw)
-                {
-                    drawSource.Key.amount -= drawSource.Value;
-                }
+                resavail = amountdrawn;
+                return false;
             }
-            resavail = resAmount;
+            resavail = amountdrawn;
             return true;
         }
 

@@ -15,6 +15,7 @@
  *
  */
 
+using DeepFreeze;
 using RSTUtils;
 
 namespace DF
@@ -26,8 +27,8 @@ namespace DF
 
         internal float DFwindowPosX ;
         internal float DFwindowPosY ;
-        internal float CFwindowPosX ;
-        internal float CFwindowPosY ;
+        //internal float CFwindowPosX ;
+        //internal float CFwindowPosY ;
         internal float DFKACwindowPosX ;
         internal float DFKACwindowPosY ;
         internal bool UseAppLauncher ;
@@ -58,13 +59,14 @@ namespace DF
         internal int internalNxtFrzrCamCode ;
         internal int internalPrvFrzrCamCode ;
         internal bool ToolTips ;
+        internal bool EditorFilter;
 
         internal DFSettings()
         {
             DFwindowPosX = 40;
             DFwindowPosY = 50;
-            CFwindowPosX = 500;
-            CFwindowPosY = 140;
+            //CFwindowPosX = 500;
+            //CFwindowPosY = 140;
             DFKACwindowPosX = 600;
             DFKACwindowPosY = 50;
             UseAppLauncher = true;
@@ -94,6 +96,7 @@ namespace DF
             internalNxtFrzrCamCode = 110;
             internalPrvFrzrCamCode = 98;
             ToolTips = true;
+            EditorFilter = true;
         }
 
         //Settings Functions Follow
@@ -106,26 +109,10 @@ namespace DF
 
                 DFsettingsNode.TryGetValue("DFwindowPosX", ref DFwindowPosX);
                 DFsettingsNode.TryGetValue("DFwindowPosY", ref DFwindowPosY);
-                DFsettingsNode.TryGetValue("CFwindowPosX", ref CFwindowPosX);
-                DFsettingsNode.TryGetValue("CFwindowPosY", ref CFwindowPosY);
+                //DFsettingsNode.TryGetValue("CFwindowPosX", ref CFwindowPosX);
+                //DFsettingsNode.TryGetValue("CFwindowPosY", ref CFwindowPosY);
                 DFsettingsNode.TryGetValue("DFKACwindowPosX", ref DFKACwindowPosX);
                 DFsettingsNode.TryGetValue("DFKACwindowPosY", ref DFKACwindowPosY);
-                DFsettingsNode.TryGetValue("ECreqdForFreezer", ref ECreqdForFreezer);
-                DFsettingsNode.TryGetValue("fatalOption", ref fatalOption);
-                DFsettingsNode.TryGetValue("comatoseTime", ref comatoseTime);
-                DFsettingsNode.TryGetValue("UseAppLauncher", ref UseAppLauncher);
-                DFsettingsNode.TryGetValue("debugging", ref debugging);
-                DFsettingsNode.TryGetValue("ToolTips", ref ToolTips);
-                DFsettingsNode.TryGetValue("AutoRecoverFznKerbals", ref AutoRecoverFznKerbals);
-                DFsettingsNode.TryGetValue("KSCcostToThawKerbal", ref KSCcostToThawKerbal);
-                DFsettingsNode.TryGetValue("ECReqdToFreezeThaw", ref ECReqdToFreezeThaw);
-                DFsettingsNode.TryGetValue("GlykerolReqdToFreeze", ref GlykerolReqdToFreeze);
-                DFsettingsNode.TryGetValue("RegTempReqd", ref RegTempReqd);
-                DFsettingsNode.TryGetValue("RegTempFreeze", ref RegTempFreeze);
-                DFsettingsNode.TryGetValue("RegTempMonitor", ref RegTempMonitor);
-                DFsettingsNode.TryGetValue("heatamtMonitoringFrznKerbals", ref heatamtMonitoringFrznKerbals);
-                DFsettingsNode.TryGetValue("heatamtThawFreezeKerbal", ref heatamtThawFreezeKerbal);
-                DFsettingsNode.TryGetValue("TempinKelvin", ref TempinKelvin);
                 DFsettingsNode.TryGetValue("defaultTimeoutforCrewXfer", ref defaultTimeoutforCrewXfer);
                 DFsettingsNode.TryGetValue("cryopodResettimeDelay", ref cryopodResettimeDelay);
                 DFsettingsNode.TryGetValue("DFWindowWidth", ref DFWindowWidth);
@@ -133,11 +120,32 @@ namespace DF
                 DFsettingsNode.TryGetValue("KACWindowWidth", ref KACWindowWidth);
                 DFsettingsNode.TryGetValue("ECLowWarningTime", ref ECLowWarningTime);
                 DFsettingsNode.TryGetValue("EClowCriticalTime", ref EClowCriticalTime);
-                DFsettingsNode.TryGetValue("StripLightsActive", ref StripLightsActive);
                 DFsettingsNode.TryGetValue("internalFrzrCamCode", ref internalFrzrCamCode);
                 DFsettingsNode.TryGetValue("internalNxtFrzrCamCode", ref internalNxtFrzrCamCode);
                 DFsettingsNode.TryGetValue("internalPrvFrzrCamCode", ref internalPrvFrzrCamCode);
-                 Utilities.Log_Debug("DFSettings load complete");
+
+
+                ApplySettings();
+                /*
+                                DFsettingsNode.TryGetValue("ECreqdForFreezer", ref ECreqdForFreezer);
+                                DFsettingsNode.TryGetValue("fatalOption", ref fatalOption);
+                                DFsettingsNode.TryGetValue("comatoseTime", ref comatoseTime);
+                                DFsettingsNode.TryGetValue("UseAppLauncher", ref UseAppLauncher);
+                                DFsettingsNode.TryGetValue("debugging", ref debugging);
+                                DFsettingsNode.TryGetValue("ToolTips", ref ToolTips);
+                                DFsettingsNode.TryGetValue("AutoRecoverFznKerbals", ref AutoRecoverFznKerbals);
+                                DFsettingsNode.TryGetValue("KSCcostToThawKerbal", ref KSCcostToThawKerbal);
+                                DFsettingsNode.TryGetValue("ECReqdToFreezeThaw", ref ECReqdToFreezeThaw);
+                                DFsettingsNode.TryGetValue("GlykerolReqdToFreeze", ref GlykerolReqdToFreeze);
+                                DFsettingsNode.TryGetValue("RegTempReqd", ref RegTempReqd);
+                                DFsettingsNode.TryGetValue("RegTempFreeze", ref RegTempFreeze);
+                                DFsettingsNode.TryGetValue("RegTempMonitor", ref RegTempMonitor);
+                                DFsettingsNode.TryGetValue("heatamtMonitoringFrznKerbals", ref heatamtMonitoringFrznKerbals);
+                                DFsettingsNode.TryGetValue("heatamtThawFreezeKerbal", ref heatamtThawFreezeKerbal);
+                                DFsettingsNode.TryGetValue("TempinKelvin", ref TempinKelvin);
+                                DFsettingsNode.TryGetValue("EditorFilter", ref EditorFilter);
+                                DFsettingsNode.TryGetValue("StripLightsActive", ref StripLightsActive);
+                                Utilities.Log_Debug("DFSettings load complete");*/
             }
         }
 
@@ -156,10 +164,23 @@ namespace DF
 
             settingsNode.AddValue("DFwindowPosX", DFwindowPosX);
             settingsNode.AddValue("DFwindowPosY", DFwindowPosY);
-            settingsNode.AddValue("CFwindowPosX", CFwindowPosX);
-            settingsNode.AddValue("CFwindowPosY", CFwindowPosY);
+            //settingsNode.AddValue("CFwindowPosX", CFwindowPosX);
+            //settingsNode.AddValue("CFwindowPosY", CFwindowPosY);
             settingsNode.AddValue("DFKACwindowPosX", DFKACwindowPosX);
             settingsNode.AddValue("DFKACwindowPosY", DFKACwindowPosY);
+            settingsNode.AddValue("defaultTimeoutforCrewXfer", defaultTimeoutforCrewXfer);
+            settingsNode.AddValue("cryopodResettimeDelay", cryopodResettimeDelay);
+            settingsNode.AddValue("DFWindowWidth", DFWindowWidth);
+            settingsNode.AddValue("CFWindowWidth", CFWindowWidth);
+            settingsNode.AddValue("KACWindowWidth", KACWindowWidth);
+            settingsNode.AddValue("ECLowWarningTime", ECLowWarningTime);
+            settingsNode.AddValue("EClowCriticalTime", EClowCriticalTime);
+            settingsNode.AddValue("internalFrzrCamCode", internalFrzrCamCode);
+            settingsNode.AddValue("internalNxtFrzrCamCode", internalNxtFrzrCamCode);
+            settingsNode.AddValue("internalPrvFrzrCamCode", internalPrvFrzrCamCode);
+
+            
+            /*
             settingsNode.AddValue("ECreqdForFreezer", ECreqdForFreezer);
             settingsNode.AddValue("fatalOption", fatalOption);
             settingsNode.AddValue("comatoseTime", comatoseTime);
@@ -176,18 +197,74 @@ namespace DF
             settingsNode.AddValue("heatamtMonitoringFrznKerbals", heatamtMonitoringFrznKerbals);
             settingsNode.AddValue("heatamtThawFreezeKerbal", heatamtThawFreezeKerbal);
             settingsNode.AddValue("TempinKelvin", TempinKelvin);
-            settingsNode.AddValue("defaultTimeoutforCrewXfer", defaultTimeoutforCrewXfer);
-            settingsNode.AddValue("cryopodResettimeDelay", cryopodResettimeDelay);
-            settingsNode.AddValue("DFWindowWidth", DFWindowWidth);
-            settingsNode.AddValue("CFWindowWidth", CFWindowWidth);
-            settingsNode.AddValue("KACWindowWidth", KACWindowWidth);
-            settingsNode.AddValue("ECLowWarningTime", ECLowWarningTime);
-            settingsNode.AddValue("EClowCriticalTime", EClowCriticalTime);
-            settingsNode.AddValue("StripLightsActive", StripLightsActive);
-            settingsNode.AddValue("internalFrzrCamCode", internalFrzrCamCode);
-            settingsNode.AddValue("internalNxtFrzrCamCode", internalNxtFrzrCamCode);
-            settingsNode.AddValue("internalPrvFrzrCamCode", internalPrvFrzrCamCode);
-             Utilities.Log_Debug("DFSettings save complete");
+            settingsNode.AddValue("EditorFilter", EditorFilter);
+            settingsNode.AddValue("StripLightsActive", StripLightsActive);*/
+            Utilities.Log_Debug("DFSettings save complete");
+        }
+
+        internal void ApplySettings()
+        {
+            Utilities.Log_Debug("DFSettings ApplySettings Start");
+            if (HighLogic.CurrentGame != null)
+            {
+                var DF_SettingsParms = HighLogic.CurrentGame.Parameters.CustomParams<DeepFreeze_SettingsParms>();
+                if (DF_SettingsParms != null)
+                {
+                    var GUI =
+                        DeepFreeze.Instance.children.Find(a => a.GetType() == typeof(DeepFreezeGUI)) as DeepFreezeGUI;
+                    if (ECreqdForFreezer != DF_SettingsParms.ECreqdForFreezer)
+                    {
+                        if (GUI != null)
+                        {
+                            GUI.chgECHeatsettings = true;
+                            GUI.chgECHeatsettingsTimer = Planetarium.GetUniversalTime();
+                        }
+                    }
+                    ECreqdForFreezer = DF_SettingsParms.ECreqdForFreezer;
+                    fatalOption = DF_SettingsParms.fatalOption;
+                    comatoseTime = DF_SettingsParms.comatoseTime;
+                    if (UseAppLauncher != DF_SettingsParms.UseAppLToolbar)
+                    {
+                        UseAppLauncher = DF_SettingsParms.UseAppLToolbar;
+
+                        if (GUI != null)
+                        {
+                            GUI.DFMenuAppLToolBar.chgAppIconStockToolBar(UseAppLauncher);
+                        }
+                    }
+                    debugging = DF_SettingsParms.DebugLogging;
+                    ToolTips = DF_SettingsParms.ToolTips;
+                    AutoRecoverFznKerbals = DF_SettingsParms.AutoRecoverFznKerbals;
+                    KSCcostToThawKerbal = DF_SettingsParms.KSCcostToThawKerbal;
+                    ECReqdToFreezeThaw = DF_SettingsParms.ECReqdToFreezeThaw;
+                    GlykerolReqdToFreeze = DF_SettingsParms.GlykerolReqdToFreeze;
+                    if (RegTempReqd != DF_SettingsParms.RegTempReqd)
+                    {
+                        if (GUI != null)
+                        {
+                            GUI.chgECHeatsettings = true;
+                            GUI.chgECHeatsettingsTimer = Planetarium.GetUniversalTime();
+                        }
+                    }
+                    RegTempReqd = DF_SettingsParms.RegTempReqd;
+                    RegTempFreeze = DF_SettingsParms.RegTempFreeze;
+                    RegTempMonitor = DF_SettingsParms.RegTempMonitor;
+                    heatamtMonitoringFrznKerbals = DF_SettingsParms.heatamtMonitoringFrznKerbals;
+                    TempinKelvin = DF_SettingsParms.TempinKelvin;
+                    StripLightsActive = DF_SettingsParms.StripLightsActive;
+                    if (EditorFilter != DF_SettingsParms.EditorFilter)
+                    {
+                        EditorFilter = DF_SettingsParms.EditorFilter;
+                        if (DFEditorFilter.Instance != null)
+                            DFEditorFilter.Instance.Setup(EditorFilter);
+                    }
+                }
+                else
+                    Utilities.Log_Debug("DFSettings ApplySettings Settings Params Not Set!");
+            }
+            else
+                Utilities.Log_Debug("DFSettings ApplySettings CurrentGame is NULL!");
+            Utilities.Log_Debug("DFSettings ApplySettings End");
         }
     }
 }

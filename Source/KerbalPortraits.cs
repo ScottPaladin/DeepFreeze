@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using KSP.UI.Screens.Flight;
 using UnityEngine;
 
@@ -27,6 +26,25 @@ namespace DeepFreeze
         {
             MethodInfo DespawnInactPortMethod = typeof(KerbalPortraitGallery).GetMethod("DespawnInactivePortraits", eFlags);
             DespawnInactPortMethod.Invoke(KerbalPortraitGallery.Instance, null);
+
+            List<KerbalPortrait> portraits = new List<KerbalPortrait>();
+            portraits = KerbalPortraitGallery.Instance.Portraits;
+            List<KerbalPortrait> list = new List<KerbalPortrait>();
+            for (int i = KerbalPortraitGallery.Instance.Portraits.Count - 1; i >= 0; i--)
+            {
+                if (KerbalPortraitGallery.Instance.Portraits[i].crewMember == null)
+                {
+                    list.Add(KerbalPortraitGallery.Instance.Portraits[i]);
+                }
+            }
+            
+            for (int i = list.Count - 1; i >= 0; i--)
+            {
+                UnityEngine.Object.Destroy(list[i].gameObject);
+                portraits.Remove(list[i]);
+                //this.firstPortrait = Mathf.Clamp(this.firstPortrait, 0, this.portraits.get_Count() - 1);
+            }
+            KerbalPortraitGallery.Instance.Portraits = portraits;
         }
 
         //reflecting protected methods inside a public class. Until KSP 1.1.x can rectify the situation.
@@ -34,6 +52,7 @@ namespace DeepFreeze
         {
             MethodInfo DespawnPortraitMethod = typeof(KerbalPortraitGallery).GetMethod("DespawnPortrait", eFlags, Type.DefaultBinder, new Type[] { typeof(Kerbal) }, null);
             DespawnPortraitMethod.Invoke(KerbalPortraitGallery.Instance, new object[] { kerbal });
+            
         }
 
         internal static bool HasPortrait(Kerbal crew, bool checkName = false)

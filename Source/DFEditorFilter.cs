@@ -32,7 +32,7 @@ namespace DF
         // which currently consist of any partprefab that has component DeepFreezer (All the freezer parts)
         // and the GlykerolTankRadial.
         private static List<AvailablePart> avPartItems = new List<AvailablePart>();
-
+        public static DFEditorFilter Instance;
         internal string category = "Filter by Function";
         internal string subCategoryTitle = "DeepFreeze Items";
         internal string defaultTitle = "DF";
@@ -44,9 +44,44 @@ namespace DF
         internal string iconName = "DeepFreezeEditor";
         internal bool filter = true;
 
-        private void Awake()
+        public DFEditorFilter()
         {
-            Debug.Log("DFEditorFilter Awake");
+            if (Instance != null)
+            {
+                Destroy(this);
+            }
+            Instance = this;
+            DontDestroyOnLoad(this);
+        }
+
+        public void Setup(bool FilterOn)
+        {
+            Debug.Log("DFEditorFilter Start");
+
+            GameEvents.onGUIEditorToolbarReady.Remove(SubCategories);
+
+            if (!FilterOn)
+            {
+                Debug.Log("EditorFilter Option is Off");
+                PartCategorizer.Category Filter =
+                    PartCategorizer.Instance.filters.Find(f => f.button.categoryName == category);
+                if (Filter != null)
+                {
+                    PartCategorizer.Category subFilter =
+                        Filter.subcategories.Find(f => f.button.categoryName == subCategoryTitle);
+                    if (subFilter != null)
+                    {
+                        //MethodInfo subFilterDeleteMethod =
+                        //    typeof(PartCategorizer.Category).GetMethod("DeleteSubcategory",
+                        //        BindingFlags.Instance | BindingFlags.NonPublic);
+                        //subFilterDeleteMethod.Invoke(subFilter, null);
+                        subFilter.DeleteSubcategory();
+                    }
+                }
+                GameEvents.onGUIEditorToolbarReady.Remove(SubCategories);
+                return;
+            }
+
             GameEvents.onGUIEditorToolbarReady.Add(SubCategories);
             /*
             //Attempt to add Module Manager callback  - find the base type

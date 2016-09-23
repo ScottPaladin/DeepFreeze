@@ -420,7 +420,26 @@ namespace DF
                         ProtoCrewMember crew = HighLogic.CurrentGame.CrewRoster.Tourist.FirstOrDefault(a => a.name == comaKerbal.Key);
                         if (crew != null)
                         {
-                            DeepFreeze.Instance.setComatoseKerbal(crew, ProtoCrewMember.KerbalType.Crew);
+                            Vessel vsl = FlightGlobals.Vessels.FirstOrDefault(a => a.id == comaKerbal.Value.vesselID);
+                            if (vsl == null)
+                            {
+                                Utilities.Log("Failed to find Vessel for Comatose Kerbal - Critical error");
+                                return;
+                            }
+                            Part part = vsl.parts.FirstOrDefault(b => b.flightID == comaKerbal.Value.partID);
+                            if (part == null)
+                            {
+                                Utilities.Log("Failed to find Part for Comatose Kerbal - Critical error");
+                                return;
+                            }
+                            if (comaKerbal.Value.experienceTraitName == "Tourist")
+                            {
+                                DeepFreeze.Instance.setComatoseKerbal(part, crew, ProtoCrewMember.KerbalType.Tourist, false);
+                            }
+                            else
+                            {
+                                DeepFreeze.Instance.setComatoseKerbal(part, crew, ProtoCrewMember.KerbalType.Crew, false);
+                            }
                             ComakeysToDelete.Add(comaKerbal.Key);
                         }
                         else
@@ -554,7 +573,9 @@ namespace DF
         {
             if (HighLogic.LoadedSceneIsFlight)
             {
-                 Utilities.Log_Debug("OnVesselCreate activevessel " + FlightGlobals.ActiveVessel.id + " parametervesselid " + vessel.id);
+                if (FlightGlobals.ActiveVessel != null)
+                    Utilities.Log_Debug("OnVesselCreate activevessel " + FlightGlobals.ActiveVessel.id);
+                Utilities.Log_Debug("OnVesselCreate parametervesselid " + vessel.id);
                 TmpDpFrzrActVsl = vessel.FindPartModulesImplementing<DeepFreezer>();
                 foreach (DeepFreezer frzr in TmpDpFrzrActVsl)
                 {
@@ -984,12 +1005,9 @@ namespace DF
                         vesselInfo.numCrew += part.protoModuleCrew.Count;
                         ++vesselInfo.numOccupiedParts;
                     }
-                    foreach (PartResource res in part.Resources)
+                    if (part.Resources.Contains("ElectricCharge"))
                     {
-                        if (res.resourceName == "ElectricCharge")
-                        {
-                            vesselInfo.storedEC += res.amount;
-                        }
+                        vesselInfo.storedEC += part.Resources.Get("ElectricCharge").amount;
                     }
                 }
             }

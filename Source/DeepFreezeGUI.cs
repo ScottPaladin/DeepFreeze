@@ -18,10 +18,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
+//using System.Text.RegularExpressions;
 using RSTUtils;
 using UnityEngine;
-using Random = System.Random;
+//using Random = System.Random;
 using KSP.UI.Screens;
 using RSTUtils.Extensions;
 
@@ -32,21 +32,21 @@ namespace DF
         //GUI Properties
         internal AppLauncherToolBar DFMenuAppLToolBar;
         private float DFWINDOW_WIDTH = 560;
-        private float CFWINDOW_WIDTH = 340;
+        //private float CFWINDOW_WIDTH = 340;
         private float KACWINDOW_WIDTH = 485;
         private float VSWINDOW_WIDTH = 340;
         private float WINDOW_BASE_HEIGHT = 350;
         private Rect DFwindowPos;
-        private Rect CFwindowPos;
+        //private Rect CFwindowPos;
         private Rect DFKACwindowPos;
         private Rect DFVSwindowPos;
         private Rect DFVSFwindowPos;
         private static int windowID = 199999;
-        private static int CFwindowID = 200000;
+        //private static int CFwindowID = 200000;
         private static int KACwindowID = 2000001;
         private static int VSwindowID = 2000002;
         private static int VSFwindowID = 2000003;
-        private Vector2 GUIscrollViewVector, GUIscrollViewVector2, GUIscrollViewVectorSettings,
+        private Vector2 GUIscrollViewVector, GUIscrollViewVector2,// GUIscrollViewVectorSettings,
             GUIscrollViewVectorKAC, GUIscrollViewVectorKACKerbals = Vector2.zero;
         private bool mouseDownDF;
         private bool mouseDownCF;
@@ -79,6 +79,7 @@ namespace DF
         private List<string> KACAlarm_FrzKbls = new List<string>();
         private List<string> KACAlarm_ThwKbls = new List<string>();
 
+        /*
         //settings vars for GUI
         private bool InputVautoRecover;
         private bool InputVdebug;
@@ -105,7 +106,8 @@ namespace DF
         private bool InputfatalOption;
         private string InputScomatoseTime = "";
         private float InputVcomatoseTime;
-
+        private bool InputVEditorFilter;
+        
         //Settings vars
         private bool ECreqdForFreezer;
         private bool debugging;
@@ -123,7 +125,8 @@ namespace DF
         private double heatamtThawFreezeKerbal;
         private bool TempinKelvin;
         private bool StripLightsOn;
-
+        private bool EditorFilter;
+        */
         //SwitchVessel vars
         private bool showUnabletoSwitchVessel;
         private bool showSwitchVessel;
@@ -131,8 +134,8 @@ namespace DF
         private string showSwitchVesselStr = string.Empty;
         private Vessel switchVessel;
         private double switchVesselManualTimer;
-        private bool chgECHeatsettings;
-        private double chgECHeatsettingsTimer;
+        internal bool chgECHeatsettings;
+        internal double chgECHeatsettingsTimer;
         
         public bool Useapplauncher;
         private double currentTime;
@@ -146,13 +149,13 @@ namespace DF
         {
             Utilities.Log_Debug("DeepFreezeGUI startup");
             windowID = Utilities.getnextrandomInt();
-            CFwindowID = Utilities.getnextrandomInt();
+            //CFwindowID = Utilities.getnextrandomInt();
             KACwindowID = Utilities.getnextrandomInt();
             VSwindowID = Utilities.getnextrandomInt();
             VSFwindowID = Utilities.getnextrandomInt();
 
             DFwindowPos = new Rect(40, Screen.height / 2 - 100, DFWINDOW_WIDTH, WINDOW_BASE_HEIGHT);
-            CFwindowPos = new Rect(450, Screen.height / 2 - 100, CFWINDOW_WIDTH, 250);
+            //CFwindowPos = new Rect(450, Screen.height / 2 - 100, CFWINDOW_WIDTH, 250);
             DFKACwindowPos = new Rect(600, Screen.height / 2 - 100, KACWINDOW_WIDTH, WINDOW_BASE_HEIGHT);
             DFVSwindowPos = new Rect(Screen.width / 2 - VSWINDOW_WIDTH / 2, Screen.height / 2 - 100, VSWINDOW_WIDTH, WINDOW_BASE_HEIGHT);
             DFVSFwindowPos = new Rect(Screen.width / 2 - VSWINDOW_WIDTH / 2, Screen.height / 2 - 100, VSWINDOW_WIDTH, WINDOW_BASE_HEIGHT);
@@ -250,7 +253,7 @@ namespace DF
                 DFwindowPos.ClampInsideScreen();
                 DFwindowPos = GUILayout.Window(windowID, DFwindowPos, windowDF, "DeepFreeze Kerbals", GUILayout.ExpandWidth(true),
                         GUILayout.ExpandHeight(true), GUILayout.MinWidth(200), GUILayout.MinHeight(250));
-                if (showConfigGUI)
+                /*if (showConfigGUI)
                 {
                     if (LoadConfig)
                     {
@@ -272,12 +275,13 @@ namespace DF
                         InputSheatamtThawFreezeKerbal = heatamtThawFreezeKerbal.ToString();
                         InputVTempinKelvin = TempinKelvin;
                         InputStripLightsOn = StripLightsOn;
+                        InputVEditorFilter = EditorFilter;
                         LoadConfig = false;
                     }
                     CFwindowPos.ClampInsideScreen();
                     CFwindowPos = GUILayout.Window(CFwindowID, CFwindowPos, windowCF, "DeepFreeze Settings", GUILayout.ExpandWidth(true),
                         GUILayout.ExpandHeight(true), GUILayout.MinWidth(400), GUILayout.MinHeight(300));
-                }
+                }*/
                 if (showKACGUI)
                 {
                     DFKACwindowPos.ClampInsideScreen();
@@ -661,7 +665,7 @@ namespace DF
                     showKACGUI = !showKACGUI;
                 }
             }
-
+            /*
             if (HighLogic.LoadedScene == GameScenes.SPACECENTER)
             {
                 GUIContent settingsContent = new GUIContent("Settings", "Config Settings");
@@ -670,7 +674,7 @@ namespace DF
                 {
                     showConfigGUI = !showConfigGUI;
                 }
-            }
+            }*/
             
             GUIContent resizeContent = new GUIContent(Textures.BtnResize, "Resize Window");
             Rect resizeRect = new Rect(DFwindowPos.width - 21, DFwindowPos.height - 22, 16, 16);
@@ -683,7 +687,7 @@ namespace DF
 
             GUI.DragWindow();
         }
-
+        /*
         private void windowCF(int id)
         {
             GUIContent closeContent = new GUIContent(Textures.BtnRedCross, "Close Window");
@@ -838,6 +842,11 @@ namespace DF
             InputVToolTips = GUILayout.Toggle(InputVToolTips, "", GUILayout.MinWidth(30.0F)); //you can play with the width of the text box
             GUILayout.EndHorizontal();
 
+            GUILayout.BeginHorizontal();
+            GUILayout.Box(new GUIContent("Editor Filter", "Turn the DeepFreeze Editor filter Category on and off"), Textures.statusStyle, GUILayout.Width(280));
+            InputVEditorFilter = GUILayout.Toggle(InputVEditorFilter, "", GUILayout.MinWidth(30.0F)); //you can play with the width of the text box
+            GUILayout.EndHorizontal();
+
             GUILayout.EndScrollView();
 
             GUILayout.BeginHorizontal();
@@ -859,7 +868,12 @@ namespace DF
                 ECreqdForFreezer = InputVECReqd;
                 debugging = InputVdebug;
                 ToolTips = InputVToolTips;
-                
+                if (EditorFilter != InputVEditorFilter)
+                {
+                    EditorFilter = InputVEditorFilter;
+                    DFEditorFilter.Instance.Setup(EditorFilter);
+                }
+
                 AutoRecoverFznKerbals = InputVautoRecover;
                 KSCcostToThawKerbal = InputVcostThawKerbal;
                 ECReqdToFreezeThaw = InputVecReqdToFreezeThaw;
@@ -898,7 +912,7 @@ namespace DF
             if (DeepFreeze.Instance.DFsettings.ToolTips)
                 Utilities.SetTooltipText();
             GUI.DragWindow();
-        }
+        }*/
 
         private void windowKAC(int id)
         {
@@ -1281,7 +1295,7 @@ namespace DF
                 }
             }
         }
-
+        /*
         private void HandleResizeEventsCF(Rect resizeRect)
         {
             var theEvent = Event.current;
@@ -1311,7 +1325,7 @@ namespace DF
                     }
                 }
             }
-        }
+        }*/
 
 
         private void HandleResizeEventsKAC(Rect resizeRect)
@@ -1362,14 +1376,15 @@ namespace DF
             Utilities.Log_Debug("DeepFreezeGUI Load");
             DFwindowPos.x = DeepFreeze.Instance.DFsettings.DFwindowPosX;
             DFwindowPos.y = DeepFreeze.Instance.DFsettings.DFwindowPosY;
-            CFwindowPos.x = DeepFreeze.Instance.DFsettings.CFwindowPosX;
-            CFwindowPos.y = DeepFreeze.Instance.DFsettings.CFwindowPosY;
+            //CFwindowPos.x = DeepFreeze.Instance.DFsettings.CFwindowPosX;
+            //CFwindowPos.y = DeepFreeze.Instance.DFsettings.CFwindowPosY;
             DFKACwindowPos.x = DeepFreeze.Instance.DFsettings.DFKACwindowPosX;
             DFKACwindowPos.y = DeepFreeze.Instance.DFsettings.DFKACwindowPosY;
             DFWINDOW_WIDTH = DeepFreeze.Instance.DFsettings.DFWindowWidth;
-            CFWINDOW_WIDTH = DeepFreeze.Instance.DFsettings.CFWindowWidth;
+            //CFWINDOW_WIDTH = DeepFreeze.Instance.DFsettings.CFWindowWidth;
             KACWINDOW_WIDTH = DeepFreeze.Instance.DFsettings.KACWindowWidth;
             WINDOW_BASE_HEIGHT = DeepFreeze.Instance.DFsettings.WindowbaseHeight;
+            /*
             Useapplauncher = DeepFreeze.Instance.DFsettings.UseAppLauncher;
             AutoRecoverFznKerbals = DeepFreeze.Instance.DFsettings.AutoRecoverFznKerbals;
             debugging = DeepFreeze.Instance.DFsettings.debugging;
@@ -1386,7 +1401,8 @@ namespace DF
             heatamtMonitoringFrznKerbals = DeepFreeze.Instance.DFsettings.heatamtMonitoringFrznKerbals;
             heatamtThawFreezeKerbal = DeepFreeze.Instance.DFsettings.heatamtThawFreezeKerbal;
             TempinKelvin = DeepFreeze.Instance.DFsettings.TempinKelvin;
-            StripLightsOn = DeepFreeze.Instance.DFsettings.StripLightsActive;            
+            StripLightsOn = DeepFreeze.Instance.DFsettings.StripLightsActive;
+            EditorFilter = DeepFreeze.Instance.DFsettings.EditorFilter;   */        
             Utilities.Log_Debug("DeepFreezeGUI Load end");
         }
 
@@ -1395,10 +1411,11 @@ namespace DF
             Utilities.Log_Debug("DeepFreezeGUI Save");
             DeepFreeze.Instance.DFsettings.DFwindowPosX = DFwindowPos.x;
             DeepFreeze.Instance.DFsettings.DFwindowPosY = DFwindowPos.y;
-            DeepFreeze.Instance.DFsettings.CFwindowPosX = CFwindowPos.x;
-            DeepFreeze.Instance.DFsettings.CFwindowPosY = CFwindowPos.y;
+            //DeepFreeze.Instance.DFsettings.CFwindowPosX = CFwindowPos.x;
+            //DeepFreeze.Instance.DFsettings.CFwindowPosY = CFwindowPos.y;
             DeepFreeze.Instance.DFsettings.DFKACwindowPosX = DFKACwindowPos.x;
             DeepFreeze.Instance.DFsettings.DFKACwindowPosY = DFKACwindowPos.y;
+            /*
             DeepFreeze.Instance.DFsettings.UseAppLauncher = Useapplauncher;
             DeepFreeze.Instance.DFsettings.AutoRecoverFznKerbals = AutoRecoverFznKerbals;
             DeepFreeze.Instance.DFsettings.debugging = debugging;
@@ -1416,7 +1433,8 @@ namespace DF
             DeepFreeze.Instance.DFsettings.heatamtMonitoringFrznKerbals = heatamtMonitoringFrznKerbals;
             DeepFreeze.Instance.DFsettings.TempinKelvin = TempinKelvin;
             DeepFreeze.Instance.DFsettings.StripLightsActive = StripLightsOn;
-            Utilities.debuggingOn = debugging;
+            DeepFreeze.Instance.DFsettings.EditorFilter = EditorFilter;
+            Utilities.debuggingOn = debugging;*/
             Utilities.Log_Debug("DeepFreezeGUI Save end");
         }
 
