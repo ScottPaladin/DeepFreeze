@@ -60,7 +60,7 @@ namespace DF
         {
             Utilities.Log("OnAwake in " + HighLogic.LoadedScene);
             base.OnAwake();
-
+            
             GameEvents.onGameSceneLoadRequested.Add(OnGameSceneLoadRequested);
             GameEvents.OnGameSettingsApplied.Add(ApplySettings);
 

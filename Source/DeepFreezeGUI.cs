@@ -78,55 +78,7 @@ namespace DF
         private KACWrapper.KACAPI.KACAlarm KACalarmMod;
         private List<string> KACAlarm_FrzKbls = new List<string>();
         private List<string> KACAlarm_ThwKbls = new List<string>();
-
-        /*
-        //settings vars for GUI
-        private bool InputVautoRecover;
-        private bool InputVdebug;
-        private bool InputVToolTips;
-        private bool InputVECReqd;
-        private bool InputAppL = true;
-        private string InputScostThawKerbal = "";
-        private float InputVcostThawKerbal;
-        private string InputSecReqdToFreezeThaw = "";
-        private int InputVecReqdToFreezeThaw;
-        private string InputSglykerolReqdToFreeze = "";
-        private int InputVglykerolReqdToFreeze;
-        private bool InputVRegTempReqd;
-        private string InputSRegTempFreeze = "";
-        private double InputVRegTempFreeze;
-        private string InputSRegTempMonitor = "";
-        private double InputVRegTempMonitor;
-        private string InputSheatamtMonitoringFrznKerbals = "";
-        private double InputVheatamtMonitoringFrznKerbals;
-        private string InputSheatamtThawFreezeKerbal = "";
-        private double InputVheatamtThawFreezeKerbal;
-        private bool InputVTempinKelvin = true;
-        private bool InputStripLightsOn = true;
-        private bool InputfatalOption;
-        private string InputScomatoseTime = "";
-        private float InputVcomatoseTime;
-        private bool InputVEditorFilter;
         
-        //Settings vars
-        private bool ECreqdForFreezer;
-        private bool debugging;
-        private bool ToolTips;
-        private bool AutoRecoverFznKerbals;
-        private float KSCcostToThawKerbal;
-        private int ECReqdToFreezeThaw;
-        private bool fatalOption;
-        private float comatoseTime;
-        private int GlykerolReqdToFreeze;
-        private bool RegTempReqd;
-        private double RegTempFreeze;
-        private double RegtempMonitor;
-        private double heatamtMonitoringFrznKerbals;
-        private double heatamtThawFreezeKerbal;
-        private bool TempinKelvin;
-        private bool StripLightsOn;
-        private bool EditorFilter;
-        */
         //SwitchVessel vars
         private bool showUnabletoSwitchVessel;
         private bool showSwitchVessel;
@@ -149,13 +101,11 @@ namespace DF
         {
             Utilities.Log_Debug("DeepFreezeGUI startup");
             windowID = Utilities.getnextrandomInt();
-            //CFwindowID = Utilities.getnextrandomInt();
             KACwindowID = Utilities.getnextrandomInt();
             VSwindowID = Utilities.getnextrandomInt();
             VSFwindowID = Utilities.getnextrandomInt();
 
             DFwindowPos = new Rect(40, Screen.height / 2 - 100, DFWINDOW_WIDTH, WINDOW_BASE_HEIGHT);
-            //CFwindowPos = new Rect(450, Screen.height / 2 - 100, CFWINDOW_WIDTH, 250);
             DFKACwindowPos = new Rect(600, Screen.height / 2 - 100, KACWINDOW_WIDTH, WINDOW_BASE_HEIGHT);
             DFVSwindowPos = new Rect(Screen.width / 2 - VSWINDOW_WIDTH / 2, Screen.height / 2 - 100, VSWINDOW_WIDTH, WINDOW_BASE_HEIGHT);
             DFVSFwindowPos = new Rect(Screen.width / 2 - VSWINDOW_WIDTH / 2, Screen.height / 2 - 100, VSWINDOW_WIDTH, WINDOW_BASE_HEIGHT);
@@ -253,35 +203,7 @@ namespace DF
                 DFwindowPos.ClampInsideScreen();
                 DFwindowPos = GUILayout.Window(windowID, DFwindowPos, windowDF, "DeepFreeze Kerbals", GUILayout.ExpandWidth(true),
                         GUILayout.ExpandHeight(true), GUILayout.MinWidth(200), GUILayout.MinHeight(250));
-                /*if (showConfigGUI)
-                {
-                    if (LoadConfig)
-                    {
-                        InputAppL = Useapplauncher;
-                        InputVECReqd = ECreqdForFreezer;
-                        InputVdebug = debugging;
-                        InputVToolTips = ToolTips;
-                        InputVautoRecover = AutoRecoverFznKerbals;
-                        InputScostThawKerbal = KSCcostToThawKerbal.ToString();
-                        InputSecReqdToFreezeThaw = ECReqdToFreezeThaw.ToString();
-                        InputfatalOption = fatalOption;
-                        InputScomatoseTime = comatoseTime.ToString();
-                        InputVcomatoseTime = comatoseTime;
-                        InputSglykerolReqdToFreeze = GlykerolReqdToFreeze.ToString();
-                        InputVRegTempReqd = RegTempReqd;
-                        InputSRegTempFreeze = RegTempFreeze.ToString();
-                        InputSRegTempMonitor = RegtempMonitor.ToString();
-                        InputSheatamtMonitoringFrznKerbals = heatamtMonitoringFrznKerbals.ToString();
-                        InputSheatamtThawFreezeKerbal = heatamtThawFreezeKerbal.ToString();
-                        InputVTempinKelvin = TempinKelvin;
-                        InputStripLightsOn = StripLightsOn;
-                        InputVEditorFilter = EditorFilter;
-                        LoadConfig = false;
-                    }
-                    CFwindowPos.ClampInsideScreen();
-                    CFwindowPos = GUILayout.Window(CFwindowID, CFwindowPos, windowCF, "DeepFreeze Settings", GUILayout.ExpandWidth(true),
-                        GUILayout.ExpandHeight(true), GUILayout.MinWidth(400), GUILayout.MinHeight(300));
-                }*/
+                
                 if (showKACGUI)
                 {
                     DFKACwindowPos.ClampInsideScreen();
@@ -665,16 +587,6 @@ namespace DF
                     showKACGUI = !showKACGUI;
                 }
             }
-            /*
-            if (HighLogic.LoadedScene == GameScenes.SPACECENTER)
-            {
-                GUIContent settingsContent = new GUIContent("Settings", "Config Settings");
-                Rect settingsRect = new Rect(DFwindowPos.width - 170, DFwindowPos.height - 22, 70, 20);
-                if (GUI.Button(settingsRect, settingsContent))
-                {
-                    showConfigGUI = !showConfigGUI;
-                }
-            }*/
             
             GUIContent resizeContent = new GUIContent(Textures.BtnResize, "Resize Window");
             Rect resizeRect = new Rect(DFwindowPos.width - 21, DFwindowPos.height - 22, 16, 16);
@@ -687,233 +599,7 @@ namespace DF
 
             GUI.DragWindow();
         }
-        /*
-        private void windowCF(int id)
-        {
-            GUIContent closeContent = new GUIContent(Textures.BtnRedCross, "Close Window");
-            Rect closeRect = new Rect(CFwindowPos.width - 21, 4, 16, 16);
-            if (GUI.Button(closeRect, closeContent, Textures.ClosebtnStyle))
-            {
-                showConfigGUI = false;
-                LoadConfig = true;
-                return;
-            }
-
-            GUILayout.BeginVertical();
-
-            GUIscrollViewVectorSettings = GUILayout.BeginScrollView(GUIscrollViewVectorSettings, false, false);
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Box(new GUIContent("ElectricCharge Required to run Freezers", "If on, EC is required to run freezers"), Textures.statusStyle, GUILayout.Width(280));
-            InputVECReqd = GUILayout.Toggle(InputVECReqd, "", GUILayout.MinWidth(30.0F)); //you can play with the width of the text box
-            GUILayout.EndHorizontal();
-
-            if (!InputVECReqd) GUI.enabled = false;
-            GUILayout.BeginHorizontal();
-            GUILayout.Box(new GUIContent("Fatal EC/Heat Option", "If on Kerbals will die if EC runs out or it gets too hot"), Textures.statusStyle, GUILayout.Width(280));
-            InputfatalOption = GUILayout.Toggle(InputfatalOption, "", GUILayout.MinWidth(30.0F)); //you can play with the width of the text box
-            GUILayout.EndHorizontal();
-            GUI.enabled = true;
-
-            if (InputfatalOption) GUI.enabled = false;
-            GUILayout.BeginHorizontal();
-            GUILayout.Box(new GUIContent("Non Fatal Kerbal Comatose Time(in secs)", "The time in seconds a kerbal is comatose if fatal EC/Heat option is off"), Textures.statusStyle, GUILayout.Width(250));
-            InputScomatoseTime = Regex.Replace(GUILayout.TextField(InputScomatoseTime, 5, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
-            GUILayout.EndHorizontal();
-            GUI.enabled = true;
-
-            if (!float.TryParse(InputScomatoseTime, out InputVcomatoseTime))
-            {
-                InputVcomatoseTime = comatoseTime;
-            }
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Box(new GUIContent("AutoRecover Frozen Kerbals at KSC", "If on, will AutoRecover Frozen Kerbals at the KSC and deduct the Cost from your funds"), Textures.statusStyle, GUILayout.Width(280));
-            InputVautoRecover = GUILayout.Toggle(InputVautoRecover, "", GUILayout.MinWidth(30.0F)); //you can play with the width of the text box
-            GUILayout.EndHorizontal();
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Box(new GUIContent("Cost to Thaw a Kerbal at KSC", "Amt of currency Reqd to Freeze a Kerbal from the KSC"), Textures.statusStyle, GUILayout.Width(250));
-            InputScostThawKerbal = Regex.Replace(GUILayout.TextField(InputScostThawKerbal, 5, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
-            GUILayout.EndHorizontal();
-
-            if (!float.TryParse(InputScostThawKerbal, out InputVcostThawKerbal))
-            {
-                InputVcostThawKerbal = KSCcostToThawKerbal;
-            }
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Box(new GUIContent("ElecCharge Reqd to Freeze/Thaw a Kerbal", "Amt of ElecCharge Reqd to Freeze/Thaw a Kerbal"), Textures.statusStyle, GUILayout.Width(250));
-            InputSecReqdToFreezeThaw = Regex.Replace(GUILayout.TextField(InputSecReqdToFreezeThaw, 5, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
-            GUILayout.EndHorizontal();
-
-            if (!int.TryParse(InputSecReqdToFreezeThaw, out InputVecReqdToFreezeThaw))
-            {
-                InputVecReqdToFreezeThaw = ECReqdToFreezeThaw;
-            }
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Box(new GUIContent("Glykerol Reqd to Freeze a Kerbal", "Amt of Glykerol used to Freeze a Kerbal, Overrides Part values"), Textures.statusStyle, GUILayout.Width(250));
-            InputSglykerolReqdToFreeze = Regex.Replace(GUILayout.TextField(InputSglykerolReqdToFreeze, 5, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
-            GUILayout.EndHorizontal();
-
-            if (!int.TryParse(InputSglykerolReqdToFreeze, out InputVglykerolReqdToFreeze))
-            {
-                InputVglykerolReqdToFreeze = GlykerolReqdToFreeze;
-            }
-            GUILayout.BeginHorizontal();
-            GUILayout.Box(new GUIContent("Temps are in (K)elvin. (K) = (C)elcius + 273.15. (K) = ((F)arenheit + 459.67) × 5/9", "Get your calculator out"), Textures.statusStyle, GUILayout.Width(280));
-            GUILayout.EndHorizontal();
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Box(new GUIContent("Regulated Temperatures Required", "If on, Regulated Temps apply to freeze and keep Kerbals Frozen"), Textures.statusStyle, GUILayout.Width(280));
-            InputVRegTempReqd = GUILayout.Toggle(InputVRegTempReqd, "", GUILayout.MinWidth(30.0F)); //you can play with the width of the text box
-            GUILayout.EndHorizontal();
-
-            if (!InputVRegTempReqd) GUI.enabled = false;
-            GUILayout.BeginHorizontal();
-            GUILayout.Box(new GUIContent("Minimum Part Temp. for Freezer to Freeze (K)", "Minimum part temperature for Freezer to be able to Freeze"), Textures.statusStyle, GUILayout.Width(250));
-            InputSRegTempFreeze = Regex.Replace(GUILayout.TextField(InputSRegTempFreeze, 3, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
-            GUILayout.EndHorizontal();
-            if (!double.TryParse(InputSRegTempFreeze, out InputVRegTempFreeze))
-            {
-                InputVRegTempFreeze = RegTempFreeze;
-            }
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Box(new GUIContent("maximum Part Temp. to Keep Kerbals Frozen (K)", "Maximum part temperature for Freezer to keep Kerbals frozen"), Textures.statusStyle, GUILayout.Width(250));
-            InputSRegTempMonitor = Regex.Replace(GUILayout.TextField(InputSRegTempMonitor, 3, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
-            GUILayout.EndHorizontal();
-            if (!double.TryParse(InputSRegTempMonitor, out InputVRegTempMonitor))
-            {
-                InputVRegTempMonitor = RegtempMonitor;
-            }
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Box(new GUIContent("Heat generated in thaw/freeze process (kW)", "Amount of thermal heat (kW) generated with each thaw/freeze process"), Textures.statusStyle, GUILayout.Width(250));
-            InputSheatamtThawFreezeKerbal = Regex.Replace(GUILayout.TextField(InputSheatamtThawFreezeKerbal, 3, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
-            GUILayout.EndHorizontal();
-            if (!double.TryParse(InputSheatamtThawFreezeKerbal, out InputVheatamtThawFreezeKerbal))
-            {
-                InputVheatamtThawFreezeKerbal = heatamtThawFreezeKerbal;
-            }
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Box(new GUIContent("Equip. heat generated per frozen kerbal (kW) per minute", "Amount of thermal heat (kW) generated by equip. for each frozen kerbal"), Textures.statusStyle, GUILayout.Width(250));
-            InputSheatamtMonitoringFrznKerbals = Regex.Replace(GUILayout.TextField(InputSheatamtMonitoringFrznKerbals, 3, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
-            GUILayout.EndHorizontal();
-            if (!double.TryParse(InputSheatamtMonitoringFrznKerbals, out InputVheatamtMonitoringFrznKerbals))
-            {
-                InputVheatamtMonitoringFrznKerbals = heatamtMonitoringFrznKerbals;
-            }
-
-            GUI.enabled = true;
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Box(new GUIContent("Show Part Temperature in Kelvin", "If on Part right click will show temp in Kelvin, if Off will show in Celcius"), Textures.statusStyle, GUILayout.Width(280));
-            InputVTempinKelvin = GUILayout.Toggle(InputVTempinKelvin, "", GUILayout.MinWidth(30.0F)); //you can play with the width of the text box
-            GUILayout.EndHorizontal();
-
-            GUILayout.BeginHorizontal();
-            GUIContent btntext = new GUIContent("Use Stock Launcher Icon", "If on uses AppLauncher, If Off Uses Toolbar");
-            if (!ToolbarManager.ToolbarAvailable) //Toolbar not available or not installed
-            {
-                InputAppL = true;
-                btntext = new GUIContent("Toolbar Unavailable", "Cannot switch Icon between Toolbar and Stock as toolbar mod is unavailable");
-                GUI.enabled = false;
-            }
-            GUILayout.Box(btntext, Textures.statusStyle, GUILayout.Width(280));
-            InputAppL = GUILayout.Toggle(InputAppL, "", GUILayout.MinWidth(30.0F)); //you can play with the width of the text box
-            GUILayout.EndHorizontal();
-            GUI.enabled = true;
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Box(new GUIContent("Freezer Strip Lights On", "Turn off if you do not want the internal freezer strip lights to function"), Textures.statusStyle, GUILayout.Width(280));
-            InputStripLightsOn = GUILayout.Toggle(InputStripLightsOn, "", GUILayout.MinWidth(30.0F)); //you can play with the width of the text box
-            GUILayout.EndHorizontal();
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Box(new GUIContent("Debug Mode", "Turns Log Debuggin on and off to assist with problems at the expense of heavy performance overhead"), Textures.statusStyle, GUILayout.Width(280));
-            InputVdebug = GUILayout.Toggle(InputVdebug, "", GUILayout.MinWidth(30.0F)); //you can play with the width of the text box
-            GUILayout.EndHorizontal();
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Box(new GUIContent("ToolTips", "Turn the Tooltips on and off"), Textures.statusStyle, GUILayout.Width(280));
-            InputVToolTips = GUILayout.Toggle(InputVToolTips, "", GUILayout.MinWidth(30.0F)); //you can play with the width of the text box
-            GUILayout.EndHorizontal();
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Box(new GUIContent("Editor Filter", "Turn the DeepFreeze Editor filter Category on and off"), Textures.statusStyle, GUILayout.Width(280));
-            InputVEditorFilter = GUILayout.Toggle(InputVEditorFilter, "", GUILayout.MinWidth(30.0F)); //you can play with the width of the text box
-            GUILayout.EndHorizontal();
-
-            GUILayout.EndScrollView();
-
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button(new GUIContent("Save & Exit Settings", "Exit this menu and Save Settings"), GUILayout.Width(155f)))
-            {
-
-                if (Useapplauncher != InputAppL)
-                {
-                    Useapplauncher = InputAppL;
-                    DFMenuAppLToolBar.chgAppIconStockToolBar(Useapplauncher);
-                }
-                
-                if (ECreqdForFreezer != InputVECReqd)
-                {
-                    chgECHeatsettings = true;
-                    chgECHeatsettingsTimer = Planetarium.GetUniversalTime();
-                }
-
-                ECreqdForFreezer = InputVECReqd;
-                debugging = InputVdebug;
-                ToolTips = InputVToolTips;
-                if (EditorFilter != InputVEditorFilter)
-                {
-                    EditorFilter = InputVEditorFilter;
-                    DFEditorFilter.Instance.Setup(EditorFilter);
-                }
-
-                AutoRecoverFznKerbals = InputVautoRecover;
-                KSCcostToThawKerbal = InputVcostThawKerbal;
-                ECReqdToFreezeThaw = InputVecReqdToFreezeThaw;
-                fatalOption = InputfatalOption;
-                GlykerolReqdToFreeze = InputVglykerolReqdToFreeze;
-                RegTempReqd = InputVRegTempReqd;
-                if (RegTempReqd != InputVRegTempReqd)
-                {
-                    chgECHeatsettings = true;
-                    chgECHeatsettingsTimer = Planetarium.GetUniversalTime();
-                }
-                RegTempFreeze = InputVRegTempFreeze;
-                RegtempMonitor = InputVRegTempMonitor;
-                heatamtMonitoringFrznKerbals = InputVheatamtMonitoringFrznKerbals;
-                heatamtThawFreezeKerbal = InputVheatamtThawFreezeKerbal;
-                TempinKelvin = InputVTempinKelvin;
-                StripLightsOn = InputStripLightsOn;
-                showConfigGUI = false;
-                LoadConfig = true;
-                ConfigNode tmpNode = new ConfigNode();
-                Save(tmpNode);
-            }
-            if (GUILayout.Button(new GUIContent("Reset Settings", "Reload last saved settings and reset screen"), GUILayout.Width(155f)))
-            {
-                LoadConfig = true;
-            }
-            GUILayout.EndHorizontal();
-            GUILayout.EndVertical();
-
-            GUIContent resizeContent = new GUIContent(Textures.BtnResize, "Resize Window");
-            Rect resizeRect = new Rect(CFwindowPos.width - 21, CFwindowPos.height - 22, 16, 16);
-            GUI.Label(resizeRect, resizeContent, Textures.ResizeStyle);
-
-            HandleResizeEventsCF(resizeRect);
-
-            if (DeepFreeze.Instance.DFsettings.ToolTips)
-                Utilities.SetTooltipText();
-            GUI.DragWindow();
-        }*/
-
+        
         private void windowKAC(int id)
         {
             GUIContent closeContent = new GUIContent(Textures.BtnRedCross, "Close Window");
@@ -1295,39 +981,7 @@ namespace DF
                 }
             }
         }
-        /*
-        private void HandleResizeEventsCF(Rect resizeRect)
-        {
-            var theEvent = Event.current;
-            if (theEvent != null)
-            {
-                if (!mouseDownCF)
-                {
-                    if (theEvent.type == EventType.MouseDown && theEvent.button == 0 && resizeRect.Contains(theEvent.mousePosition))
-                    {
-                        mouseDownCF = true;
-                        theEvent.Use();
-                    }
-                }
-                else if (theEvent.type != EventType.Layout)
-                {
-                    if (Input.GetMouseButton(0))
-                    {
-                        // Flip the mouse Y so that 0 is at the top
-                        float mouseY = Screen.height - Input.mousePosition.y;
-
-                        CFwindowPos.width = Mathf.Clamp(Input.mousePosition.x - CFwindowPos.x + resizeRect.width / 2, 50, Screen.width - CFwindowPos.x);
-                        CFwindowPos.height = Mathf.Clamp(mouseY - CFwindowPos.y + resizeRect.height / 2, 50, Screen.height - CFwindowPos.y);
-                    }
-                    else
-                    {
-                        mouseDownCF = false;
-                    }
-                }
-            }
-        }*/
-
-
+        
         private void HandleResizeEventsKAC(Rect resizeRect)
         {
             var theEvent = Event.current;
@@ -1376,33 +1030,11 @@ namespace DF
             Utilities.Log_Debug("DeepFreezeGUI Load");
             DFwindowPos.x = DeepFreeze.Instance.DFsettings.DFwindowPosX;
             DFwindowPos.y = DeepFreeze.Instance.DFsettings.DFwindowPosY;
-            //CFwindowPos.x = DeepFreeze.Instance.DFsettings.CFwindowPosX;
-            //CFwindowPos.y = DeepFreeze.Instance.DFsettings.CFwindowPosY;
             DFKACwindowPos.x = DeepFreeze.Instance.DFsettings.DFKACwindowPosX;
             DFKACwindowPos.y = DeepFreeze.Instance.DFsettings.DFKACwindowPosY;
             DFWINDOW_WIDTH = DeepFreeze.Instance.DFsettings.DFWindowWidth;
-            //CFWINDOW_WIDTH = DeepFreeze.Instance.DFsettings.CFWindowWidth;
             KACWINDOW_WIDTH = DeepFreeze.Instance.DFsettings.KACWindowWidth;
             WINDOW_BASE_HEIGHT = DeepFreeze.Instance.DFsettings.WindowbaseHeight;
-            /*
-            Useapplauncher = DeepFreeze.Instance.DFsettings.UseAppLauncher;
-            AutoRecoverFznKerbals = DeepFreeze.Instance.DFsettings.AutoRecoverFznKerbals;
-            debugging = DeepFreeze.Instance.DFsettings.debugging;
-            ToolTips = DeepFreeze.Instance.DFsettings.ToolTips;
-            ECreqdForFreezer = DeepFreeze.Instance.DFsettings.ECreqdForFreezer;
-            fatalOption = DeepFreeze.Instance.DFsettings.fatalOption;
-            comatoseTime = DeepFreeze.Instance.DFsettings.comatoseTime;
-            KSCcostToThawKerbal = DeepFreeze.Instance.DFsettings.KSCcostToThawKerbal;
-            ECReqdToFreezeThaw = DeepFreeze.Instance.DFsettings.ECReqdToFreezeThaw;
-            GlykerolReqdToFreeze = DeepFreeze.Instance.DFsettings.GlykerolReqdToFreeze;
-            RegTempReqd = DeepFreeze.Instance.DFsettings.RegTempReqd;
-            RegTempFreeze = DeepFreeze.Instance.DFsettings.RegTempFreeze;
-            RegtempMonitor = DeepFreeze.Instance.DFsettings.RegTempMonitor;
-            heatamtMonitoringFrznKerbals = DeepFreeze.Instance.DFsettings.heatamtMonitoringFrznKerbals;
-            heatamtThawFreezeKerbal = DeepFreeze.Instance.DFsettings.heatamtThawFreezeKerbal;
-            TempinKelvin = DeepFreeze.Instance.DFsettings.TempinKelvin;
-            StripLightsOn = DeepFreeze.Instance.DFsettings.StripLightsActive;
-            EditorFilter = DeepFreeze.Instance.DFsettings.EditorFilter;   */        
             Utilities.Log_Debug("DeepFreezeGUI Load end");
         }
 
@@ -1411,30 +1043,8 @@ namespace DF
             Utilities.Log_Debug("DeepFreezeGUI Save");
             DeepFreeze.Instance.DFsettings.DFwindowPosX = DFwindowPos.x;
             DeepFreeze.Instance.DFsettings.DFwindowPosY = DFwindowPos.y;
-            //DeepFreeze.Instance.DFsettings.CFwindowPosX = CFwindowPos.x;
-            //DeepFreeze.Instance.DFsettings.CFwindowPosY = CFwindowPos.y;
             DeepFreeze.Instance.DFsettings.DFKACwindowPosX = DFKACwindowPos.x;
             DeepFreeze.Instance.DFsettings.DFKACwindowPosY = DFKACwindowPos.y;
-            /*
-            DeepFreeze.Instance.DFsettings.UseAppLauncher = Useapplauncher;
-            DeepFreeze.Instance.DFsettings.AutoRecoverFznKerbals = AutoRecoverFznKerbals;
-            DeepFreeze.Instance.DFsettings.debugging = debugging;
-            DeepFreeze.Instance.DFsettings.ToolTips = ToolTips;
-            DeepFreeze.Instance.DFsettings.ECreqdForFreezer = ECreqdForFreezer;
-            DeepFreeze.Instance.DFsettings.fatalOption = fatalOption;
-            DeepFreeze.Instance.DFsettings.comatoseTime = comatoseTime;
-            DeepFreeze.Instance.DFsettings.KSCcostToThawKerbal = KSCcostToThawKerbal;
-            DeepFreeze.Instance.DFsettings.ECReqdToFreezeThaw = ECReqdToFreezeThaw;
-            DeepFreeze.Instance.DFsettings.GlykerolReqdToFreeze = GlykerolReqdToFreeze;
-            DeepFreeze.Instance.DFsettings.RegTempReqd = RegTempReqd;
-            DeepFreeze.Instance.DFsettings.RegTempFreeze = RegTempFreeze;
-            DeepFreeze.Instance.DFsettings.RegTempMonitor = RegtempMonitor;
-            DeepFreeze.Instance.DFsettings.heatamtThawFreezeKerbal = heatamtThawFreezeKerbal;
-            DeepFreeze.Instance.DFsettings.heatamtMonitoringFrznKerbals = heatamtMonitoringFrznKerbals;
-            DeepFreeze.Instance.DFsettings.TempinKelvin = TempinKelvin;
-            DeepFreeze.Instance.DFsettings.StripLightsActive = StripLightsOn;
-            DeepFreeze.Instance.DFsettings.EditorFilter = EditorFilter;
-            Utilities.debuggingOn = debugging;*/
             Utilities.Log_Debug("DeepFreezeGUI Save end");
         }
 

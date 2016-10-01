@@ -31,7 +31,7 @@ namespace DF
         // This class ass a Filter Icon to the Editor to show DeepFreeze Parts
         // which currently consist of any partprefab that has component DeepFreezer (All the freezer parts)
         // and the GlykerolTankRadial.
-        private static List<AvailablePart> avPartItems = new List<AvailablePart>();
+        private static List<AvailablePart> avPartItems;
         public static DFEditorFilter Instance;
         internal string category = "Filter by Function";
         internal string subCategoryTitle = "DeepFreeze Items";
@@ -39,12 +39,12 @@ namespace DF
 
         //internal string iconName = "R&D_node_icon_evatech";
         //create and the icons
-        private Texture2D icon_DeepFreeze_Editor = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+        //private Texture2D icon_DeepFreeze_Editor;
 
         internal string iconName = "DeepFreezeEditor";
         internal bool filter = true;
 
-        public DFEditorFilter()
+        public void Awake()
         {
             if (Instance != null)
             {
@@ -57,8 +57,12 @@ namespace DF
         public void Setup(bool FilterOn)
         {
             Debug.Log("DFEditorFilter Start");
+            avPartItems = new List<AvailablePart>();
+            //icon_DeepFreeze_Editor = new Texture2D(32, 32, TextureFormat.ARGB32, false);
 
             GameEvents.onGUIEditorToolbarReady.Remove(SubCategories);
+
+            DFMMCallBack();
 
             if (!FilterOn)
             {
@@ -79,6 +83,7 @@ namespace DF
                     }
                 }
                 GameEvents.onGUIEditorToolbarReady.Remove(SubCategories);
+                AddPartUtilitiesCat();
                 return;
             }
 
@@ -102,10 +107,10 @@ namespace DF
                 }
                 
             }*/
-            DFMMCallBack();
+            //DFMMCallBack();
             //load the icons
-            icon_DeepFreeze_Editor.LoadImage(File.ReadAllBytes("GameData/REPOSoftTech/DeepFreeze/Icons/DeepFreezeEditor.png"));
-
+            //icon_DeepFreeze_Editor.LoadImage(File.ReadAllBytes("GameData/REPOSoftTech/DeepFreeze/Icons/DeepFreezeEditor.png"));
+            RemovePartUtilitiesCat();
             Debug.Log("DFEditorFilter Awake Complete");
         }
 
@@ -126,6 +131,24 @@ namespace DF
             return true;
         }
 
+        private void RemovePartUtilitiesCat()
+        {
+            foreach (AvailablePart avPart in avPartItems)
+            {
+                //PartCategorizer.Instance.subcategoryFunctionUtility.RemovePart(avPart);
+                avPart.category = PartCategories.none;
+            }
+        }
+
+        private void AddPartUtilitiesCat()
+        {
+            foreach (AvailablePart avPart in avPartItems)
+            {
+                //PartCategorizer.Instance.subcategoryFunctionUtility.AddPart(avPart);
+                avPart.category = PartCategories.Utility;
+            }
+        }
+
         private bool EditorItemsFilter(AvailablePart avPart)
         {
             if (avPartItems.Contains(avPart))
@@ -137,7 +160,7 @@ namespace DF
 
         private void SubCategories()
         {
-            Icon filterDeepFreeze = new Icon("DeepFreezeEditor", icon_DeepFreeze_Editor, icon_DeepFreeze_Editor, true);
+            Icon filterDeepFreeze = new Icon("DeepFreezeEditor", Textures.DeepFreeze_Editor, Textures.DeepFreeze_Editor, true);
             PartCategorizer.Category Filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == category);
             PartCategorizer.AddCustomSubcategoryFilter(Filter, subCategoryTitle, filterDeepFreeze, p => EditorItemsFilter(p));
             //RUIToggleButtonTyped button = Filter.button.activeButton;

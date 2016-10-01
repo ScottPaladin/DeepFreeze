@@ -76,10 +76,7 @@ namespace DF
             LogFormatted_DebugOnly("Attempting to Grab KAC Types...");
 
             //find the base type
-            KACType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetExportedTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName == "KerbalAlarmClock.KerbalAlarmClock");
+            KACType = getType("KerbalAlarmClock.KerbalAlarmClock"); 
 
             if (KACType == null)
             {
@@ -94,10 +91,7 @@ namespace DF
             }
 
             //now the Alarm Type
-            KACAlarmType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetExportedTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName == "KerbalAlarmClock.KACAlarm");
+            KACAlarmType = getType("KerbalAlarmClock.KACAlarm"); 
 
             if (KACAlarmType == null)
             {
@@ -129,6 +123,24 @@ namespace DF
             //}
             _KACWrapped = true;
             return true;
+        }
+
+        internal static Type getType(string name)
+        {
+            Type type = null;
+            AssemblyLoader.loadedAssemblies.TypeOperation(t =>
+
+            {
+                if (t.FullName == name)
+                    type = t;
+            }
+            );
+
+            if (type != null)
+            {
+                return type;
+            }
+            return null;
         }
 
         /// <summary>

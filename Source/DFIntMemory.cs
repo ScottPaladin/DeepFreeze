@@ -167,6 +167,8 @@ namespace DF
 
         private void Update()
         {
+            if (!HighLogic.LoadedSceneIsFlight)
+                return;
             //For some reason when we Freeze a Kerbal and switch to the Internal camera (if in IVA mode) the cameramanager gets stuck.
             //If the user hits the camera mode key while in Internal camera mode this will kick them out to flight
             if (GameSettings.CAMERA_MODE.GetKeyDown() && Utilities.IsInInternal)
@@ -183,7 +185,7 @@ namespace DF
                 }
             }
             
-            if (HighLogic.LoadedSceneIsFlight && ActVslHasDpFrezr)
+            if (ActVslHasDpFrezr)
             {
                 //If user hits Modifier Key - D switch to freezer cams.
                 if (GameSettings.MODIFIER_KEY.GetKey() && Input.GetKeyDown(keyFrzrCam) && ActFrzrCams.Count > 0 && !Utilities.StockOverlayCamIsOn)
@@ -856,7 +858,7 @@ namespace DF
             partsToDelete.ForEach(id => DeepFreeze.Instance.DFgameSettings.knownFreezerParts.Remove(id));
 
             // Scan through all in-game vessels and add any new ones we don't know about that have a freezer module.
-            foreach (Vessel vessel in allVessels.Where(v => v.loaded))
+            foreach (Vessel vessel in FlightGlobals.VesselsLoaded)
             {
                 if (!knownVessels.ContainsKey(vessel.id) && vessel.FindPartModulesImplementing<DeepFreezer>().Any())
                 {

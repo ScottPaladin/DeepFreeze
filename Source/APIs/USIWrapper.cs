@@ -78,10 +78,7 @@ namespace DF
             LogFormatted_DebugOnly("Attempting to Grab USI LS Types...");
 
             //find the base type
-            USIType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetExportedTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName == "LifeSupport.LifeSupportScenario");
+            USIType = getType("LifeSupport.LifeSupportScenario"); 
 
             if (USIType == null)
             {
@@ -91,10 +88,7 @@ namespace DF
             LogFormatted("USI LS Version:{0}", USIType.Assembly.GetName().Version.ToString());
 
             //find the LifeSupportManager class type
-            USILifeSupportMgrType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetExportedTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName == "LifeSupport.LifeSupportManager");
+            USILifeSupportMgrType = getType("LifeSupport.LifeSupportManager"); 
 
             if (USILifeSupportMgrType == null)
             {
@@ -129,6 +123,24 @@ namespace DF
 
             _USIWrapped = true;
             return true;
+        }
+
+        internal static Type getType(string name)
+        {
+            Type type = null;
+            AssemblyLoader.loadedAssemblies.TypeOperation(t =>
+
+            {
+                if (t.FullName == name)
+                    type = t;
+            }
+            );
+
+            if (type != null)
+            {
+                return type;
+            }
+            return null;
         }
 
         /// <summary>

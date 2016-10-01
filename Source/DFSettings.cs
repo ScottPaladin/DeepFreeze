@@ -208,6 +208,8 @@ namespace DF
             if (HighLogic.CurrentGame != null)
             {
                 var DF_SettingsParms = HighLogic.CurrentGame.Parameters.CustomParams<DeepFreeze_SettingsParms>();
+                var DF_SettingsParms_Sec2 = HighLogic.CurrentGame.Parameters.CustomParams<DeepFreeze_SettingsParms_Sec2>();
+                var DF_SettingsParms_Sec3 = HighLogic.CurrentGame.Parameters.CustomParams<DeepFreeze_SettingsParms_Sec3>();
                 if (DF_SettingsParms != null)
                 {
                     var GUI =
@@ -223,22 +225,23 @@ namespace DF
                     ECreqdForFreezer = DF_SettingsParms.ECreqdForFreezer;
                     fatalOption = DF_SettingsParms.fatalOption;
                     comatoseTime = DF_SettingsParms.comatoseTime;
-                    if (UseAppLauncher != DF_SettingsParms.UseAppLToolbar)
+                    if (UseAppLauncher != DF_SettingsParms_Sec3.UseAppLToolbar)
                     {
-                        UseAppLauncher = DF_SettingsParms.UseAppLToolbar;
+                        UseAppLauncher = DF_SettingsParms_Sec3.UseAppLToolbar;
 
                         if (GUI != null)
                         {
                             GUI.DFMenuAppLToolBar.chgAppIconStockToolBar(UseAppLauncher);
                         }
                     }
-                    debugging = DF_SettingsParms.DebugLogging;
-                    ToolTips = DF_SettingsParms.ToolTips;
+                    debugging = DF_SettingsParms_Sec3.DebugLogging;
+                    Utilities.debuggingOn = debugging;
+                    ToolTips = DF_SettingsParms_Sec3.ToolTips;
                     AutoRecoverFznKerbals = DF_SettingsParms.AutoRecoverFznKerbals;
                     KSCcostToThawKerbal = DF_SettingsParms.KSCcostToThawKerbal;
                     ECReqdToFreezeThaw = DF_SettingsParms.ECReqdToFreezeThaw;
                     GlykerolReqdToFreeze = DF_SettingsParms.GlykerolReqdToFreeze;
-                    if (RegTempReqd != DF_SettingsParms.RegTempReqd)
+                    if (RegTempReqd != DF_SettingsParms_Sec2.RegTempReqd)
                     {
                         if (GUI != null)
                         {
@@ -246,15 +249,15 @@ namespace DF
                             GUI.chgECHeatsettingsTimer = Planetarium.GetUniversalTime();
                         }
                     }
-                    RegTempReqd = DF_SettingsParms.RegTempReqd;
-                    RegTempFreeze = DF_SettingsParms.RegTempFreeze;
-                    RegTempMonitor = DF_SettingsParms.RegTempMonitor;
-                    heatamtMonitoringFrznKerbals = DF_SettingsParms.heatamtMonitoringFrznKerbals;
-                    TempinKelvin = DF_SettingsParms.TempinKelvin;
-                    StripLightsActive = DF_SettingsParms.StripLightsActive;
-                    if (EditorFilter != DF_SettingsParms.EditorFilter)
+                    RegTempReqd = DF_SettingsParms_Sec2.RegTempReqd;
+                    RegTempFreeze = DF_SettingsParms_Sec2.RegTempFreeze;
+                    RegTempMonitor = DF_SettingsParms_Sec2.RegTempMonitor;
+                    heatamtMonitoringFrznKerbals = DF_SettingsParms_Sec2.heatamtMonitoringFrznKerbals;
+                    TempinKelvin = DF_SettingsParms_Sec2.TempinKelvin;
+                    StripLightsActive = DF_SettingsParms_Sec3.StripLightsActive;
+                    if (EditorFilter != DF_SettingsParms_Sec3.EditorFilter)
                     {
-                        EditorFilter = DF_SettingsParms.EditorFilter;
+                        EditorFilter = DF_SettingsParms_Sec3.EditorFilter;
                         if (DFEditorFilter.Instance != null)
                             DFEditorFilter.Instance.Setup(EditorFilter);
                     }

@@ -76,10 +76,7 @@ namespace MyPlugin_DFWrapper
                 LogFormatted("Attempting to Grab DeepFreeze Types...");
 
                 //find the base type
-                DFType = AssemblyLoader.loadedAssemblies
-                    .Select(a => a.assembly.GetExportedTypes())
-                    .SelectMany(t => t)
-                    .FirstOrDefault(t => t.FullName == "DF.DeepFreeze");
+                DFType = getType("DF.DeepFreeze"); 
 
                 if (DFType == null)
                 {
@@ -89,10 +86,7 @@ namespace MyPlugin_DFWrapper
                 LogFormatted("DeepFreeze Version:{0}", DFType.Assembly.GetName().Version.ToString());
 
                 //now the KerbalInfo Type
-                KerbalInfoType = AssemblyLoader.loadedAssemblies
-                    .Select(a => a.assembly.GetExportedTypes())
-                    .SelectMany(t => t)
-                    .FirstOrDefault(t => t.FullName == "DF.KerbalInfo");
+                KerbalInfoType = getType("DF.KerbalInfo"); 
 
                 if (KerbalInfoType == null)
                 {
@@ -100,10 +94,7 @@ namespace MyPlugin_DFWrapper
                 }
 
                 //now the DeepFreezer (partmodule) Type
-                DeepFreezerType = AssemblyLoader.loadedAssemblies
-                    .Select(a => a.assembly.GetExportedTypes())
-                    .SelectMany(t => t)
-                    .FirstOrDefault(t => t.FullName == "DF.DeepFreezer");
+                DeepFreezerType = getType("DF.DeepFreezer"); 
 
                 if (DeepFreezerType == null)
                 {
@@ -111,11 +102,7 @@ namespace MyPlugin_DFWrapper
                 }
 
                 //now the FrznCrewMbr Type
-                FrznCrewMbrType = AssemblyLoader.loadedAssemblies
-                    .Select(a => a.assembly.GetExportedTypes())
-                    .SelectMany(t => t)
-                    .FirstOrDefault(t => t.FullName == "DF.FrznCrewMbr");
-
+                FrznCrewMbrType = getType("DF.FrznCrewMbr"); 
                 if (FrznCrewMbrType == null)
                 {
                     return false;
@@ -151,6 +138,24 @@ namespace MyPlugin_DFWrapper
                 _DFWrapped = false;
                 return false;
             }
+        }
+
+        internal static Type getType(string name)
+        {
+            Type type = null;
+            AssemblyLoader.loadedAssemblies.TypeOperation(t =>
+
+            {
+                if (t.FullName == name)
+                    type = t;
+            }
+            );
+
+            if (type != null)
+            {
+                return type;
+            }
+            return null;
         }
 
         /// <summary>
