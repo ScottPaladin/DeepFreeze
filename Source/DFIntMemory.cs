@@ -195,19 +195,16 @@ namespace DF
                     {
                          Utilities.Log_Debug("Vessel is in IVA, looking for active kerbal");
                         Kerbal activeKerbal;
-                        foreach (DeepFreezer frzr in DpFrzrActVsl)
+                        
+                        activeKerbal = CameraManager.Instance.IVACameraActiveKerbal;
+                        if (activeKerbal != null)
                         {
-                            activeKerbal = CameraManager.Instance.IVACameraActiveKerbal;// frzr.part.FindCurrentKerbal();
-                            if (activeKerbal != null)
+                            int CamIndex = -1;
+                            CamIndex = ActFrzrCams.FindIndex(a => a.FrzrCamPart == activeKerbal.InPart && a.FrzrCamSeatIndex == activeKerbal.protoCrewMember.seatIdx);
+                            if (CamIndex != -1)
                             {
-                                int CamIndex = -1;
-                                CamIndex = ActFrzrCams.FindIndex(a => a.FrzrCamPart == activeKerbal.InPart && a.FrzrCamSeatIndex == activeKerbal.protoCrewMember.seatIdx);
-                                if (CamIndex != -1)
-                                {
-                                    lastFrzrCam = CamIndex;
-                                     Utilities.Log_Debug("Vessel was in IVA so Set lastFrzrCam to " + ActFrzrCams[lastFrzrCam].FrzrCamPartName + " " + ActFrzrCams[lastFrzrCam].FrzrCamSeatIndex);
-                                    break;
-                                }
+                                lastFrzrCam = CamIndex;
+                                    Utilities.Log_Debug("Vessel was in IVA so Set lastFrzrCam to " + ActFrzrCams[lastFrzrCam].FrzrCamPartName + " " + ActFrzrCams[lastFrzrCam].FrzrCamSeatIndex);
                             }
                         }
                     }
@@ -413,45 +410,47 @@ namespace DF
             ComakeysToDelete.Clear();
             //comaKerbals.Clear();
             comaKerbals = DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.Where(e => e.Value.type == ProtoCrewMember.KerbalType.Tourist).ToList();
-            foreach (KeyValuePair<string, KerbalInfo> comaKerbal in comaKerbals)
+            //foreach (KeyValuePair<string, KerbalInfo> comaKerbal in comaKerbals)
+            for (int i=0; i < comaKerbals.Count; i++)
             {
-                if (comaKerbal.Value.type == ProtoCrewMember.KerbalType.Tourist)
+                if (Planetarium.GetUniversalTime() - comaKerbals[i].Value.lastUpdate > DeepFreeze.Instance.DFsettings.comatoseTime) // Is time up?
                 {
-                    if (Planetarium.GetUniversalTime() - comaKerbal.Value.lastUpdate > DeepFreeze.Instance.DFsettings.comatoseTime) // Is time up?
+                    ProtoCrewMember crew = HighLogic.CurrentGame.CrewRoster.Tourist.FirstOrDefault(a => a.name == comaKerbals[i].Key);
+                    if (crew != null)
                     {
-                        ProtoCrewMember crew = HighLogic.CurrentGame.CrewRoster.Tourist.FirstOrDefault(a => a.name == comaKerbal.Key);
-                        if (crew != null)
+                        Vessel vsl = FlightGlobals.Vessels.FirstOrDefault(a => a.id == comaKerbals[i].Value.vesselID);
+                        if (vsl == null)
                         {
-                            Vessel vsl = FlightGlobals.Vessels.FirstOrDefault(a => a.id == comaKerbal.Value.vesselID);
-                            if (vsl == null)
-                            {
-                                Utilities.Log("Failed to find Vessel for Comatose Kerbal - Critical error");
-                                return;
-                            }
-                            Part part = vsl.parts.FirstOrDefault(b => b.flightID == comaKerbal.Value.partID);
-                            if (part == null)
-                            {
-                                Utilities.Log("Failed to find Part for Comatose Kerbal - Critical error");
-                                return;
-                            }
-                            if (comaKerbal.Value.experienceTraitName == "Tourist")
-                            {
-                                DeepFreeze.Instance.setComatoseKerbal(part, crew, ProtoCrewMember.KerbalType.Tourist, false);
-                            }
-                            else
-                            {
-                                DeepFreeze.Instance.setComatoseKerbal(part, crew, ProtoCrewMember.KerbalType.Crew, false);
-                            }
-                            ComakeysToDelete.Add(comaKerbal.Key);
+                            Utilities.Log("Failed to find Vessel for Comatose Kerbal - Critical error");
+                            return;
+                        }
+                        Part part = vsl.parts.FirstOrDefault(b => b.flightID == comaKerbals[i].Value.partID);
+                        if (part == null)
+                        {
+                            Utilities.Log("Failed to find Part for Comatose Kerbal - Critical error");
+                            return;
+                        }
+                        if (comaKerbals[i].Value.experienceTraitName == "Tourist")
+                        {
+                            DeepFreeze.Instance.setComatoseKerbal(part, crew, ProtoCrewMember.KerbalType.Tourist, false);
                         }
                         else
                         {
-                            Utilities.Log("Unable to set comatose crew member " + comaKerbal.Key + " back to crew status.");
+                            DeepFreeze.Instance.setComatoseKerbal(part, crew, ProtoCrewMember.KerbalType.Crew, false);
                         }
+                        ComakeysToDelete.Add(comaKerbals[i].Key);
+                    }
+                    else
+                    {
+                        Utilities.Log("Unable to set comatose crew member " + comaKerbals[i].Key + " back to crew status.");
                     }
                 }
+                
             }
-            ComakeysToDelete.ForEach(id => DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.Remove(id));
+            for (int i = 0; i < ComakeysToDelete.Count; i++)
+            {
+                DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.Remove(ComakeysToDelete[i]);
+            }
         }
 
         private void ChkUnknownFrozenKerbals()
@@ -462,30 +461,30 @@ namespace DF
             if (unknownkerbals != null)
             {
                 Utilities.Log("There are " + unknownkerbals.Count + " unknownKerbals in the game roster.");
-                foreach (ProtoCrewMember CrewMember in unknownkerbals)
+                for (int i = 0; i < unknownkerbals.Count; i++)
                 {
-                    if (CrewMember.rosterStatus == ProtoCrewMember.RosterStatus.Dead)
+                    if (unknownkerbals[i].rosterStatus == ProtoCrewMember.RosterStatus.Dead)
                     {
-                        if (!DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.ContainsKey(CrewMember.name))
+                        if (!DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.ContainsKey(unknownkerbals[i].name))
                         {
                             // Update the saved frozen kerbals dictionary
                             KerbalInfo kerbalInfo = new KerbalInfo(Planetarium.GetUniversalTime());
                             kerbalInfo.vesselID = Guid.Empty;
                             kerbalInfo.vesselName = "";
-                            kerbalInfo.type = CrewMember.type;
-                            kerbalInfo.status = CrewMember.rosterStatus;
+                            kerbalInfo.type = unknownkerbals[i].type;
+                            kerbalInfo.status = unknownkerbals[i].rosterStatus;
                             //kerbalInfo.seatName = "Unknown";
                             kerbalInfo.seatIdx = 0;
                             kerbalInfo.partID = 0;
-                            kerbalInfo.experienceTraitName = CrewMember.experienceTrait.Title;
+                            kerbalInfo.experienceTraitName = unknownkerbals[i].experienceTrait.Title;
                             try
                             {
-                                Utilities.Log("Adding dead unknown kerbal " + CrewMember.name + " AKA FROZEN kerbal to DeepFreeze List");
-                                DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.Add(CrewMember.name, kerbalInfo);
+                                Utilities.Log("Adding dead unknown kerbal " + unknownkerbals[i].name + " AKA FROZEN kerbal to DeepFreeze List");
+                                DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.Add(unknownkerbals[i].name, kerbalInfo);
                             }
                             catch (Exception ex)
                             {
-                                Utilities.Log("Add of dead unknown kerbal " + CrewMember.name + " failed " + ex);
+                                Utilities.Log("Add of dead unknown kerbal " + unknownkerbals[i].name + " failed " + ex);
                             }
                         }
                     }
@@ -501,19 +500,19 @@ namespace DF
             if (crewkerbals != null)
             {
                 Utilities.Log("There are " + crewkerbals.Count() + " crew Kerbals in the game roster.");
-                foreach (ProtoCrewMember CrewMember in crewkerbals)
+                for (int i = 0; i < crewkerbals.Count; i++)
                 {
-                    if (DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.ContainsKey(CrewMember.name))
+                    if (DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.ContainsKey(crewkerbals[i].name))
                     {
                         // Remove the saved frozen kerbals dictionary
                         try
                         {
-                             Utilities.Log_Debug("Removing crew kerbal " + CrewMember.name + " from DeepFreeze List");
-                            DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.Remove(CrewMember.name);
+                             Utilities.Log_Debug("Removing crew kerbal " + crewkerbals[i].name + " from DeepFreeze List");
+                            DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.Remove(crewkerbals[i].name);
                         }
                         catch (Exception ex)
                         {
-                            Utilities.Log("Removal of crew kerbal " + CrewMember.name + " from frozen list failed " + ex);
+                            Utilities.Log("Removal of crew kerbal " + crewkerbals[i].name + " from frozen list failed " + ex);
                         }
                     }
                 }
@@ -877,13 +876,13 @@ namespace DF
             double ECreqdsincelastupdate = 0f;
             int frznChargeRequired = 0;
             List<KeyValuePair<uint, PartInfo>> DpFrzrVsl = DeepFreeze.Instance.DFgameSettings.knownFreezerParts.Where(p => p.Value.vesselID == vessel.id).ToList();
-            foreach (KeyValuePair<uint, PartInfo> frzr in DpFrzrVsl)
+            for (int i = 0; i < DpFrzrActVsl.Count; i++)
             {
                 //calculate the predicated time EC will run out
-                double timeperiod = Planetarium.GetUniversalTime() - frzr.Value.timeLastElectricity;
-                frznChargeRequired = (int)frzr.Value.frznChargeRequired;
-                ECreqdsincelastupdate += frznChargeRequired / 60.0f * timeperiod * frzr.Value.numFrznCrew;
-                frzr.Value.deathCounter = currentTime;
+                double timeperiod = Planetarium.GetUniversalTime() - DpFrzrVsl[i].Value.timeLastElectricity;
+                frznChargeRequired = (int)DpFrzrVsl[i].Value.frznChargeRequired;
+                ECreqdsincelastupdate += frznChargeRequired / 60.0f * timeperiod * DpFrzrVsl[i].Value.numFrznCrew;
+                DpFrzrVsl[i].Value.deathCounter = currentTime;
                 // Utilities.Log_Debug("predicted EC part " + frzr.Value.vesselID + " " + frzr.Value.PartName + " FrznChargeRequired " + frznChargeRequired + " timeperiod " + timeperiod + " #frzncrew " + frzr.Value.numFrznCrew);
             }
             double ECafterlastupdate = vesselInfo.storedEC - ECreqdsincelastupdate;
@@ -903,13 +902,14 @@ namespace DF
             vesselInfo.hasextPod = false;
             DpFrzrLoadedVsl.Clear();
             DpFrzrLoadedVsl = vessel.FindPartModulesImplementing<DeepFreezer>();
-            foreach (DeepFreezer frzr in DpFrzrLoadedVsl)
+            for (int i = 0; i < DpFrzrLoadedVsl.Count; i++)
+            //foreach (DeepFreezer frzr in DpFrzrLoadedVsl)
             {
                 // do we have a known part? If not add it
-                if (!DeepFreeze.Instance.DFgameSettings.knownFreezerParts.TryGetValue(frzr.part.flightID, out partInfo))
+                if (!DeepFreeze.Instance.DFgameSettings.knownFreezerParts.TryGetValue(DpFrzrLoadedVsl[i].part.flightID, out partInfo))
                 {
-                    Utilities.Log("New Freezer Part: " + frzr.name + "(" + frzr.part.flightID + ")" + " (" + vessel.id + ")");
-                    partInfo = new PartInfo(vessel.id, frzr.name, currentTime);
+                    Utilities.Log("New Freezer Part: " + DpFrzrLoadedVsl[i].name + "(" + DpFrzrLoadedVsl[i].part.flightID + ")" + " (" + vessel.id + ")");
+                    partInfo = new PartInfo(vessel.id, DpFrzrLoadedVsl[i].name, currentTime);
                     //partInfo.vesselID = vessel.id;
                     //partInfo.PartName = frzr.name;
                     partInfo.hibernating = false;
@@ -920,50 +920,50 @@ namespace DF
                     partInfo.crewMemberTraits.Clear();
 
 
-                    partInfo.hasextDoor = frzr.ExternalDoorActive;
-                    partInfo.hasextPod = frzr.isPodExternal;
-                    partInfo.numSeats = frzr.FreezerSize;
-                    partInfo.timeLastElectricity = frzr.timeSinceLastECtaken;
-                    partInfo.frznChargeRequired = frzr.FrznChargeRequired;
-                    partInfo.timeLastTempCheck = frzr.timeSinceLastTmpChk;
-                    partInfo.deathCounter = frzr.deathCounter;
-                    partInfo.tmpdeathCounter = frzr.tmpdeathCounter;
-                    partInfo.outofEC = frzr.DFFreezerOutofEC;
-                    partInfo.TmpStatus = frzr.DFFrzrTmp;
-                    partInfo.cabinTemp = frzr.CabinTemp;
-                    foreach (ProtoCrewMember crew in frzr.part.protoModuleCrew)
+                    partInfo.hasextDoor = DpFrzrLoadedVsl[i].ExternalDoorActive;
+                    partInfo.hasextPod = DpFrzrLoadedVsl[i].isPodExternal;
+                    partInfo.numSeats = DpFrzrLoadedVsl[i].FreezerSize;
+                    partInfo.timeLastElectricity = DpFrzrLoadedVsl[i].timeSinceLastECtaken;
+                    partInfo.frznChargeRequired = DpFrzrLoadedVsl[i].FrznChargeRequired;
+                    partInfo.timeLastTempCheck = DpFrzrLoadedVsl[i].timeSinceLastTmpChk;
+                    partInfo.deathCounter = DpFrzrLoadedVsl[i].deathCounter;
+                    partInfo.tmpdeathCounter = DpFrzrLoadedVsl[i].tmpdeathCounter;
+                    partInfo.outofEC = DpFrzrLoadedVsl[i].DFFreezerOutofEC;
+                    partInfo.TmpStatus = DpFrzrLoadedVsl[i].DFFrzrTmp;
+                    partInfo.cabinTemp = DpFrzrLoadedVsl[i].CabinTemp;
+                    for (int j = 0; j < DpFrzrLoadedVsl[i].part.protoModuleCrew.Count; j++)
                     {
-                        partInfo.crewMembers.Add(crew.name);
-                        partInfo.crewMemberTraits.Add(crew.experienceTrait.Title);
+                        partInfo.crewMembers.Add(DpFrzrLoadedVsl[i].part.protoModuleCrew[j].name);
+                        partInfo.crewMemberTraits.Add(DpFrzrLoadedVsl[i].part.protoModuleCrew[j].experienceTrait.Title);
                     }
 
-                    DeepFreeze.Instance.DFgameSettings.knownFreezerParts[frzr.part.flightID] = partInfo;
+                    DeepFreeze.Instance.DFgameSettings.knownFreezerParts[DpFrzrLoadedVsl[i].part.flightID] = partInfo;
                 }
                 else   // Update existing entry
                 {
-                    partInfo.hasextDoor = frzr.ExternalDoorActive;
-                    partInfo.hasextPod = frzr.isPodExternal;
-                    partInfo.numSeats = frzr.FreezerSize;
-                    partInfo.timeLastElectricity = frzr.timeSinceLastECtaken;
-                    partInfo.frznChargeRequired = frzr.FrznChargeRequired;
-                    partInfo.timeLastTempCheck = frzr.timeSinceLastTmpChk;
-                    partInfo.deathCounter = frzr.deathCounter;
-                    partInfo.tmpdeathCounter = frzr.tmpdeathCounter;
-                    partInfo.outofEC = frzr.DFFreezerOutofEC;
-                    partInfo.TmpStatus = frzr.DFFrzrTmp;
-                    partInfo.cabinTemp = frzr.CabinTemp;
+                    partInfo.hasextDoor = DpFrzrLoadedVsl[i].ExternalDoorActive;
+                    partInfo.hasextPod = DpFrzrLoadedVsl[i].isPodExternal;
+                    partInfo.numSeats = DpFrzrLoadedVsl[i].FreezerSize;
+                    partInfo.timeLastElectricity = DpFrzrLoadedVsl[i].timeSinceLastECtaken;
+                    partInfo.frznChargeRequired = DpFrzrLoadedVsl[i].FrznChargeRequired;
+                    partInfo.timeLastTempCheck = DpFrzrLoadedVsl[i].timeSinceLastTmpChk;
+                    partInfo.deathCounter = DpFrzrLoadedVsl[i].deathCounter;
+                    partInfo.tmpdeathCounter = DpFrzrLoadedVsl[i].tmpdeathCounter;
+                    partInfo.outofEC = DpFrzrLoadedVsl[i].DFFreezerOutofEC;
+                    partInfo.TmpStatus = DpFrzrLoadedVsl[i].DFFrzrTmp;
+                    partInfo.cabinTemp = DpFrzrLoadedVsl[i].CabinTemp;
                     partInfo.crewMembers.Clear();
                     partInfo.crewMemberTraits.Clear();
-                    foreach (ProtoCrewMember crew in frzr.part.protoModuleCrew)
+                    for (int j = 0; j < DpFrzrLoadedVsl[i].part.protoModuleCrew.Count; j++)
                     {
-                        partInfo.crewMembers.Add(crew.name);
-                        partInfo.crewMemberTraits.Add(crew.experienceTrait.Title);
+                        partInfo.crewMembers.Add(DpFrzrLoadedVsl[i].part.protoModuleCrew[j].name);
+                        partInfo.crewMemberTraits.Add(DpFrzrLoadedVsl[i].part.protoModuleCrew[j].experienceTrait.Title);
                     }
                 }
                 //now update the knownfreezerpart and any related vesselinfo field
-                if (frzr.ExternalDoorActive)
+                if (DpFrzrLoadedVsl[i].ExternalDoorActive)
                     vesselInfo.hasextDoor = true;
-                if (frzr.isPodExternal)
+                if (DpFrzrLoadedVsl[i].isPodExternal)
                     vesselInfo.hasextPod = true;
             }
         }
@@ -974,12 +974,13 @@ namespace DF
             // Utilities.Log_Debug("UpdateVesselCounts " + vessel.id);
             crewCapacity = 0;
             vesselInfo.ClearAmounts(); // numCrew = 0; numOccupiedParts = 0; numseats = 0;
-            foreach (Part part in vessel.parts)
+            for (int i = 0; i < vessel.parts.Count; i++)
+            //foreach (Part part in vessel.parts)
             {
-                DeepFreezer freezer = part.FindModuleImplementing<DeepFreezer>();
+                DeepFreezer freezer = vessel.parts[i].FindModuleImplementing<DeepFreezer>();
                 if (freezer != null) // this vessel part does contain a freezer
                 {
-                     Utilities.Log_Debug("part:" + part.name + " Has Freezer");
+                     Utilities.Log_Debug("part:" + vessel.parts[i].name + " Has Freezer");
                     //first Update the PartInfo counts
                     
                     if (DeepFreeze.Instance.DFgameSettings.knownFreezerParts.TryGetValue(freezer.part.flightID, out partInfo))
@@ -990,26 +991,26 @@ namespace DF
                     //Now update the VesselInfo counts
                     crewCapacity += freezer.FreezerSize;
                     vesselInfo.numSeats += freezer.FreezerSize;
-                    vesselInfo.numCrew += part.protoModuleCrew.Count;
+                    vesselInfo.numCrew += vessel.parts[i].protoModuleCrew.Count;
                     vesselInfo.numFrznCrew += freezer.DFIStoredCrewList.Count();
                     // Utilities.Log_Debug("numcrew:" + part.protoModuleCrew.Count + " numfrzncrew:" + freezer.DFIStoredCrewList.Count());
-                    if (part.protoModuleCrew.Count > 0 || freezer.DFIStoredCrewList.Any())
+                    if (vessel.parts[i].protoModuleCrew.Count > 0 || freezer.DFIStoredCrewList.Any())
                     {
                         ++vesselInfo.numOccupiedParts;
                     }
                 }
                 else //this vessel part does not contain a freezer
                 {
-                    crewCapacity += part.CrewCapacity;
-                    vesselInfo.numSeats += part.CrewCapacity;
-                    if (part.protoModuleCrew.Count > 0)
+                    crewCapacity += vessel.parts[i].CrewCapacity;
+                    vesselInfo.numSeats += vessel.parts[i].CrewCapacity;
+                    if (vessel.parts[i].protoModuleCrew.Count > 0)
                     {
-                        vesselInfo.numCrew += part.protoModuleCrew.Count;
+                        vesselInfo.numCrew += vessel.parts[i].protoModuleCrew.Count;
                         ++vesselInfo.numOccupiedParts;
                     }
-                    if (part.Resources.Contains("ElectricCharge"))
+                    if (vessel.parts[i].Resources.Contains("ElectricCharge"))
                     {
-                        vesselInfo.storedEC += part.Resources.Get("ElectricCharge").amount;
+                        vesselInfo.storedEC += vessel.parts[i].Resources.Get("ElectricCharge").amount;
                     }
                 }
             }

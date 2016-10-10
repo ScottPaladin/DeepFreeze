@@ -1226,11 +1226,11 @@ namespace DF
                     double ECreqd = FrznChargeRequired / 60.0f * timeperiod * TotalFrozen;
                     Utilities.Log_Debug("DeepFreezer Running the freezer parms currenttime = {0} timeperiod = {1} ecreqd = {2}" , currenttime.ToString(), timeperiod.ToString(), ECreqd.ToString());
                     double resTotal = 0f;
-                    if (Utilities.requireResource(vessel, EC, ECreqd, false, true, out ResAvail, out resTotal))
+                    if (Utilities.requireResource(vessel, EC, ECreqd, false, true, false, out ResAvail, out resTotal))
                     {
                         if (OnGoingECMsg != null) ScreenMessages.RemoveMessage(OnGoingECMsg);
                         //Have resource
-                        Utilities.requireResource(vessel, EC, ECreqd, true, true, out ResAvail, out resTotal);
+                        Utilities.requireResource(vessel, EC, ECreqd, true, true, false, out ResAvail, out resTotal);
                         FrznChargeUsage = (float)ResAvail;
                         Utilities.Log_Debug("DeepFreezer Consumed Freezer EC " + ECreqd + " units");
                         timeSinceLastECtaken = (float)currenttime;
@@ -1245,9 +1245,9 @@ namespace DF
                         {
                             ECreqd = resTotal * 95 / 100;
                             double ECtotal = 0f;
-                            if (Utilities.requireResource(vessel, EC, ECreqd, false, true, out ResAvail, out resTotal))
+                            if (Utilities.requireResource(vessel, EC, ECreqd, false, true, false, out ResAvail, out resTotal))
                             {
-                                Utilities.requireResource(vessel, EC, ECreqd, true, true, out ResAvail, out resTotal);
+                                Utilities.requireResource(vessel, EC, ECreqd, true, true, false, out ResAvail, out resTotal);
                                 FrznChargeUsage = (float)ResAvail;
                             }
                         }
@@ -1773,14 +1773,14 @@ namespace DF
                     //get Electric Charge and Glykerol
                     Utilities.Log_Debug("Freeze Step 1");
                     double ECTotal = 0f;
-                    if (!Utilities.requireResource(vessel, EC, ChargeRate, false, true, out ResAvail, out ECTotal))
+                    if (!Utilities.requireResource(vessel, EC, ChargeRate, false, true, false, out ResAvail, out ECTotal))
                     {
                         ScreenMessages.PostScreenMessage("Insufficient electric charge to freeze kerbal", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                         FreezeKerbalAbort(ActiveFrzKerbal);
                     }
                     else
                     {
-                        Utilities.requireResource(vessel, EC, ChargeRate, true, true, out ResAvail, out ECTotal);
+                        Utilities.requireResource(vessel, EC, ChargeRate, true, true, false, out ResAvail, out ECTotal);
                         StoredCharge = StoredCharge + ChargeRate;
                         if (FreezeMsg != null) ScreenMessages.RemoveMessage(FreezeMsg);
                         FreezeMsg = ScreenMessages.PostScreenMessage(" Cryopod - Charging: " + StoredCharge.ToString("######0"));
@@ -1792,7 +1792,7 @@ namespace DF
                         if (StoredCharge >= ChargeRequired)
                         {
                             if (FreezeMsg != null) ScreenMessages.RemoveMessage(FreezeMsg);
-                            if (Utilities.requireResource(vessel, Glykerol, GlykerolRequired, true, true, out ResAvail, out ECTotal))
+                            if (Utilities.requireResource(vessel, Glykerol, GlykerolRequired, true, true, false, out ResAvail, out ECTotal))
                             {
                                 charge_up.Stop(); // stop the sound effects
                                 FreezeStepInProgress = 2;
@@ -1934,7 +1934,7 @@ namespace DF
                 if (FreezerSpace > 0 && part.protoModuleCrew.Contains(CrewMember)) // Freezer has space? and Part contains the CrewMember?
                 {
                     double GlykTotal = 0f;
-                    if (!Utilities.requireResource(vessel, Glykerol, GlykerolRequired, false, true, out ResAvail, out GlykTotal)) // check we have Glykerol on board. 5 units per freeze event. This should be a part config item not hard coded.
+                    if (!Utilities.requireResource(vessel, Glykerol, GlykerolRequired, false, true, false, out ResAvail, out GlykTotal)) // check we have Glykerol on board. 5 units per freeze event. This should be a part config item not hard coded.
                     {
                         ScreenMessages.PostScreenMessage("Insufficient Glykerol to freeze kerbal", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                     }
@@ -2251,14 +2251,14 @@ namespace DF
                         break;
                     }
                     double totalAvail = 0f;
-                    if (!Utilities.requireResource(vessel, EC, ChargeRate, false, true, out ResAvail, out totalAvail))
+                    if (!Utilities.requireResource(vessel, EC, ChargeRate, false, true, false, out ResAvail, out totalAvail))
                     {
                         ScreenMessages.PostScreenMessage("Insufficient electric charge to thaw kerbal", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                         ThawKerbalAbort(ToThawKerbal);
                     }
                     else
                     {
-                        Utilities.requireResource(vessel, EC, ChargeRate, true, true, out ResAvail, out totalAvail);
+                        Utilities.requireResource(vessel, EC, ChargeRate, true, true, false, out ResAvail, out totalAvail);
                         StoredCharge = StoredCharge + ChargeRate;
                         if (ThawMsg != null) ScreenMessages.RemoveMessage(ThawMsg);
                         ThawMsg = ScreenMessages.PostScreenMessage(" Cryopod - Charging: " + StoredCharge.ToString("######0"));
@@ -2869,7 +2869,7 @@ namespace DF
                 // remove the CrewMember from the part crewlist and unregister their traits, because they are frozen, and this is the only way to trick the game.
                 kerbal.UnregisterExperienceTraits(part);
                 part.protoModuleCrew.Remove(kerbal);
-                vessel.RemoveCrew(kerbal);
+                Vessel.CrewWasModified(vessel);
                 if (partHasInternals)
                 {
                     if (part.internalModel.seats[SeatIndx].kerbalRef != kerbal.KerbalRef)
@@ -2940,14 +2940,7 @@ namespace DF
                 }
                 if (partHasInternals && ExternalDoorActive)
                     Utilities.setHelmetshaders(kerbal.KerbalRef, true);
-                // add the CrewMember to the part crewlist and register their traits.
-                kerbal.RegisterExperienceTraits(part);
-                if (!part.protoModuleCrew.Contains(kerbal))
-                {
-                    part.protoModuleCrew.Add(kerbal);
-                    //vessel.RebuildCrewList();
-                }
-
+                
                 // Set our newly thawed Popsicle, er Kerbal, to Crew type and Assigned status.
                 if (kerbal.type != ProtoCrewMember.KerbalType.Crew)
                 {
@@ -2973,6 +2966,15 @@ namespace DF
                     }
                     seatTakenbyFrznKerbal[SeatIndx] = false;
                 }
+
+                // add the CrewMember to the part crewlist and register their traits.
+                kerbal.RegisterExperienceTraits(part);
+                if (!part.protoModuleCrew.Contains(kerbal))
+                {
+                    part.protoModuleCrew.Add(kerbal);
+                    Vessel.CrewWasModified(vessel);
+                }
+
                 /*if (kerbal.KerbalRef != null)
                 {
                     if (kerbal.KerbalRef.InPart == null)
@@ -2982,7 +2984,7 @@ namespace DF
                     //Add themto the GUIManager Portrait cams.
                     Portraits.RestorePortrait(kerbal.KerbalRef);
                 }*/
-                 Utilities.Log_Debug("End AddKerbal");
+                Utilities.Log_Debug("End AddKerbal");
                 return true;
             }
             catch (Exception ex)

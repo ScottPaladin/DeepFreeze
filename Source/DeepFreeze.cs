@@ -35,12 +35,23 @@ namespace DF
         private readonly string globalConfigFilename;
         private ConfigNode globalNode = new ConfigNode();
         internal readonly List<Component> children = new List<Component>();
+        private List<KeyValuePair<string, KerbalInfo>> _frozenKerbalsList = new List<KeyValuePair<string, KerbalInfo>>();
 
         public Dictionary<string, KerbalInfo> FrozenKerbals
         {
             get
             {
                 return DFgameSettings.KnownFrozenKerbals;
+            }
+        }
+
+        public List<KeyValuePair<string, KerbalInfo>> FrozenKerbalsList
+        {
+            get
+            {
+                _frozenKerbalsList.Clear();
+                _frozenKerbalsList = DFgameSettings.KnownFrozenKerbals.ToList();
+                return _frozenKerbalsList;
             }
         }
 
