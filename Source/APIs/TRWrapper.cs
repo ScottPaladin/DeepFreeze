@@ -81,10 +81,7 @@ namespace DF
             LogFormatted_DebugOnly("Attempting to Grab TextureReplacer Types...");
 
             //find the base type
-            TRType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetExportedTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName == "TextureReplacer.TextureReplacer");
+            TRType = getType("TextureReplacer.TextureReplacer"); 
 
             if (TRType == null)
             {
@@ -94,10 +91,7 @@ namespace DF
             LogFormatted("TextureReplacer Version:{0}", TRType.Assembly.GetName().Version.ToString());
 
             //find the personaliser class type
-            TRPersonaliserType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetExportedTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName == "TextureReplacer.Personaliser");
+            TRPersonaliserType = getType("TextureReplacer.Personaliser"); 
 
             if (TRPersonaliserType == null)
             {
@@ -136,6 +130,24 @@ namespace DF
 
             _TRWrapped = true;
             return true;
+        }
+
+        internal static Type getType(string name)
+        {
+            Type type = null;
+            AssemblyLoader.loadedAssemblies.TypeOperation(t =>
+
+            {
+                if (t.FullName == name)
+                    type = t;
+            }
+            );
+
+            if (type != null)
+            {
+                return type;
+            }
+            return null;
         }
 
         /// <summary>

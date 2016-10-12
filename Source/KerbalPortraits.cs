@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using KSP.UI.Screens.Flight;
 using UnityEngine;
 
@@ -14,28 +13,7 @@ namespace DeepFreeze
     {
 
         internal static BindingFlags eFlags = BindingFlags.Instance | BindingFlags.NonPublic;
-
-        //reflecting protected methods inside a public class. Until KSP 1.1.x can rectify the situation.
-        internal static void UIControlsUpdate()
-        {
-            MethodInfo UIControlsUpdateMethod = typeof(KerbalPortraitGallery).GetMethod("UIControlsUpdate", eFlags);
-            UIControlsUpdateMethod.Invoke(KerbalPortraitGallery.Instance, null);
-        }
-
-        //reflecting protected methods inside a public class. Until KSP 1.1.x can rectify the situation.
-        internal static void DespawnInactivePortraits()
-        {
-            MethodInfo DespawnInactPortMethod = typeof(KerbalPortraitGallery).GetMethod("DespawnInactivePortraits", eFlags);
-            DespawnInactPortMethod.Invoke(KerbalPortraitGallery.Instance, null);
-        }
-
-        //reflecting protected methods inside a public class. Until KSP 1.1.x can rectify the situation.
-        internal static void DespawnPortrait(Kerbal kerbal)
-        {
-            MethodInfo DespawnPortraitMethod = typeof(KerbalPortraitGallery).GetMethod("DespawnPortrait", eFlags, Type.DefaultBinder, new Type[] { typeof(Kerbal) }, null);
-            DespawnPortraitMethod.Invoke(KerbalPortraitGallery.Instance, new object[] { kerbal });
-        }
-
+        
         internal static bool HasPortrait(Kerbal crew, bool checkName = false)
         {
             if (!checkName)
@@ -82,9 +60,9 @@ namespace DeepFreeze
                 }
             }
             //Portraits List clean-up.
-            DespawnInactivePortraits(); //Despawn any portraits where CrewMember == null
-            DespawnPortrait(kerbal); //Despawn our Kerbal's portrait
-            UIControlsUpdate(); //Update UI controls
+            KerbalPortraitGallery.Instance.DespawnInactivePortraits(); //Despawn any portraits where CrewMember == null
+            KerbalPortraitGallery.Instance.DespawnPortrait(kerbal); //Despawn our Kerbal's portrait
+            KerbalPortraitGallery.Instance.UIControlsUpdate(); //Update UI controls
         }
 
         /// <summary>

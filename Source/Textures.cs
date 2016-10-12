@@ -47,6 +47,7 @@ namespace DF
         internal static Texture2D TooltipBox = new Texture2D(10, 10, TextureFormat.ARGB32, false);
         internal static Texture2D BtnRedCross = new Texture2D(16, 16, TextureFormat.ARGB32, false);
         internal static Texture2D BtnResize = new Texture2D(16, 16, TextureFormat.ARGB32, false);
+        internal static Texture2D DeepFreeze_Editor = new Texture2D(32, 32, TextureFormat.ARGB32, false);
 
         internal static String PathIconsPath = System.IO.Path.Combine(DeepFreeze._AssemblyFolder.Substring(0, DeepFreeze._AssemblyFolder.IndexOf("/DeepFreeze/") + 12), "Icons").Replace("\\", "/");
         internal static String PathToolbarIconsPath = PathIconsPath.Substring(PathIconsPath.ToLower().IndexOf("/gamedata/") + 10);
@@ -62,6 +63,7 @@ namespace DF
                 LoadImageFromFile(ref TooltipBox, "DFToolTipBox.png", PathIconsPath);
                 LoadImageFromFile(ref BtnRedCross, "DFbtnRedCross.png", PathIconsPath);
                 LoadImageFromFile(ref BtnResize, "DFbtnResize.png", PathIconsPath);
+                LoadImageFromFile(ref DeepFreeze_Editor, "DeepFreezeEditor.png", PathIconsPath);
             }
             catch (Exception)
             {

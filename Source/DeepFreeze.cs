@@ -34,13 +34,24 @@ namespace DF
         internal DFGameSettings DFgameSettings;
         private readonly string globalConfigFilename;
         private ConfigNode globalNode = new ConfigNode();
-        private readonly List<Component> children = new List<Component>();
+        internal readonly List<Component> children = new List<Component>();
+        private List<KeyValuePair<string, KerbalInfo>> _frozenKerbalsList = new List<KeyValuePair<string, KerbalInfo>>();
 
         public Dictionary<string, KerbalInfo> FrozenKerbals
         {
             get
             {
                 return DFgameSettings.KnownFrozenKerbals;
+            }
+        }
+
+        public List<KeyValuePair<string, KerbalInfo>> FrozenKerbalsList
+        {
+            get
+            {
+                _frozenKerbalsList.Clear();
+                _frozenKerbalsList = DFgameSettings.KnownFrozenKerbals.ToList();
+                return _frozenKerbalsList;
             }
         }
 
@@ -60,8 +71,9 @@ namespace DF
         {
             Utilities.Log("OnAwake in " + HighLogic.LoadedScene);
             base.OnAwake();
-
+            
             GameEvents.onGameSceneLoadRequested.Add(OnGameSceneLoadRequested);
+            GameEvents.OnGameSettingsApplied.Add(ApplySettings);
 
             if (HighLogic.LoadedScene == GameScenes.SPACECENTER)
             {
@@ -114,6 +126,10 @@ namespace DF
                     s.Load(globalNode);
                 }
             }
+            if (HighLogic.LoadedScene == GameScenes.SPACECENTER)
+            {
+                DFEditorFilter.Instance.Setup(DFsettings.EditorFilter);
+            }
             Utilities.debuggingOn = DFsettings.debugging;
             APIReady = true;
             if (Utilities.debuggingOn)
@@ -143,10 +159,7 @@ namespace DF
             }
         }
 
-        protected void OnGameSceneLoadRequested(GameScenes gameScene)
-        {
-            Utilities.Log("Game scene load requested: " + gameScene);
-        }
+        
 
         protected void OnDestroy()
         {
@@ -161,9 +174,23 @@ namespace DF
             children.Clear();
             DeepFreezeEventRem();
             GameEvents.onGameSceneLoadRequested.Remove(OnGameSceneLoadRequested);
+            GameEvents.OnGameSettingsApplied.Remove(ApplySettings);
         }
 
         #region Events
+
+        public void ApplySettings()
+        {
+            if (DFsettings != null)
+            {
+                DFsettings.ApplySettings();
+            }
+        }
+
+        protected void OnGameSceneLoadRequested(GameScenes gameScene)
+        {
+            Utilities.Log("Game scene load requested: " + gameScene);
+        }
 
         protected void DeepFreezeEventAdd()
         {
@@ -375,21 +402,37 @@ namespace DF
             }
         }
 
-        internal bool setComatoseKerbal(ProtoCrewMember crew, ProtoCrewMember.KerbalType type)
+        internal bool setComatoseKerbal(Part part, ProtoCrewMember crew, ProtoCrewMember.KerbalType type, bool start)
         {
             try
             {
-                crew.type = type;
-                if (type == ProtoCrewMember.KerbalType.Crew)
+                if (start)
                 {
-                    KerbalRoster.SetExperienceTrait(crew, "");
-                    ScreenMessages.PostScreenMessage(crew.name + " has recovered from emergency thaw and resumed normal duties.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                    crew.UnregisterExperienceTraits(part);
+                }
+
+                crew.type = type;
+
+                if (!start)
+                {
+                    if (type == ProtoCrewMember.KerbalType.Crew)
+                    {
+                        KerbalRoster.SetExperienceTrait(crew, "");
+                    }
+                    else
+                    {
+                        KerbalRoster.SetExperienceTrait(crew, "Tourist");
+                    }
+                    crew.RegisterExperienceTraits(part);
+                    ScreenMessages.PostScreenMessage(
+                            crew.name + " has recovered from emergency thaw and resumed normal duties.", 5.0f,
+                            ScreenMessageStyle.UPPER_CENTER);
                 }
                 else
                 {
-                    KerbalRoster.SetExperienceTrait(crew, "Tourist");
                     ScreenMessages.PostScreenMessage(crew.name + " has been emergency thawed and cannot perform duties for " + Instance.DFsettings.comatoseTime / 60 + " minutes.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                 }
+                
                 return true;
             }
             catch (Exception)

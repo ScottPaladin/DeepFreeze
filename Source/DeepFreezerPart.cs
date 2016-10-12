@@ -62,10 +62,10 @@ namespace DF
 
         private bool RTlastKerbalFreezeWarn;     //  set to true if you are using RemoteTech and you attempt to freeze your last kerbal in active vessel
 
-        [KSPField(isPersistant = false, guiActive = false, guiName = "Animated")] //Set to true if Internal contains Animated Cryopods, read from part.cfg.
+        [KSPField(isPersistant = true, guiActive = false, guiName = "Animated")] //Set to true if Internal contains Animated Cryopods, read from part.cfg.
         public bool isPartAnimated;
 
-        [KSPField(isPersistant = false, guiActive = false, guiName = "PodExternal")] //Set to true if Cryopod is External part (eg. CRY-0300R), read from part.cfg.
+        [KSPField(isPersistant = true, guiActive = false, guiName = "PodExternal")] //Set to true if Cryopod is External part (eg. CRY-0300R), read from part.cfg.
         public bool isPodExternal = false;
 
         [KSPField(isPersistant = true, guiActive = true, guiName = "Freezer Capacity")] //Total Size of Freezer, get's read from part.cfg.
@@ -405,6 +405,14 @@ namespace DF
         private AudioSource ding_ding;
         private AudioSource ext_door;
         private AudioSource charge_up;
+
+        public override string GetInfo()
+        {
+            string text = string.Empty;
+            text += "\nCryopods: " + FreezerSize;
+            
+            return text;
+        }
 
         public List<PartResourceDefinition> GetConsumedResources()
         {
@@ -1217,11 +1225,12 @@ namespace DF
                 {
                     double ECreqd = FrznChargeRequired / 60.0f * timeperiod * TotalFrozen;
                     Utilities.Log_Debug("DeepFreezer Running the freezer parms currenttime = {0} timeperiod = {1} ecreqd = {2}" , currenttime.ToString(), timeperiod.ToString(), ECreqd.ToString());
-                    if (requireResource(vessel, EC, ECreqd, false, out ResAvail))
+                    double resTotal = 0f;
+                    if (Utilities.requireResource(vessel, EC, ECreqd, false, true, false, out ResAvail, out resTotal))
                     {
                         if (OnGoingECMsg != null) ScreenMessages.RemoveMessage(OnGoingECMsg);
                         //Have resource
-                        requireResource(vessel, EC, ECreqd, true, out ResAvail);
+                        Utilities.requireResource(vessel, EC, ECreqd, true, true, false, out ResAvail, out resTotal);
                         FrznChargeUsage = (float)ResAvail;
                         Utilities.Log_Debug("DeepFreezer Consumed Freezer EC " + ECreqd + " units");
                         timeSinceLastECtaken = (float)currenttime;
@@ -1234,10 +1243,11 @@ namespace DF
                         if (Time.timeSinceLevelLoad < 5.0f) // this is true if vessel just loaded or we just switched to this vessel
                                               // we need to check if we aren't going to exhaust all EC in one call.. and???
                         {
-                            ECreqd = ResAvail * 95 / 100;
-                            if (requireResource(vessel, EC, ECreqd, false, out ResAvail))
+                            ECreqd = resTotal * 95 / 100;
+                            double ECtotal = 0f;
+                            if (Utilities.requireResource(vessel, EC, ECreqd, false, true, false, out ResAvail, out resTotal))
                             {
-                                requireResource(vessel, EC, ECreqd, true, out ResAvail);
+                                Utilities.requireResource(vessel, EC, ECreqd, true, true, false, out ResAvail, out resTotal);
                                 FrznChargeUsage = (float)ResAvail;
                             }
                         }
@@ -1762,14 +1772,15 @@ namespace DF
                 case 1:
                     //get Electric Charge and Glykerol
                     Utilities.Log_Debug("Freeze Step 1");
-                    if (!requireResource(vessel, EC, ChargeRate, false, out ResAvail))
+                    double ECTotal = 0f;
+                    if (!Utilities.requireResource(vessel, EC, ChargeRate, false, true, false, out ResAvail, out ECTotal))
                     {
                         ScreenMessages.PostScreenMessage("Insufficient electric charge to freeze kerbal", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                         FreezeKerbalAbort(ActiveFrzKerbal);
                     }
                     else
                     {
-                        requireResource(vessel, EC, ChargeRate, true, out ResAvail);
+                        Utilities.requireResource(vessel, EC, ChargeRate, true, true, false, out ResAvail, out ECTotal);
                         StoredCharge = StoredCharge + ChargeRate;
                         if (FreezeMsg != null) ScreenMessages.RemoveMessage(FreezeMsg);
                         FreezeMsg = ScreenMessages.PostScreenMessage(" Cryopod - Charging: " + StoredCharge.ToString("######0"));
@@ -1781,7 +1792,7 @@ namespace DF
                         if (StoredCharge >= ChargeRequired)
                         {
                             if (FreezeMsg != null) ScreenMessages.RemoveMessage(FreezeMsg);
-                            if (requireResource(vessel, Glykerol, GlykerolRequired, true, out ResAvail))
+                            if (Utilities.requireResource(vessel, Glykerol, GlykerolRequired, true, true, false, out ResAvail, out ECTotal))
                             {
                                 charge_up.Stop(); // stop the sound effects
                                 FreezeStepInProgress = 2;
@@ -1922,7 +1933,8 @@ namespace DF
             {
                 if (FreezerSpace > 0 && part.protoModuleCrew.Contains(CrewMember)) // Freezer has space? and Part contains the CrewMember?
                 {
-                    if (!requireResource(vessel, Glykerol, GlykerolRequired, false, out ResAvail)) // check we have Glykerol on board. 5 units per freeze event. This should be a part config item not hard coded.
+                    double GlykTotal = 0f;
+                    if (!Utilities.requireResource(vessel, Glykerol, GlykerolRequired, false, true, false, out ResAvail, out GlykTotal)) // check we have Glykerol on board. 5 units per freeze event. This should be a part config item not hard coded.
                     {
                         ScreenMessages.PostScreenMessage("Insufficient Glykerol to freeze kerbal", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                     }
@@ -2238,14 +2250,15 @@ namespace DF
                         ThawStepInProgress = 2;
                         break;
                     }
-                    if (!requireResource(vessel, EC, ChargeRate, false, out ResAvail))
+                    double totalAvail = 0f;
+                    if (!Utilities.requireResource(vessel, EC, ChargeRate, false, true, false, out ResAvail, out totalAvail))
                     {
                         ScreenMessages.PostScreenMessage("Insufficient electric charge to thaw kerbal", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                         ThawKerbalAbort(ToThawKerbal);
                     }
                     else
                     {
-                        requireResource(vessel, EC, ChargeRate, true, out ResAvail);
+                        Utilities.requireResource(vessel, EC, ChargeRate, true, true, false, out ResAvail, out totalAvail);
                         StoredCharge = StoredCharge + ChargeRate;
                         if (ThawMsg != null) ScreenMessages.RemoveMessage(ThawMsg);
                         ThawMsg = ScreenMessages.PostScreenMessage(" Cryopod - Charging: " + StoredCharge.ToString("######0"));
@@ -2461,7 +2474,7 @@ namespace DF
                                          Utilities.Log_Debug("Kerbal kerbalref is still null, respawn");
                                         kerbal.seat = part.internalModel.seats[tmpcrew.SeatIdx];
                                         kerbal.seatIdx = tmpcrew.SeatIdx;
-                                        kerbal.Spawn();
+                                        ProtoCrewMember.Spawn(kerbal);
                                          Utilities.Log_Debug("Kerbal kerbalref = " + kerbal.KerbalRef.GetInstanceID());
                                     }
                                     codestep = 1;
@@ -2736,7 +2749,7 @@ namespace DF
             {
                 ScreenMessages.PostScreenMessage(frozenkerbal + " was thawed out due to lack of Electrical Charge to run cryogenics", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                 Debug.Log("DeepFreezer - kerbal " + frozenkerbal + " was thawed out due to lack of Electrical charge to run cryogenics");
-                DeepFreeze.Instance.setComatoseKerbal(kerbal, ProtoCrewMember.KerbalType.Tourist);
+                DeepFreeze.Instance.setComatoseKerbal(part, kerbal, ProtoCrewMember.KerbalType.Tourist, true);
 
                 // Update the saved frozen kerbals dictionary
                 KerbalInfo kerbalInfo = new KerbalInfo(Planetarium.GetUniversalTime());
@@ -2856,6 +2869,7 @@ namespace DF
                 // remove the CrewMember from the part crewlist and unregister their traits, because they are frozen, and this is the only way to trick the game.
                 kerbal.UnregisterExperienceTraits(part);
                 part.protoModuleCrew.Remove(kerbal);
+                Vessel.CrewWasModified(vessel);
                 if (partHasInternals)
                 {
                     if (part.internalModel.seats[SeatIndx].kerbalRef != kerbal.KerbalRef)
@@ -2926,12 +2940,7 @@ namespace DF
                 }
                 if (partHasInternals && ExternalDoorActive)
                     Utilities.setHelmetshaders(kerbal.KerbalRef, true);
-                // add the CrewMember to the part crewlist and register their traits.
-                kerbal.RegisterExperienceTraits(part);
-                if (!part.protoModuleCrew.Contains(kerbal))
-                {
-                    part.protoModuleCrew.Add(kerbal);
-                }
+                
                 // Set our newly thawed Popsicle, er Kerbal, to Crew type and Assigned status.
                 if (kerbal.type != ProtoCrewMember.KerbalType.Crew)
                 {
@@ -2957,6 +2966,15 @@ namespace DF
                     }
                     seatTakenbyFrznKerbal[SeatIndx] = false;
                 }
+
+                // add the CrewMember to the part crewlist and register their traits.
+                kerbal.RegisterExperienceTraits(part);
+                if (!part.protoModuleCrew.Contains(kerbal))
+                {
+                    part.protoModuleCrew.Add(kerbal);
+                    Vessel.CrewWasModified(vessel);
+                }
+
                 /*if (kerbal.KerbalRef != null)
                 {
                     if (kerbal.KerbalRef.InPart == null)
@@ -2966,7 +2984,7 @@ namespace DF
                     //Add themto the GUIManager Portrait cams.
                     Portraits.RestorePortrait(kerbal.KerbalRef);
                 }*/
-                 Utilities.Log_Debug("End AddKerbal");
+                Utilities.Log_Debug("End AddKerbal");
                 return true;
             }
             catch (Exception ex)
@@ -3042,11 +3060,10 @@ namespace DF
         /// If it is move it from the OK list to the NOT OK list so the user can't select this part.
         /// </summary>
         /// <param name="fromToAction">List<Part>, List<Part>> fromToAction two lists of parts.</param>
-        private void onCrewTransferPartListCreated(
-            GameEvents.FromToAction<List<Part>, List<Part>> fromToAction)
+        private void onCrewTransferPartListCreated(GameEvents.HostedFromToAction<Part, List<Part>> HostedFromTo)
         {
             CrewMoveList.Clear();
-            foreach (Part p in fromToAction.from)
+            foreach (Part p in HostedFromTo.from)
             {
                 if (p == part && PartFull)
                 {
@@ -3054,8 +3071,8 @@ namespace DF
                 }
             }
 
-            CrewMoveList.ForEach(id => fromToAction.from.Remove(id));
-            CrewMoveList.ForEach(id => fromToAction.to.Add(id));
+            CrewMoveList.ForEach(id => HostedFromTo.from.Remove(id));
+            CrewMoveList.ForEach(id => HostedFromTo.to.Add(id));
             crewTransferInputLock = true;
         }
         
@@ -3238,7 +3255,7 @@ namespace DF
                                 crewmember.seat = part.internalModel.seats[crewmember.seatIdx];
                             if (crewmember.KerbalRef == null)
                             {
-                                crewmember.Spawn();
+                                ProtoCrewMember.Spawn(crewmember);
                             }
                             crewmember.KerbalRef.transform.parent =
                                 part.internalModel.seats[crewmember.seatIdx].seatTransform;
@@ -3266,6 +3283,7 @@ namespace DF
                         //Unregister their traits/abilities and remove them from the Portrait Cameras if they are there.
                         crewmember.UnregisterExperienceTraits(part);
                         part.protoModuleCrew.Remove(crewmember);
+                        vessel.RemoveCrew(crewmember);
                         DFPortraits.DestroyPortrait(crewmember.KerbalRef);
                     }
                     else
@@ -3372,52 +3390,8 @@ namespace DF
                 Utilities.Log(ex.Message);
             }
         }
-
-        // Simple bool for resource checking and usage.  Returns true and optionally uses resource if resAmount of res is available. - Credit TMarkos https://github.com/TMarkos/ as this is lifted verbatim from his Beacon's pack. Mad modify as needed.
-        private bool requireResource(Vessel craft, string res, double resAmount, bool consumeResource, out double resavail)
-        {
-            if (!craft.loaded)
-            {
-                resavail = 0;
-                return false; // Unloaded resource checking is unreliable.
-            }
-            Dictionary<PartResource, double> toDraw = new Dictionary<PartResource, double>();
-            double resRemaining = resAmount;
-            foreach (Part cPart in craft.Parts)
-            {
-                foreach (PartResource cRes in cPart.Resources)
-                {
-                    if (cRes.resourceName != res) continue;
-                    if (cRes.amount == 0) continue;
-                    if (cRes.amount >= resRemaining)
-                    {
-                        toDraw.Add(cRes, resRemaining);
-                        resRemaining = 0;
-                    }
-                    else
-                    {
-                        toDraw.Add(cRes, cRes.amount);
-                        resRemaining -= cRes.amount;
-                    }
-                }
-                if (resRemaining <= 0) break;
-            }
-            if (resRemaining > 0)
-            {
-                resavail = resAmount - resRemaining;
-                return false;
-            }
-            if (consumeResource)
-            {
-                foreach (KeyValuePair<PartResource, double> drawSource in toDraw)
-                {
-                    drawSource.Key.amount -= drawSource.Value;
-                }
-            }
-            resavail = resAmount;
-            return true;
-        }
-
+        
+       
         #region Cryopods
 
         //This region contains the methods for animating the cryopod doors and turning windows on/off (if not animated)

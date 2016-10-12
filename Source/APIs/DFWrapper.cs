@@ -76,10 +76,7 @@ namespace MyPlugin_DFWrapper
                 LogFormatted("Attempting to Grab DeepFreeze Types...");
 
                 //find the base type
-                DFType = AssemblyLoader.loadedAssemblies
-                    .Select(a => a.assembly.GetExportedTypes())
-                    .SelectMany(t => t)
-                    .FirstOrDefault(t => t.FullName == "DF.DeepFreeze");
+                DFType = getType("DF.DeepFreeze"); 
 
                 if (DFType == null)
                 {
@@ -89,10 +86,7 @@ namespace MyPlugin_DFWrapper
                 LogFormatted("DeepFreeze Version:{0}", DFType.Assembly.GetName().Version.ToString());
 
                 //now the KerbalInfo Type
-                KerbalInfoType = AssemblyLoader.loadedAssemblies
-                    .Select(a => a.assembly.GetExportedTypes())
-                    .SelectMany(t => t)
-                    .FirstOrDefault(t => t.FullName == "DF.KerbalInfo");
+                KerbalInfoType = getType("DF.KerbalInfo"); 
 
                 if (KerbalInfoType == null)
                 {
@@ -100,10 +94,7 @@ namespace MyPlugin_DFWrapper
                 }
 
                 //now the DeepFreezer (partmodule) Type
-                DeepFreezerType = AssemblyLoader.loadedAssemblies
-                    .Select(a => a.assembly.GetExportedTypes())
-                    .SelectMany(t => t)
-                    .FirstOrDefault(t => t.FullName == "DF.DeepFreezer");
+                DeepFreezerType = getType("DF.DeepFreezer"); 
 
                 if (DeepFreezerType == null)
                 {
@@ -111,11 +102,7 @@ namespace MyPlugin_DFWrapper
                 }
 
                 //now the FrznCrewMbr Type
-                FrznCrewMbrType = AssemblyLoader.loadedAssemblies
-                    .Select(a => a.assembly.GetExportedTypes())
-                    .SelectMany(t => t)
-                    .FirstOrDefault(t => t.FullName == "DF.FrznCrewMbr");
-
+                FrznCrewMbrType = getType("DF.FrznCrewMbr"); 
                 if (FrznCrewMbrType == null)
                 {
                     return false;
@@ -153,6 +140,24 @@ namespace MyPlugin_DFWrapper
             }
         }
 
+        internal static Type getType(string name)
+        {
+            Type type = null;
+            AssemblyLoader.loadedAssemblies.TypeOperation(t =>
+
+            {
+                if (t.FullName == name)
+                    type = t;
+            }
+            );
+
+            if (type != null)
+            {
+                return type;
+            }
+            return null;
+        }
+
         /// <summary>
         /// The API Class that is an analogue of the real DeepFreeze. This lets you access all the API-able properties and Methods of the DeepFreeze
         /// </summary>
@@ -177,6 +182,11 @@ namespace MyPlugin_DFWrapper
                     FrozenKerbalsMethod = DFType.GetMethod("get_FrozenKerbals", BindingFlags.Public | BindingFlags.Instance);
                     actualFrozenKerbals = FrozenKerbalsMethod.Invoke(actualDFAPI, null);
                     LogFormatted("Success: " + (actualFrozenKerbals != null).ToString());
+
+                    LogFormatted("Getting FrozenKerbals Object");
+                    FrozenKerbalsListMethod = DFType.GetMethod("get_FrozenKerbalsList", BindingFlags.Public | BindingFlags.Instance);
+                    actualFrozenKerbalsList = FrozenKerbalsListMethod.Invoke(actualDFAPI, null);
+                    LogFormatted("Success: " + (actualFrozenKerbalsList != null).ToString());
                 }
                 catch (Exception ex)
                 {
@@ -265,6 +275,32 @@ namespace MyPlugin_DFWrapper
                     LogFormatted("Unable to extract FrozenKerbals Dictionary: {0}", ex.Message);
                 }
                 return DictToReturn;
+            }
+
+            private object actualFrozenKerbalsList;
+            private MethodInfo FrozenKerbalsListMethod;
+
+            /// <summary>
+            /// This converts the actualFrozenKerbals actual object to a new List keyvaluepair for consumption
+            /// </summary>
+            /// /// <returns>
+            /// List<KeyValuePair<string, KerbalInfo>> of Frozen Kerbals
+            /// </returns>
+            internal List<KeyValuePair<string, KerbalInfo>> FrozenKerbalsList
+            {
+                get
+                {
+                    List<KeyValuePair<string, KerbalInfo>> returnvalue = new List<KeyValuePair<string, KerbalInfo>>();
+                    if (FrozenKerbalsListMethod == null)
+                    {
+                        LogFormatted("Error getting FrozenKerbals - Reflection Method is Null");
+                        return returnvalue;
+                    }
+                    actualFrozenKerbalsList = null;
+                    actualFrozenKerbalsList = FrozenKerbalsListMethod.Invoke(actualDFAPI, null);
+                    returnvalue = (List < KeyValuePair < string, KerbalInfo >> )actualFrozenKerbalsList;
+                    return returnvalue;
+                }
             }
 
             #endregion Frozenkerbals

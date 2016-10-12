@@ -69,10 +69,7 @@ namespace DF
                 LogFormatted_DebugOnly("Attempting to Grab ShipManifest Types...");
 
                 //find the base type
-                SMType = AssemblyLoader.loadedAssemblies
-                    .Select(a => a.assembly.GetExportedTypes())
-                    .SelectMany(t => t)
-                    .FirstOrDefault(t => t.FullName == "ShipManifest.SMAddon");
+                SMType = getType("ShipManifest.SMAddon"); 
 
                 if (SMType == null)
                 {
@@ -82,11 +79,8 @@ namespace DF
                 LogFormatted("ShipManifest Version:{0}", SMType.Assembly.GetName().Version.ToString());
 
                 //now the KerbalInfo Type
-                TransferCrewType = AssemblyLoader.loadedAssemblies
-                    .Select(a => a.assembly.GetExportedTypes())
-                    .SelectMany(t => t)
-                    .FirstOrDefault(t => t.FullName == "ShipManifest.Process.TransferCrew");
-
+                TransferCrewType = getType("ShipManifest.Process.TransferCrew");
+                
                 if (TransferCrewType == null)
                 {
                     return false;
@@ -122,6 +116,24 @@ namespace DF
                 _SMWrapped = false;
                 return false;
             }
+        }
+
+        internal static Type getType(string name)
+        {
+            Type type = null;
+            AssemblyLoader.loadedAssemblies.TypeOperation(t =>
+
+            {
+                if (t.FullName == name)
+                    type = t;
+            }
+            );
+
+            if (type != null)
+            {
+                return type;
+            }
+            return null;
         }
 
         /// <summary>

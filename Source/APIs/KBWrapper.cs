@@ -76,10 +76,7 @@ namespace DF
             LogFormatted_DebugOnly("Attempting to Grab KB LS Types...");
 
             //find the base type
-            KBType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetExportedTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName == "KERBALISM.Kerbalism");
+            KBType = getType("KERBALISM.Kerbalism");
 
             if (KBType == null)
             {
@@ -95,6 +92,24 @@ namespace DF
 
             _KBWrapped = true;
             return true;
+        }
+
+        internal static Type getType(string name)
+        {
+            Type type = null;
+            AssemblyLoader.loadedAssemblies.TypeOperation(t =>
+
+            {
+                if (t.FullName == name)
+                    type = t;
+            }
+            );
+
+            if (type != null)
+            {
+                return type;
+            }
+            return null;
         }
 
         /// <summary>
