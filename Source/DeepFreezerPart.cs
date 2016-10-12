@@ -62,10 +62,10 @@ namespace DF
 
         private bool RTlastKerbalFreezeWarn;     //  set to true if you are using RemoteTech and you attempt to freeze your last kerbal in active vessel
 
-        [KSPField(isPersistant = false, guiActive = false, guiName = "Animated")] //Set to true if Internal contains Animated Cryopods, read from part.cfg.
+        [KSPField(isPersistant = true, guiActive = false, guiName = "Animated")] //Set to true if Internal contains Animated Cryopods, read from part.cfg.
         public bool isPartAnimated;
 
-        [KSPField(isPersistant = false, guiActive = false, guiName = "PodExternal")] //Set to true if Cryopod is External part (eg. CRY-0300R), read from part.cfg.
+        [KSPField(isPersistant = true, guiActive = false, guiName = "PodExternal")] //Set to true if Cryopod is External part (eg. CRY-0300R), read from part.cfg.
         public bool isPodExternal = false;
 
         [KSPField(isPersistant = true, guiActive = true, guiName = "Freezer Capacity")] //Total Size of Freezer, get's read from part.cfg.
