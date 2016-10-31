@@ -18,9 +18,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using DeepFreeze;
-using KSP.UI.Screens.Flight;
+using RSTKSPGameEvents;
 using RSTUtils;
 using UnityEngine;
 using Object = System.Object;
@@ -582,28 +581,7 @@ namespace DF
                             _prevexterndoorstate = _externaldoorstate;
                         }
                     }
-                    // This is now handled by a coroutine callback.
-                    //If a kerbal entered the part from EVA into a frozen kerbals seat then we moved them
-                    // and now we wait IvaUpdateFrameDelay frames to refresh the portraits
-                    /*
-                    if (IvaUpdateActive)
-                    {
-                        Utilities.Log_Debug("IvaUpdateActive delay counter=" + IvaPortraitDelay);
-                        if (IvaPortraitDelay >= IvaUpdateFrameDelay)
-                        {
-                            IvaUpdateActive = false;
-                            IvaPortraitDelay = 0;
-                            vessel.SpawnCrew();
-                            resetFrozenKerbals();
-                            onvslchgInternal = true;
-                            GameEvents.onVesselChange.Fire(vessel);
-                        }
-                        else
-                        {
-                            IvaPortraitDelay += 1;
-                        }
-                    }
-                    */
+                    
                     //Refresh IVA mode Messages and Bools
                     if (IVAKerbalName != null) ScreenMessages.RemoveMessage(IVAKerbalName);
                     if (IVAkerbalPart != null) ScreenMessages.RemoveMessage(IVAkerbalPart);
@@ -618,7 +596,13 @@ namespace DF
                         {
                             if (Utilities.ActiveKerbalIsLocal(part))
                             {
-                                ProtoCrewMember crew = part.protoModuleCrew.FirstOrDefault(a => a.name == CameraManager.Instance.IVACameraActiveKerbal.name);
+                                ProtoCrewMember crew = null;
+                                List<ProtoCrewMember>.Enumerator enumerator = part.protoModuleCrew.GetEnumerator();
+                                while (enumerator.MoveNext())
+                                {
+                                    if (enumerator.Current.name == CameraManager.Instance.IVACameraActiveKerbal.name)
+                                        crew = enumerator.Current;
+                                }
                                 int SeatIndx = -1;
                                 if (crew != null)
                                 {
@@ -769,7 +753,7 @@ namespace DF
                                 anim["DOORHandle"].normalizedTime = 1;
                                 anim.Play("DOORHandle");
                             }
-                            ext_door.Play();
+                            //ext_door.Play();
                         }
                         catch (Exception ex)
                         {
@@ -881,9 +865,9 @@ namespace DF
                             {
                                 if (transparentPodSetting == "ON")
                                 {
-                                    if (_externaldoorstate == DoorState.CLOSED ||
-                                        _externaldoorstate == DoorState.CLOSING ||
-                                        _externaldoorstate == DoorState.OPENING)
+                                    if (_externaldoorstate == DoorState.CLOSED)// ||
+                                        //_externaldoorstate == DoorState.CLOSING ||
+                                        //_externaldoorstate == DoorState.OPENING)
                                         //If the Door is Closed, closing or opening
                                     {
                                         //If Stock Overlay is on we turn the Occluder OFF so we can see inside.
@@ -1431,7 +1415,11 @@ namespace DF
 
             //Set Shaders for changing the Crypod Windows
             HashSet<Shader> shaders = new HashSet<Shader>();
-            Resources.FindObjectsOfTypeAll<Shader>().ToList().ForEach(sh => shaders.Add(sh));
+            var sh = Resources.FindObjectsOfTypeAll<Shader>();
+            for (int i = 0; i < sh.Length; ++i)
+            {
+                shaders.Add(sh[i]);
+            }
             List<Shader> listshaders = new List<Shader>(shaders);
             TransparentSpecularShader = listshaders.Find(a => a.name == "Legacy Shaders/Transparent/Specular");
             KSPSpecularShader = listshaders.Find(b => b.name == "KSP/Specular");
@@ -1507,7 +1495,12 @@ namespace DF
             //If we have an external door (CRY-0300) check if RPM is installed, if not disable the door, otherwise set it's current state (open/closed).
             if (animationName != string.Empty && PartHasDoor)
             {
-                externalDoorAnim = part.FindModelAnimators(animationName).FirstOrDefault();
+                externalDoorAnim = null;
+                var Dooranims = part.FindModelAnimators(animationName);
+                if (Dooranims.Length > 0)
+                {
+                    externalDoorAnim = Dooranims[0];
+                }
                 if (externalDoorAnim == null)
                 {
                     Utilities.Log_Debug("Part has external animation defined but cannot find the animation on the part");
@@ -1521,7 +1514,12 @@ namespace DF
                 {
                     if (part.internalModel != null)
                     {
-                        externalDoorAnimOccluder = part.internalModel.FindModelAnimators(animationName).FirstOrDefault();
+                        externalDoorAnimOccluder = null;
+                        var anims = part.internalModel.FindModelAnimators(animationName);
+                        if (anims.Length > 0)
+                        {
+                            externalDoorAnimOccluder = anims[0];
+                        }
                     }
                     else
                     {
@@ -1611,7 +1609,14 @@ namespace DF
                         {
                             string crewname = "";
                             crewname = subStrings[1] + " " + subStrings[2];
-                            if (part.protoModuleCrew.FirstOrDefault(a => a.name == crewname) == null) // Search the part for the crewmember.
+                            ProtoCrewMember crew = null;
+                            List<ProtoCrewMember>.Enumerator enumerator = part.protoModuleCrew.GetEnumerator();
+                            while (enumerator.MoveNext())
+                            {
+                                if (enumerator.Current.name == crewname)
+                                    crew = enumerator.Current;
+                            }
+                            if (crew == null) // Search the part for the crewmember.
                             // We didn't find the crewmember so remove the Freeze Event.
                             {
                                 eventsToDelete.Add(itemX);
@@ -2158,6 +2163,7 @@ namespace DF
                 ScreenMessages.PostScreenMessage(CrewMember.name + " frozen", 5.0f, ScreenMessageStyle.UPPER_CENTER);
 
                 onvslchgInternal = true;
+                RSTEvents.onKerbalFrozen.Fire(this.part, CrewMember);
                 CrewHatchController.fetch.EnableInterface();
                 GameEvents.onVesselChange.Fire(vessel);
                 GameEvents.onVesselWasModified.Fire(vessel);
@@ -2196,26 +2202,7 @@ namespace DF
                 Debug.Log("DeepFreeze has been unable to connect to Kerbalism mod. API is not ready. Report this error on the Forum Thread.");
             }
         }
-
-        private void USIUntrackVessel(string vesselId)
-        //This will remove tracking of a frozen kerbal from USI Life Support MOD, so that they don't consume resources when they are thawed.
-        {
-            if (USIWrapper.APIReady && USIWrapper.InstanceExists)
-            {
-                USIWrapper.USIActualAPI.UntrackVessel(vesselId);
-                bool checkTracked = USIWrapper.USIActualAPI.IsVesselTracked(vesselId);
-                if (checkTracked)
-                {
-                    Debug.Log("DeepFreeze has been unable to untrack vessel " + vesselId + " in USI LS mod. Report this error on the Forum Thread.");
-                }
-
-            }
-            else
-            {
-                Debug.Log("DeepFreeze has been unable to connect to USI LS mod. API is not ready. Report this error on the Forum Thread.");
-            }
-        }
-
+        
         #endregion FrzKerbals
 
         #region ThwKerbals
@@ -2439,7 +2426,13 @@ namespace DF
         private void ThawKerbalStep0(string frozenkerbal)
         {
             // First we find out Unowned Crewmember in the roster.
-            ProtoCrewMember kerbal = HighLogic.CurrentGame.CrewRoster.Unowned.FirstOrDefault(a => a.name == frozenkerbal);
+            ProtoCrewMember kerbal = null;
+            IEnumerator<ProtoCrewMember> enumerator = HighLogic.CurrentGame.CrewRoster.Unowned.GetEnumerator();
+            while (enumerator.MoveNext())
+            {
+                if (enumerator.Current.name == frozenkerbal)
+                    kerbal = enumerator.Current;
+            } 
             if (kerbal != null)
             {
                 // Set our newly thawed Popsicle, er Kerbal, to Crew type again (from Unowned) and Assigned status (from Dead status).
@@ -2448,7 +2441,13 @@ namespace DF
                 kerbal.rosterStatus = ProtoCrewMember.RosterStatus.Assigned;
                  Utilities.Log_Debug("find the stored crew member");
                 //Now we find our Crewmember in the stored crew list in the part.
-                FrznCrewMbr tmpcrew = _StoredCrewList.Find(a => a.CrewName == frozenkerbal);  // Find the thawed kerbal in the frozen kerbal list.
+                FrznCrewMbr tmpcrew = null;  // Find the thawed kerbal in the frozen kerbal list.
+                List<FrznCrewMbr>.Enumerator enumerator2 = _StoredCrewList.GetEnumerator();
+                while (enumerator2.MoveNext())
+                {
+                    if (enumerator2.Current.CrewName == frozenkerbal)
+                        tmpcrew = enumerator2.Current;
+                }
                 if (tmpcrew != null)
                 {
                     //check if seat is empty, if it is we have to seat them in next available seat
@@ -2681,7 +2680,13 @@ namespace DF
             OpenPodAnimPlaying = false;
             ThawWindowAnimPlaying = false;
             ThawStepInProgress = 0;
-            ProtoCrewMember kerbal = HighLogic.CurrentGame.CrewRoster.Crew.FirstOrDefault(a => a.name == ThawKerbal);
+            ProtoCrewMember kerbal = null;
+            IEnumerator<ProtoCrewMember> enumerator = HighLogic.CurrentGame.CrewRoster.Crew.GetEnumerator();
+            while (enumerator.MoveNext())
+            {
+                if (enumerator.Current.name == ThawKerbal)
+                    kerbal = enumerator.Current;
+            }
             if (!RemoveKerbal(kerbal, ToThawKerbalSeat))  // remove the CrewMember from the part, because they are frozen, and this is the only way to trick the game.
             {
                 Debug.Log("ThawKerbalAbort Procedure FAILED! Critical error");
@@ -2720,9 +2725,14 @@ namespace DF
              Utilities.Log_Debug("ThawKerbalConfirm start for " + frozenkerbal);
             machine_hum.Stop(); //stop sound effects
             StoredCharge = 0;   // Discharge all EC stored
-
-            ProtoCrewMember kerbal = HighLogic.CurrentGame.CrewRoster.Crew.FirstOrDefault(a => a.name == frozenkerbal);
-
+            
+            ProtoCrewMember kerbal = null;
+            IEnumerator<ProtoCrewMember> enumerator = HighLogic.CurrentGame.CrewRoster.Crew.GetEnumerator();
+            while (enumerator.MoveNext())
+            {
+                if (enumerator.Current.name == frozenkerbal)
+                    kerbal = enumerator.Current;
+            }
             if (!AddKerbal(kerbal, ToThawKerbalSeat))
             {
                 ThawKerbalAbort(frozenkerbal);
@@ -2805,6 +2815,7 @@ namespace DF
                 }
             }
             CrewHatchController.fetch.EnableInterface();
+            RSTEvents.onKerbalThaw.Fire(this.part, kerbal);
             GameEvents.onVesselChange.Fire(vessel);
             GameEvents.onVesselWasModified.Fire(vessel);
             Utilities.Log_Debug("ThawKerbalConfirm End");
@@ -2818,7 +2829,13 @@ namespace DF
             try
             {
                  Utilities.Log_Debug("RemoveKerbal " + kerbal.name + " seat " + SeatIndx);
-                FrznCrewMbr tmpcrew = _StoredCrewList.Find(a => a.CrewName == kerbal.name);  // Find the thawed kerbal in the frozen kerbal list.
+                FrznCrewMbr tmpcrew = null;
+                List<FrznCrewMbr>.Enumerator enumerator = _StoredCrewList.GetEnumerator();
+                while (enumerator.MoveNext())
+                {
+                    if (enumerator.Current.CrewName == kerbal.name)
+                        tmpcrew = enumerator.Current;
+                }
                 if (tmpcrew == null)
                 {
                     FrznCrewMbr frzncrew = new FrznCrewMbr(kerbal.name, SeatIndx, vessel.id, vessel.name);
@@ -2906,8 +2923,14 @@ namespace DF
             {
                 try
                 {
-                    FrznCrewMbr tmpcrew = _StoredCrewList.Find(a => a.CrewName == kerbal.name);  // Find the thawed kerbal in the frozen kerbal list.
-                    if (_StoredCrewList.Contains(tmpcrew))
+                    FrznCrewMbr tmpcrew = null; // Find the thawed kerbal in the frozen kerbal list.
+                    List<FrznCrewMbr>.Enumerator enumerator = _StoredCrewList.GetEnumerator();
+                    while (enumerator.MoveNext())
+                    {
+                        if (enumerator.Current.CrewName == kerbal.name)
+                            tmpcrew = enumerator.Current;
+                    }
+                    if (tmpcrew != null)
                     {
                          Utilities.Log_Debug("Removing _StoredCrewList entry");
                         _StoredCrewList.Remove(tmpcrew);
@@ -3175,14 +3198,24 @@ namespace DF
         internal void resetFrozenPortraits()
         {
             // create a list of kerbal that are in this part in this vessel & they are not comatose/tourist
-            List<KeyValuePair<string, KerbalInfo>> FrznKerbalsinPart =
-                DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.Where(
-                    e =>
-                        e.Value.partID == CrntPartID && e.Value.vesselID == CrntVslID &&
-                        e.Value.type != ProtoCrewMember.KerbalType.Tourist).ToList();
+            List<KeyValuePair<string, KerbalInfo>> FrznKerbalsinPart = new List<KeyValuePair<string, KerbalInfo>>();
+            foreach (var frznKerbal in DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals)
+            {
+                if (frznKerbal.Value.partID == CrntPartID && frznKerbal.Value.vesselID == CrntVslID &&
+                    frznKerbal.Value.type != ProtoCrewMember.KerbalType.Tourist)
+                {
+                    FrznKerbalsinPart.Add(frznKerbal);
+                }
+            }
             for (int i = 0; i < FrznKerbalsinPart.Count; i++)
             {
-                ProtoCrewMember crewmember = HighLogic.CurrentGame.CrewRoster.Unowned.FirstOrDefault(a => a.name == FrznKerbalsinPart[i].Key);
+                ProtoCrewMember crewmember = null;
+                IEnumerator<ProtoCrewMember> enumerator = HighLogic.CurrentGame.CrewRoster.Unowned.GetEnumerator();
+                while (enumerator.MoveNext())
+                {
+                    if (enumerator.Current.name == FrznKerbalsinPart[i].Key)
+                        crewmember = enumerator.Current;
+                }
                 if (crewmember != null)
                 {
                     DFPortraits.DestroyPortrait(crewmember.KerbalRef);
@@ -3195,12 +3228,29 @@ namespace DF
             try
             {
                 // Create a list of kerbals that are in Invalid Seats (SeatIndx == -1 where kerbal is in this part in this vessel & they are not comatose/tourist
-                List<KeyValuePair<string, KerbalInfo>> kerbalsInvSeats = DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.Where(e => e.Value.partID == CrntPartID && e.Value.vesselID == CrntVslID && e.Value.type != ProtoCrewMember.KerbalType.Tourist && e.Value.seatIdx == -1).ToList();
+                List<KeyValuePair<string, KerbalInfo>> kerbalsInvSeats = new List<KeyValuePair<string, KerbalInfo>>();
+                foreach (var frznKerbal in DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals)
+                {
+                    if (frznKerbal.Value.partID == CrntPartID && frznKerbal.Value.vesselID == CrntVslID &&
+                        frznKerbal.Value.type != ProtoCrewMember.KerbalType.Tourist && frznKerbal.Value.seatIdx == -1)
+                    {
+                        kerbalsInvSeats.Add(frznKerbal);
+                    }
+                }
+                
                 // create a list of kerbal that are in this part in this vessel & they are not comatose/tourist
-                List<KeyValuePair<string, KerbalInfo>> FrznKerbalsinPart = DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.Where(e => e.Value.partID == CrntPartID && e.Value.vesselID == CrntVslID && e.Value.type != ProtoCrewMember.KerbalType.Tourist).ToList();
+                List<KeyValuePair<string, KerbalInfo>> FrznKerbalsinPart = new List<KeyValuePair<string, KerbalInfo>>();
+                foreach (var frznKerbal in DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals)
+                {
+                    if (frznKerbal.Value.partID == CrntPartID && frznKerbal.Value.vesselID == CrntVslID &&
+                        frznKerbal.Value.type != ProtoCrewMember.KerbalType.Tourist)
+                    {
+                        FrznKerbalsinPart.Add(frznKerbal);
+                    }
+                }
                 
                 //If we found any Invalid Seat assignments we need to find them empty seats
-                if (kerbalsInvSeats.Any()) 
+                if (kerbalsInvSeats.Count > 0) 
                 {
                     bool[] seatIndxs = new bool[FreezerSize];  //Create a bool array to store whether seats are taken or not
                                                                //go through all the frozen kerbals in the part that don't have invalid seats and set bool array seat index to true (taken) for each
@@ -3236,7 +3286,14 @@ namespace DF
                 {
                     //Check if they are in the _StoredCrewList and if they aren't Add them in.
                     FrznCrewMbr fzncrew = new FrznCrewMbr(kerbal.Key, kerbal.Value.seatIdx, CrntVslID, CrntVslName);
-                    FrznCrewMbr tmpcrew = _StoredCrewList.Find(a => a.CrewName == kerbal.Key);
+                    FrznCrewMbr tmpcrew = null; // Find the thawed kerbal in the frozen kerbal list.
+                    List<FrznCrewMbr>.Enumerator enumerator2 = _StoredCrewList.GetEnumerator();
+                    while (enumerator2.MoveNext())
+                    {
+                        if (enumerator2.Current.CrewName == kerbal.Key)
+                            tmpcrew = enumerator2.Current;
+                    }
+
                     if (tmpcrew == null)
                     {
                         //add them to our storedcrewlist for this part.
@@ -3245,7 +3302,13 @@ namespace DF
                     }
 
                     //check if they are in the part and spawned, if not do so.
-                    ProtoCrewMember crewmember = HighLogic.CurrentGame.CrewRoster.Unowned.FirstOrDefault(a => a.name == kerbal.Key);
+                    ProtoCrewMember crewmember = null;
+                    IEnumerator<ProtoCrewMember> enumerator = HighLogic.CurrentGame.CrewRoster.Unowned.GetEnumerator();
+                    while (enumerator.MoveNext())
+                    {
+                        if (enumerator.Current.name == kerbal.Key)
+                            crewmember = enumerator.Current;
+                    }
                     if (crewmember != null)
                     {
                         if (partHasInternals)
@@ -3301,8 +3364,15 @@ namespace DF
 
         private void onCrewTransferred(GameEvents.HostedFromToAction<ProtoCrewMember, Part> HostedFromTo)
         {
-            if (HostedFromTo.to == part && HostedFromTo.from.Modules.Cast<PartModule>().Any(x => x is KerbalEVA) &&
-                PartFull)
+            bool fromEVA = false;
+            for (int i = 0; i < HostedFromTo.from.Modules.Count; ++i)
+            {
+                if (HostedFromTo.from.Modules[i] as KerbalEVA)
+                {
+                    fromEVA = true;
+                }
+            }
+            if (fromEVA && PartFull)
             {
                 Utilities.Log_Debug("DeepFreezer EVA kerbal tried to enter a FULL Freezer part, so we kick them out");
                 if (ExternalDoorActive)
@@ -3358,7 +3428,13 @@ namespace DF
                             seatTakenbyFrznKerbal[_StoredCrewList[i].SeatIdx] = true;                          
                             setCryopodWindowSpecular(_StoredCrewList[i].SeatIdx);
                             
-                            ProtoCrewMember kerbal = HighLogic.CurrentGame.CrewRoster.Unowned.FirstOrDefault(a => a.name == _StoredCrewList[i].CrewName);
+                            ProtoCrewMember kerbal = null;
+                            IEnumerator<ProtoCrewMember> enumerator = HighLogic.CurrentGame.CrewRoster.Unowned.GetEnumerator();
+                            while (enumerator.MoveNext())
+                            {
+                                if (enumerator.Current.name == _StoredCrewList[i].CrewName)
+                                    kerbal = enumerator.Current;
+                            }
                             if (kerbal == null)
                             {
                                 Utilities.Log("DeepFreezer Frozen Kerbal " + _StoredCrewList[i].CrewName + " is not found in the currentgame.crewroster.unowned, this should never happen");
@@ -3427,7 +3503,12 @@ namespace DF
                 try
                 {
                     cryopodstateclosedstring = string.Empty;
-                    cryopodstateclosedstring = string.Join(", ", cryopodstateclosed.Select(b => b.ToString()).ToArray());
+                    string[] tmpCryopodstateclosedarray = new string[cryopodstateclosed.Length];
+                    for (int i = 0; i < cryopodstateclosed.Length; i++)
+                    {
+                        tmpCryopodstateclosedarray[i] = cryopodstateclosed[i].ToString();
+                    }
+                    cryopodstateclosedstring = string.Join(", ", tmpCryopodstateclosedarray);
                     //Debug.Log("Save cryopodstatepersistent value " + cryopodstateclosedstring);
                 }
                 catch (Exception ex)

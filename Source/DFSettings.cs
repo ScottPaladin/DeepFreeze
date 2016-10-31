@@ -259,7 +259,7 @@ namespace DF
                     {
                         EditorFilter = DF_SettingsParms_Sec3.EditorFilter;
                         if (DFEditorFilter.Instance != null)
-                            DFEditorFilter.Instance.Setup(EditorFilter);
+                            DFEditorFilter.Instance.Setup();
                     }
                 }
                 else

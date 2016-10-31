@@ -40,6 +40,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\KSPDLLs - 1.2\Assembly-CSharp.dll</HintPath>
     </Reference>
+    <Reference Include="RSTKSPGameEvents">
+      <HintPath>..\..\REPOSoftTechKSPUtils\RSTKSPGameEvents\bin\Debug\RSTKSPGameEvents.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />

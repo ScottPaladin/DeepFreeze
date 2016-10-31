@@ -128,7 +128,7 @@ namespace DF
             }
             if (HighLogic.LoadedScene == GameScenes.SPACECENTER)
             {
-                DFEditorFilter.Instance.Setup(DFsettings.EditorFilter);
+                DFEditorFilter.Instance.Setup();
             }
             Utilities.debuggingOn = DFsettings.debugging;
             APIReady = true;
@@ -376,6 +376,7 @@ namespace DF
                 Utilities.Log("DeepFreezeEvents " + kerbal.name + " killed");
                 kerbal.type = ProtoCrewMember.KerbalType.Crew;
                 kerbal.rosterStatus = ProtoCrewMember.RosterStatus.Dead;
+                RSTKSPGameEvents.RSTEvents.onFrozenKerbalDied.Fire(kerbal);
                 if (HighLogic.CurrentGame.Parameters.Difficulty.MissingCrewsRespawn)
                 {
                     kerbal.StartRespawnPeriod();
@@ -388,17 +389,18 @@ namespace DF
                 ProtoCrewMember crew = HighLogic.CurrentGame.CrewRoster.Tourist.FirstOrDefault(a => a.name == FrozenCrew);
                 if (crew != null)
                 {
-                    Utilities.Log("DeepFreezeEvents " + kerbal.name + " killed");
-                    kerbal.type = ProtoCrewMember.KerbalType.Crew;
-                    kerbal.rosterStatus = ProtoCrewMember.RosterStatus.Dead;
+                    Utilities.Log("DeepFreezeEvents " + crew.name + " killed");
+                    crew.type = ProtoCrewMember.KerbalType.Crew;
+                    crew.rosterStatus = ProtoCrewMember.RosterStatus.Dead;
+                    RSTKSPGameEvents.RSTEvents.onFrozenKerbalDied.Fire(crew);
                     if (HighLogic.CurrentGame.Parameters.Difficulty.MissingCrewsRespawn)
                     {
-                        kerbal.StartRespawnPeriod();
-                        Utilities.Log("DeepFreezeEvents " + kerbal.name + " respawn started.");
+                        crew.StartRespawnPeriod();
+                        Utilities.Log("DeepFreezeEvents " + crew.name + " respawn started.");
                     }
                 }
                 else
-                    Utilities.Log("DeepFreezeEvents " + kerbal.name + " couldn't find them to kill them.");
+                    Utilities.Log("DeepFreezeEvents " + crew.name + " couldn't find them to kill them.");
             }
         }
 
@@ -409,6 +411,7 @@ namespace DF
                 if (start)
                 {
                     crew.UnregisterExperienceTraits(part);
+                    RSTKSPGameEvents.RSTEvents.onKerbalSetComatose.Fire(part, crew);
                 }
 
                 crew.type = type;
@@ -424,6 +427,7 @@ namespace DF
                         KerbalRoster.SetExperienceTrait(crew, "Tourist");
                     }
                     crew.RegisterExperienceTraits(part);
+                    RSTKSPGameEvents.RSTEvents.onKerbalUnSetComatose.Fire(part, crew);
                     ScreenMessages.PostScreenMessage(
                             crew.name + " has recovered from emergency thaw and resumed normal duties.", 5.0f,
                             ScreenMessageStyle.UPPER_CENTER);

@@ -16,12 +16,9 @@
  */
 
 using System.Collections.Generic;
-using System.IO;
 using KSP.UI.Screens;
 using RUI.Icons.Selectable;
 using UnityEngine;
-using System.Reflection;
-using System.Linq;
 
 namespace DF
 {
@@ -31,7 +28,7 @@ namespace DF
         // This class ass a Filter Icon to the Editor to show DeepFreeze Parts
         // which currently consist of any partprefab that has component DeepFreezer (All the freezer parts)
         // and the GlykerolTankRadial.
-        private static List<AvailablePart> avPartItems;
+        private static List<AvailablePart> avPartItems = new List<AvailablePart>();
         public static DFEditorFilter Instance;
         internal string category = "Filter by Function";
         internal string subCategoryTitle = "DeepFreeze Items";
@@ -54,39 +51,24 @@ namespace DF
             DontDestroyOnLoad(this);
         }
 
-        public void Setup(bool FilterOn)
+        public void Setup()
         {
             Debug.Log("DFEditorFilter Start");
-            avPartItems = new List<AvailablePart>();
-            //icon_DeepFreeze_Editor = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-
+            RemoveSubFilter();
+            AddPartUtilitiesCat();
             GameEvents.onGUIEditorToolbarReady.Remove(SubCategories);
+            
 
-            DFMMCallBack();
-
-            if (!FilterOn)
+            if (!HighLogic.CurrentGame.Parameters.CustomParams<DeepFreeze_SettingsParms_Sec3>().EditorFilter)
             {
                 Debug.Log("EditorFilter Option is Off");
-                PartCategorizer.Category Filter =
-                    PartCategorizer.Instance.filters.Find(f => f.button.categoryName == category);
-                if (Filter != null)
-                {
-                    PartCategorizer.Category subFilter =
-                        Filter.subcategories.Find(f => f.button.categoryName == subCategoryTitle);
-                    if (subFilter != null)
-                    {
-                        //MethodInfo subFilterDeleteMethod =
-                        //    typeof(PartCategorizer.Category).GetMethod("DeleteSubcategory",
-                        //        BindingFlags.Instance | BindingFlags.NonPublic);
-                        //subFilterDeleteMethod.Invoke(subFilter, null);
-                        subFilter.DeleteSubcategory();
-                    }
-                }
-                GameEvents.onGUIEditorToolbarReady.Remove(SubCategories);
-                AddPartUtilitiesCat();
                 return;
             }
 
+
+            Debug.Log("EditorFilter Option is On");
+            DFMMCallBack();
+            RemovePartUtilitiesCat();
             GameEvents.onGUIEditorToolbarReady.Add(SubCategories);
             /*
             //Attempt to add Module Manager callback  - find the base type
@@ -108,9 +90,6 @@ namespace DF
                 
             }*/
             //DFMMCallBack();
-            //load the icons
-            //icon_DeepFreeze_Editor.LoadImage(File.ReadAllBytes("GameData/REPOSoftTech/DeepFreeze/Icons/DeepFreezeEditor.png"));
-            RemovePartUtilitiesCat();
             Debug.Log("DFEditorFilter Awake Complete");
         }
 
@@ -131,11 +110,26 @@ namespace DF
             return true;
         }
 
+        private void RemoveSubFilter()
+        {
+            if (PartCategorizer.Instance != null)
+            {
+                PartCategorizer.Category Filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == category);
+                if (Filter != null)
+                {
+                    PartCategorizer.Category subFilter = Filter.subcategories.Find(f => f.button.categoryName == subCategoryTitle);
+                    if (subFilter != null)
+                    {
+                        subFilter.DeleteSubcategory();
+                    }
+                }
+            }
+        }
+
         private void RemovePartUtilitiesCat()
         {
             foreach (AvailablePart avPart in avPartItems)
             {
-                //PartCategorizer.Instance.subcategoryFunctionUtility.RemovePart(avPart);
                 avPart.category = PartCategories.none;
             }
         }
@@ -144,7 +138,6 @@ namespace DF
         {
             foreach (AvailablePart avPart in avPartItems)
             {
-                //PartCategorizer.Instance.subcategoryFunctionUtility.AddPart(avPart);
                 avPart.category = PartCategories.Utility;
             }
         }
@@ -160,12 +153,10 @@ namespace DF
 
         private void SubCategories()
         {
+            RemoveSubFilter();
             Icon filterDeepFreeze = new Icon("DeepFreezeEditor", Textures.DeepFreeze_Editor, Textures.DeepFreeze_Editor, true);
             PartCategorizer.Category Filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == category);
             PartCategorizer.AddCustomSubcategoryFilter(Filter, subCategoryTitle, filterDeepFreeze, p => EditorItemsFilter(p));
-            //RUIToggleButtonTyped button = Filter.button.activeButton;
-            //button.SetFalse(button, RUIToggleButtonTyped.ClickType.FORCED);
-            //button.SetTrue(button, RUIToggleButtonTyped.ClickType.FORCED);
         }
     }
 }
