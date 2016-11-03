@@ -88,6 +88,7 @@ namespace DF
         private double switchVesselManualTimer;
         internal bool chgECHeatsettings;
         internal double chgECHeatsettingsTimer;
+        private bool switchNextUpdate = false;
         
         public bool Useapplauncher;
         private double currentTime;
@@ -129,6 +130,8 @@ namespace DF
             DFvslLstUpd = Mathf.Round((DFWINDOW_WIDTH - 28f) * .18f);
             DFvslRT = Mathf.Round((DFWINDOW_WIDTH - 28f) * .12f);
 
+            Useapplauncher = DeepFreeze.Instance.DFsettings.UseAppLauncher;
+
             Utilities.setScaledScreen();
             
             DFMenuAppLToolBar = new AppLauncherToolBar("DeepFreeze", "DeepFreeze",
@@ -141,7 +144,7 @@ namespace DF
                 GameScenes.FLIGHT, GameScenes.EDITOR, GameScenes.SPACECENTER, GameScenes.TRACKSTATION);
 
             //If Settings wants to use ToolBar mod, check it is installed and available. If not set the TST Setting to use Stock.
-            if (!ToolbarManager.ToolbarAvailable && Useapplauncher)
+            if (!ToolbarManager.ToolbarAvailable && !Useapplauncher)
             {
                 Useapplauncher = true;
             }
@@ -161,6 +164,37 @@ namespace DF
                 if (currentTime - chgECHeatsettingsTimer > 2)
                 {
                     chgECHeatsettings = false;
+                }
+            }
+        }
+
+        private void Update()
+        {
+            if (switchNextUpdate)
+            {
+                //Jump to vessel code here.
+                switchNextUpdate = false;
+                int intVesselidx = Utilities.getVesselIdx(switchVessel);
+                if (intVesselidx < 0)
+                {
+                    Utilities.Log("Couldn't find the index for the vessel " + switchVessel.vesselName + "(" +
+                                  switchVessel.id + ")");
+                    showUnabletoSwitchVessel = true;
+                }
+                else
+                {
+                    
+                    if (HighLogic.LoadedSceneIsFlight)
+                    {
+                        FlightGlobals.SetActiveVessel(switchVessel);
+                    }
+                    else
+                    {
+                        String strret = GamePersistence.SaveGame("DFJumpToShip", HighLogic.SaveFolder,
+                            SaveMode.OVERWRITE);
+                        Game tmpGame = GamePersistence.LoadGame(strret, HighLogic.SaveFolder, false, false);
+                        FlightDriver.StartAndFocusVessel(tmpGame, intVesselidx);
+                    }
                 }
             }
         }
@@ -864,7 +898,7 @@ namespace DF
             TimeWarp.SetRate(0, true);
             if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ready && !FlightDriver.Pause)
                 FlightDriver.SetPause(true);
-
+            
             GUILayout.BeginVertical();
             GUILayout.BeginHorizontal();
             //GUILayout.Box(new GUIContent("ElectricCharge is running out on vessel, you must switch to the vessel now.", "Switch to DeepFreeze vessel required"), statusStyle, GUILayout.Width(280));
@@ -877,26 +911,7 @@ namespace DF
                 showSwitchVessel = false;
                 if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ready)
                     FlightDriver.SetPause(false);
-                //Jump to vessel code here.
-                int intVesselidx = Utilities.getVesselIdx(switchVessel);
-                if (intVesselidx < 0)
-                {
-                    Utilities.Log("Couldn't find the index for the vessel " + switchVessel.vesselName + "(" + switchVessel.id + ")");
-                    showUnabletoSwitchVessel = true;
-                }
-                else
-                {
-                    if (HighLogic.LoadedSceneIsFlight)
-                    {
-                        FlightGlobals.SetActiveVessel(switchVessel);
-                    }
-                    else
-                    {
-                        String strret = GamePersistence.SaveGame("DFJumpToShip", HighLogic.SaveFolder, SaveMode.OVERWRITE);
-                        Game tmpGame = GamePersistence.LoadGame(strret, HighLogic.SaveFolder, false, false);
-                        FlightDriver.StartAndFocusVessel(tmpGame, intVesselidx);
-                    }
-                }
+                switchNextUpdate = true;
             }
             if (GUILayout.Button(new GUIContent("Not Now", "Don't switch vessel now"), GUILayout.Width(160)))
             {

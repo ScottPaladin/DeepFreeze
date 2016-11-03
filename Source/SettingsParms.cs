@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Text;
 using UnityEngine;
 
-namespace DeepFreeze
+namespace DF
 {
     public class DeepFreeze_SettingsParms : GameParameters.CustomParameterNode
 
@@ -44,34 +44,32 @@ namespace DeepFreeze
             switch (preset)
             {
                 case GameParameters.Preset.Easy:
-                    ECreqdForFreezer = false;
-                    AutoRecoverFznKerbals = true;
-                    KSCcostToThawKerbal = 5000f;
-                    ECReqdToFreezeThaw = 1000;
-                    GlykerolReqdToFreeze = 5;
+                    this.ECreqdForFreezer = false;
+                    this.AutoRecoverFznKerbals = true;
+                    this.KSCcostToThawKerbal = 5000f;
+                    this.ECReqdToFreezeThaw = 1000;
+                    this.GlykerolReqdToFreeze = 5;
                     break;
                 case GameParameters.Preset.Normal:
-                    ECreqdForFreezer = false;
-                    AutoRecoverFznKerbals = true;
-                    KSCcostToThawKerbal = 10000f;
-                    ECReqdToFreezeThaw = 2000;
-                    GlykerolReqdToFreeze = 5;
+                    this.ECreqdForFreezer = false;
+                    this.AutoRecoverFznKerbals = true;
+                    this.KSCcostToThawKerbal = 10000f;
+                    this.ECReqdToFreezeThaw = 2000;
+                    this.GlykerolReqdToFreeze = 5;
                     break;
                 case GameParameters.Preset.Moderate:
-                    ECreqdForFreezer = true;
-                    AutoRecoverFznKerbals = false;
-                    KSCcostToThawKerbal = 20000f;
-                    ECReqdToFreezeThaw = 3000;
-                    GlykerolReqdToFreeze = 10;
+                    this.ECreqdForFreezer = true;
+                    this.AutoRecoverFznKerbals = false;
+                    this.KSCcostToThawKerbal = 20000f;
+                    this.ECReqdToFreezeThaw = 3000;
+                    this.GlykerolReqdToFreeze = 10;
                     break;
                 case GameParameters.Preset.Hard:
-                    ECreqdForFreezer = true;
-                    AutoRecoverFznKerbals = false;
-                    KSCcostToThawKerbal = 30000f;
-                    ECReqdToFreezeThaw = 4000;
-                    GlykerolReqdToFreeze = 15;
-                    break;
-                case GameParameters.Preset.Custom:
+                    this.ECreqdForFreezer = true;
+                    this.AutoRecoverFznKerbals = false;
+                    this.KSCcostToThawKerbal = 30000f;
+                    this.ECReqdToFreezeThaw = 4000;
+                    this.GlykerolReqdToFreeze = 15;
                     break;
             }
         }
@@ -82,9 +80,7 @@ namespace DeepFreeze
             {
                 if (HighLogic.LoadedSceneIsFlight)
                 {
-                    if (member.Name != "TempinKelvin" && member.Name != "StripLightsActive" && member.Name != "ToolTips" &&
-                        member.Name != "UseAppLToolbar" && member.Name != "DebugLogging")
-                        return false;
+                    return false;
                 }
             }
 
@@ -97,31 +93,21 @@ namespace DeepFreeze
             {
                 if (HighLogic.LoadedSceneIsFlight)
                 {
-                    if (member.Name != "TempinKelvin" && member.Name != "StripLightsActive" && member.Name != "ToolTips" &&
-                        member.Name != "UseAppLToolbar" && member.Name != "DebugLogging")
-                        return false;
+                    return false;
                 }
             }
             if (member.Name == "fatalOption")
             {
-                if (ECreqdForFreezer)
-                    return true;
-                else
-                    return false;
+                return parameters.CustomParams<DeepFreeze_SettingsParms>().ECreqdForFreezer;
             }
             if (member.Name == "comatoseTime")
             {
-                if (ECreqdForFreezer && !fatalOption)
-                    return true;
-                else
-                    return false;
+                return (parameters.CustomParams<DeepFreeze_SettingsParms>().ECreqdForFreezer &&
+                        !parameters.CustomParams<DeepFreeze_SettingsParms>().fatalOption);
             }
             if (member.Name == "KSCcostToThawKerbal")
             {
-                if (AutoRecoverFznKerbals)
-                    return true;
-                else
-                    return false;
+                return parameters.CustomParams<DeepFreeze_SettingsParms>().AutoRecoverFznKerbals;
             }
             
             return true;
@@ -164,35 +150,18 @@ namespace DeepFreeze
             switch (preset)
             {
                 case GameParameters.Preset.Easy:
-                    RegTempReqd = false;
+                    this.RegTempReqd = false;
                     break;
                 case GameParameters.Preset.Normal:
-                    RegTempReqd = false;
+                    this.RegTempReqd = false;
                     break;
                 case GameParameters.Preset.Moderate:
-                    RegTempReqd = true;
+                    this.RegTempReqd = true;
                     break;
                 case GameParameters.Preset.Hard:
-                    RegTempReqd = true;
-                    break;
-                case GameParameters.Preset.Custom:
+                    this.RegTempReqd = true;
                     break;
             }
-        }
-
-        public override bool Enabled(MemberInfo member, GameParameters parameters)
-        {
-            if (HighLogic.fetch != null)
-            {
-                if (HighLogic.LoadedSceneIsFlight)
-                {
-                    if (member.Name != "TempinKelvin" && member.Name != "StripLightsActive" && member.Name != "ToolTips" &&
-                        member.Name != "UseAppLToolbar" && member.Name != "DebugLogging")
-                        return false;
-                }
-            }
-            
-            return true;
         }
 
         public override bool Interactible(MemberInfo member, GameParameters parameters)
@@ -201,18 +170,14 @@ namespace DeepFreeze
             {
                 if (HighLogic.LoadedSceneIsFlight)
                 {
-                    if (member.Name != "TempinKelvin" && member.Name != "StripLightsActive" && member.Name != "ToolTips" &&
-                        member.Name != "UseAppLToolbar" && member.Name != "DebugLogging")
+                    if (member.Name != "TempinKelvin")
                         return false;
                 }
             }
             
             if (member.Name == "RegTempFreeze" || member.Name == "RegTempMonitor" || member.Name == "heatamtMonitoringFrznKerbals" || member.Name == "heatamtThawFreezeKerbal")
             {
-                if (RegTempReqd)
-                    return true;
-                else
-                    return false;
+                return parameters.CustomParams<DeepFreeze_SettingsParms_Sec2>().RegTempReqd;
             }
             
             return true;
@@ -224,7 +189,7 @@ namespace DeepFreeze
     {
         public override string Title { get { return "DeepFreeze Misc."; } }
         public override GameParameters.GameMode GameMode { get { return GameParameters.GameMode.ANY; } }
-        public override bool HasPresets { get { return true; } }
+        public override bool HasPresets { get { return false; } }
         public override string Section { get { return "DeepFreeze"; } }
         public override int SectionOrder { get { return 3; } }
         
@@ -242,62 +207,14 @@ namespace DeepFreeze
 
         [GameParameters.CustomParameterUI("Extra Debug Logging", toolTip = "Turn this On to capture lots of extra information\ninto the KSP log for reporting a problem.")]
         public bool DebugLogging = false;
-
-        public override void SetDifficultyPreset(GameParameters.Preset preset)
-        {
-            Debug.Log("Setting difficulty preset");
-            switch (preset)
-            {
-                case GameParameters.Preset.Easy:
-                    
-                    break;
-                case GameParameters.Preset.Normal:
-                    
-                    break;
-                case GameParameters.Preset.Moderate:
-                    
-                    break;
-                case GameParameters.Preset.Hard:
-                    
-                    break;
-                case GameParameters.Preset.Custom:
-                    break;
-            }
-        }
-
-        public override bool Enabled(MemberInfo member, GameParameters parameters)
-        {
-            if (HighLogic.fetch != null)
-            {
-                if (HighLogic.LoadedSceneIsFlight)
-                {
-                    if (member.Name != "TempinKelvin" && member.Name != "StripLightsActive" && member.Name != "ToolTips" &&
-                        member.Name != "UseAppLToolbar" && member.Name != "DebugLogging")
-                        return false;
-                }
-            }
-
-            return true;
-        }
-
+        
         public override bool Interactible(MemberInfo member, GameParameters parameters)
         {
-            if (HighLogic.fetch != null)
-            {
-                if (HighLogic.LoadedSceneIsFlight)
-                {
-                    if (member.Name != "TempinKelvin" && member.Name != "StripLightsActive" && member.Name != "ToolTips" &&
-                        member.Name != "UseAppLToolbar" && member.Name != "DebugLogging")
-                        return false;
-                }
-            }
-            
             if (member.Name == "UseAppLToolbar")
             {
                 if (RSTUtils.ToolbarManager.ToolbarAvailable)
                     return true;
-                else
-                    return false;
+                return false;
             }
 
             return true;

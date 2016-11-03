@@ -1,7 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
+﻿/**
+ * DeepFreeze Continued...
+ * (C) Copyright 2015, Jamie Leighton
+ *
+ * Kerbal Space Program is Copyright (C) 2013 Squad. See http://kerbalspaceprogram.com/. This
+ * project is in no way associated with nor endorsed by Squad.
+ *
+ *  This file is part of JPLRepo's DeepFreeze (continued...) - a Fork of DeepFreeze. Original Author of DeepFreeze is 'scottpaladin' on the KSP Forums.
+ *  This File was not part of the original Deepfreeze but was written by Jamie Leighton.
+ *  (C) Copyright 2015, Jamie Leighton
+ *
+ * Continues to be licensed under the Attribution-NonCommercial-ShareAlike 3.0 (CC BY-NC-SA 4.0)
+ * creative commons license. See <https://creativecommons.org/licenses/by-nc-sa/4.0/>
+ * for full details.
+ *
+ */
 using KSP.UI.Screens.Flight;
 using UnityEngine;
 
@@ -11,18 +23,25 @@ namespace DeepFreeze
     [KSPAddon(KSPAddon.Startup.Flight, false)]
     class DFPortraits : MonoBehaviour
     {
-
-        internal static BindingFlags eFlags = BindingFlags.Instance | BindingFlags.NonPublic;
-        
         internal static bool HasPortrait(Kerbal crew, bool checkName = false)
         {
             if (!checkName)
             {
-                return KerbalPortraitGallery.Instance.Portraits.Any(p => p.crewMember == crew);
+                for (int i = 0; i < KerbalPortraitGallery.Instance.Portraits.Count; ++i)
+                {
+                    if (KerbalPortraitGallery.Instance.Portraits[i].crewMember == crew)
+                        return true;
+                }
+                return false;
             }
             else
             {
-                return KerbalPortraitGallery.Instance.Portraits.Any(p => p.crewMemberName == crew.crewMemberName);
+                for (int i = 0; i < KerbalPortraitGallery.Instance.Portraits.Count; ++i)
+                {
+                    if (KerbalPortraitGallery.Instance.Portraits[i].crewMemberName == crew.crewMemberName)
+                        return true;
+                }
+                return false;
             }
         }
 
@@ -30,11 +49,21 @@ namespace DeepFreeze
         {
             if (!checkName)
             {
-                return KerbalPortraitGallery.Instance.ActiveCrew.Any(p => p == crew);
+                for (int i = 0; i < KerbalPortraitGallery.Instance.ActiveCrew.Count; ++i)
+                {
+                    if (KerbalPortraitGallery.Instance.ActiveCrew[i] == crew)
+                        return true;
+                }
+                return false;
             }
             else
             {
-                return KerbalPortraitGallery.Instance.ActiveCrew.Any(p => p.crewMemberName == crew.crewMemberName);
+                for (int i = 0; i < KerbalPortraitGallery.Instance.ActiveCrew.Count; ++i)
+                {
+                    if (KerbalPortraitGallery.Instance.ActiveCrew[i].crewMemberName == crew.crewMemberName)
+                        return true;
+                }
+                return false;
             }
         }
 
