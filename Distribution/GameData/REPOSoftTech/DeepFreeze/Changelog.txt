@@ -1,7 +1,6 @@
 ﻿V0.23.2.0
 Compile for KSP 1.2.2
 Remove need for RSTKSPEvents and utilize new KSP 1.2.2 GameEvents extension.
-
 V0.23.1.0
 Compile for KSP 1.2.1
 Fix Editor customer Filter for DeepFreeze parts.
