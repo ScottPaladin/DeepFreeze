@@ -19,7 +19,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using DeepFreeze;
-using RSTKSPGameEvents;
 using RSTUtils;
 using UnityEngine;
 using Object = System.Object;
@@ -2163,7 +2162,7 @@ namespace DF
                 ScreenMessages.PostScreenMessage(CrewMember.name + " frozen", 5.0f, ScreenMessageStyle.UPPER_CENTER);
 
                 onvslchgInternal = true;
-                RSTEvents.onKerbalFrozen.Fire(this.part, CrewMember);
+                DFGameEvents.onKerbalFrozen.Fire(this.part, CrewMember);
                 CrewHatchController.fetch.EnableInterface();
                 GameEvents.onVesselChange.Fire(vessel);
                 GameEvents.onVesselWasModified.Fire(vessel);
@@ -2815,7 +2814,7 @@ namespace DF
                 }
             }
             CrewHatchController.fetch.EnableInterface();
-            RSTEvents.onKerbalThaw.Fire(this.part, kerbal);
+            DFGameEvents.onKerbalThaw.Fire(this.part, kerbal);
             GameEvents.onVesselChange.Fire(vessel);
             GameEvents.onVesselWasModified.Fire(vessel);
             Utilities.Log_Debug("ThawKerbalConfirm End");
