@@ -19,7 +19,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using DeepFreeze;
-using RSTKSPGameEvents;
 using RSTUtils;
 using UnityEngine;
 using Object = System.Object;
@@ -37,6 +36,7 @@ namespace DF
         internal double tmpdeathCounter;             // time delay counter until the chance of a frozen kerbal dying due to part being too hot
         internal static float tmpdeathRoll = 120f;        // time delay until the chance of a frozen kerbal dying due to part being too hot
         internal static float deathRoll = 240f;           // time delay until the chance of a frozen kerbal dying due to lack of EC
+        internal double timeLoadedOffrails;        // time the vessel this part is attached to was loaded or came off rails.
 
         // EC and Temp Functions Vars
         private Random rnd = new Random();  // Random seed for Killing Kerbals when we run out of EC to keep the Freezer running.
@@ -1203,7 +1203,7 @@ namespace DF
             double currenttime = Planetarium.GetUniversalTime();
             double timeperiod = currenttime - timeSinceLastECtaken;
             // Utilities.Log_Debug("currenttime = " + currenttime + " timeperiod = " + timeperiod + " updateECTempInterval= " + updateECTempInterval);
-            if (timeperiod > updateECTempInterval) //only update every udpateECTempInterval to avoid request resource bug when amounts are too small
+            if (timeperiod > updateECTempInterval) //only update every updateECTempInterval to avoid request resource bug when amounts are too small
             {
                 if (TotalFrozen > 0) //We have frozen Kerbals, consume EC
                 {
@@ -1224,7 +1224,7 @@ namespace DF
                     }
                     else
                     {
-                        if (Time.timeSinceLevelLoad < 5.0f) // this is true if vessel just loaded or we just switched to this vessel
+                        if (currenttime - timeLoadedOffrails < 5.0f) // this is true if vessel just loaded or we just switched to this vessel or vessel just came off rails
                                               // we need to check if we aren't going to exhaust all EC in one call.. and???
                         {
                             ECreqd = resTotal * 95 / 100;
@@ -1233,6 +1233,8 @@ namespace DF
                             {
                                 Utilities.requireResource(vessel, EC, ECreqd, true, true, false, out ResAvail, out resTotal);
                                 FrznChargeUsage = (float)ResAvail;
+                                timeSinceLastECtaken = (float)currenttime;
+                                deathCounter = currenttime;
                             }
                         }
                         //Debug.Log("DeepFreezer Ran out of EC to run the freezer");
@@ -1411,6 +1413,7 @@ namespace DF
                 GameEvents.onCrewOnEva.Add(onCrewOnEva);
                 GameEvents.onVesselDestroy.Add(onVesselDestroy);
                 GameEvents.OnCameraChange.Add(OnCameraChange);
+                GameEvents.onVesselGoOffRails.Add(onVesselGoOffRails);
             }
 
             //Set Shaders for changing the Crypod Windows
@@ -1562,6 +1565,8 @@ namespace DF
                 Fields["isRTConnected"].guiActive = false;
             }
 
+            timeLoadedOffrails = Planetarium.GetUniversalTime();
+
             Debug.Log("DeepFreezer  END OnStart");
         }
 
@@ -1586,6 +1591,7 @@ namespace DF
             GameEvents.onCrewOnEva.Remove(onCrewOnEva);
             GameEvents.onVesselDestroy.Remove(onVesselDestroy);
             GameEvents.OnCameraChange.Remove(OnCameraChange);
+            GameEvents.onVesselGoOffRails.Remove(onVesselGoOffRails);
             Debug.Log("DeepFreezer END OnDestroy");
         }
 
@@ -2163,7 +2169,7 @@ namespace DF
                 ScreenMessages.PostScreenMessage(CrewMember.name + " frozen", 5.0f, ScreenMessageStyle.UPPER_CENTER);
 
                 onvslchgInternal = true;
-                RSTEvents.onKerbalFrozen.Fire(this.part, CrewMember);
+                DFGameEvents.onKerbalFrozen.Fire(this.part, CrewMember);
                 CrewHatchController.fetch.EnableInterface();
                 GameEvents.onVesselChange.Fire(vessel);
                 GameEvents.onVesselWasModified.Fire(vessel);
@@ -2815,7 +2821,7 @@ namespace DF
                 }
             }
             CrewHatchController.fetch.EnableInterface();
-            RSTEvents.onKerbalThaw.Fire(this.part, kerbal);
+            DFGameEvents.onKerbalThaw.Fire(this.part, kerbal);
             GameEvents.onVesselChange.Fire(vessel);
             GameEvents.onVesselWasModified.Fire(vessel);
             Utilities.Log_Debug("ThawKerbalConfirm End");
@@ -3162,6 +3168,15 @@ namespace DF
                 }
             }
             crewTransferInputLock = false;
+        }
+
+        // this is called when the vessel comes off rails.
+        private void onVesselGoOffRails(Vessel vessel)
+        {
+            if (vessel == this.vessel)
+            {
+                timeLoadedOffrails = Planetarium.GetUniversalTime();
+            }    
         }
 
         // when the camera mode changes reset the frozen kerbal portrait cams.

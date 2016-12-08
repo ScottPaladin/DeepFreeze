@@ -376,7 +376,7 @@ namespace DF
                 Utilities.Log("DeepFreezeEvents " + kerbal.name + " killed");
                 kerbal.type = ProtoCrewMember.KerbalType.Crew;
                 kerbal.rosterStatus = ProtoCrewMember.RosterStatus.Dead;
-                RSTKSPGameEvents.RSTEvents.onFrozenKerbalDied.Fire(kerbal);
+                DFGameEvents.onFrozenKerbalDied.Fire(kerbal);
                 if (HighLogic.CurrentGame.Parameters.Difficulty.MissingCrewsRespawn)
                 {
                     kerbal.StartRespawnPeriod();
@@ -392,7 +392,7 @@ namespace DF
                     Utilities.Log("DeepFreezeEvents " + crew.name + " killed");
                     crew.type = ProtoCrewMember.KerbalType.Crew;
                     crew.rosterStatus = ProtoCrewMember.RosterStatus.Dead;
-                    RSTKSPGameEvents.RSTEvents.onFrozenKerbalDied.Fire(crew);
+                    DFGameEvents.onFrozenKerbalDied.Fire(crew);
                     if (HighLogic.CurrentGame.Parameters.Difficulty.MissingCrewsRespawn)
                     {
                         crew.StartRespawnPeriod();
@@ -411,7 +411,7 @@ namespace DF
                 if (start)
                 {
                     crew.UnregisterExperienceTraits(part);
-                    RSTKSPGameEvents.RSTEvents.onKerbalSetComatose.Fire(part, crew);
+                    DFGameEvents.onKerbalSetComatose.Fire(part, crew);
                 }
 
                 crew.type = type;
@@ -427,7 +427,7 @@ namespace DF
                         KerbalRoster.SetExperienceTrait(crew, "Tourist");
                     }
                     crew.RegisterExperienceTraits(part);
-                    RSTKSPGameEvents.RSTEvents.onKerbalUnSetComatose.Fire(part, crew);
+                    DFGameEvents.onKerbalUnSetComatose.Fire(part, crew);
                     ScreenMessages.PostScreenMessage(
                             crew.name + " has recovered from emergency thaw and resumed normal duties.", 5.0f,
                             ScreenMessageStyle.UPPER_CENTER);

@@ -40,9 +40,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\KSPDLLs - 1.2\Assembly-CSharp.dll</HintPath>
     </Reference>
-    <Reference Include="RSTKSPGameEvents">
-      <HintPath>..\..\REPOSoftTechKSPUtils\RSTKSPGameEvents\bin\Debug\RSTKSPGameEvents.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -71,6 +68,7 @@
     <Compile Include="..\..\REPOSoftTechKSPUtils\ToolBarManager.cs">
       <Link>ToolBarManager.cs</Link>
     </Compile>
+    <Compile Include="APIs\DFGameEvents.cs" />
     <Compile Include="APIs\KBWrapper.cs" />
     <Compile Include="DeepFreeze.cs" />
     <Compile Include="DeepFreezerPart.cs" />
