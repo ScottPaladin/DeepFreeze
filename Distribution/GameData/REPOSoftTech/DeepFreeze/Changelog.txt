@@ -1,4 +1,9 @@
-﻿V0.23.2.0
+﻿V0.23.4.0
+Fix Kerbalism Integration.
+V0.23.3.0
+Fixed log spam when RPM occlusion fails.
+Work-around for integration issue/bug in USI LS.
+V0.23.2.0
 Compile for KSP 1.2.2
 Remove need for RSTKSPEvents and utilize new KSP 1.2.2 GameEvents extension.
 Update Community Resource Pack to 0.6.3.0.

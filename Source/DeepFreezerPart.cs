@@ -26,6 +26,7 @@ using Random = System.Random;
 
 namespace DF
 {
+    [KSPModule("DeepFreeze Freezer Part")]
     public class DeepFreezer : PartModule, IResourceConsumer
     {
         private float lastUpdate;                  // time since we last updated the part menu
@@ -271,6 +272,8 @@ namespace DF
         public string transparentTransforms = string.Empty; //Set by part.cfg. contains list of transforms that should be transparent | separated.
 
         private bool hasJSITransparentPod;
+        private bool checkRPMPodTransparencySettingError = false;
+        private bool RPMPodOccluderProcessingError = false;
 
         [KSPEvent(active = false, guiActive = true, guiActiveUnfocused = true, guiActiveEditor = true, unfocusedRange = 5f, name = "eventOpenDoors", guiName = "Open Doors")]
         public void eventOpenDoors()
@@ -702,10 +705,14 @@ namespace DF
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                Utilities.Log("DeepFreezer Error checking RPM TransparentPod Setting");
-                //Utilities.Log("DeepFreezer ", ex.Message);
+                if (!checkRPMPodTransparencySettingError)
+                {
+                    Utilities.Log("DeepFreezer Error checking RPM TransparentPod Setting");
+                    Utilities.Log("DeepFreezer ", ex.Message);
+                    checkRPMPodTransparencySettingError = true;
+                }
             }
         }
 
@@ -925,10 +932,14 @@ namespace DF
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                Utilities.Log("DeepFreezer Error setting RPM Occluders");
-                //Utilities.Log("DeepFreezer ", ex.Message);
+                if (!RPMPodOccluderProcessingError)
+                {
+                    Utilities.Log("DeepFreezer Error setting RPM Occluders");
+                    Utilities.Log("DeepFreezer ", ex.Message);
+                    RPMPodOccluderProcessingError = true;
+                }
             }
         }
 
@@ -2136,23 +2147,7 @@ namespace DF
                 ToFrzeKerbal = "";                    // Set the Active Freeze Kerbal to null
                 ActiveFrzKerbal = null;               // Set the Active Freeze Kerbal to null
                 removeFreezeEvent(CrewMember.name);   // Remove the Freeze Event for this kerbal.
-                if (DFInstalledMods.IsUSILSInstalled) // IF USI LS Installed, remove tracking.
-                {
-                    Utilities.Log_Debug("USI/LS installed untrack kerbal=" + CrewMember.name);
-                    try
-                    {
-                        USIUntrackKerbal(CrewMember.name);
-                        //if (this.part.vessel.GetVesselCrew().Count == 0)
-                        //{
-                        //    USIUntrackVessel(this.part.vessel.id.ToString());
-                        //}
-                    }
-                    catch (Exception ex)
-                    {
-                        Utilities.Log("DeepFreeze Exception attempting to untrack a kerbal and/or vessel in USI/LS. Report this error on the Forum Thread.");
-                        Utilities.Log("DeepFreeze Err: " + ex);
-                    }
-                }
+                
                 if (DFInstalledMods.IskerbalismInstalled) // IF Kerbalism Installed, remove tracking.
                 {
                     Utilities.Log_Debug("kerbalism installed untrack kerbal=" + CrewMember.name);
@@ -2169,10 +2164,30 @@ namespace DF
                 ScreenMessages.PostScreenMessage(CrewMember.name + " frozen", 5.0f, ScreenMessageStyle.UPPER_CENTER);
 
                 onvslchgInternal = true;
+                vessel.RebuildCrewList();
                 DFGameEvents.onKerbalFrozen.Fire(this.part, CrewMember);
                 CrewHatchController.fetch.EnableInterface();
                 GameEvents.onVesselChange.Fire(vessel);
                 GameEvents.onVesselWasModified.Fire(vessel);
+                
+                if (DFInstalledMods.IsUSILSInstalled) // IF USI LS Installed, remove tracking.
+                {
+                    Utilities.Log_Debug("USI/LS installed untrack kerbal=" + CrewMember.name);
+                    try
+                    {
+                        USIUntrackKerbal(CrewMember.name);
+                        if (this.part.vessel.GetVesselCrew().Count == 0)
+                        {
+                            Utilities.Log_Debug("USI/LS installed untrack vessel=" + this.part.vessel.id.ToString());
+                            USIUntrackVessel(this.part.vessel.id.ToString());
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Utilities.Log("DeepFreeze Exception attempting to untrack a kerbal and/or vessel in USI/LS. Report this error on the Forum Thread.");
+                        Utilities.Log("DeepFreeze Err: " + ex);
+                    }
+                }
             }
             Utilities.Log_Debug("FreezeCompleted");
         }
@@ -2187,6 +2202,25 @@ namespace DF
                 if (checkTracked)
                 {
                     Debug.Log("DeepFreeze has been unable to untrack kerbal " + crewmember + " in USI LS mod. Report this error on the Forum Thread.");
+                }
+
+            }
+            else
+            {
+                Debug.Log("DeepFreeze has been unable to connect to USI LS mod. API is not ready. Report this error on the Forum Thread.");
+            }
+        }
+
+        private void USIUntrackVessel(string vesselId)
+        //This will remove tracking of a frozen kerbal from USI Life Support MOD, so that they don't consume resources when they are thawed.
+        {
+            if (USIWrapper.APIReady && USIWrapper.InstanceExists)
+            {
+                USIWrapper.USIActualAPI.UntrackVessel(vesselId);
+                bool checkTracked = USIWrapper.USIActualAPI.IsVesselTracked(vesselId);
+                if (checkTracked)
+                {
+                    Debug.Log("DeepFreeze has been unable to untrack vessel " + vesselId + " in USI LS mod. Report this error on the Forum Thread.");
                 }
 
             }
