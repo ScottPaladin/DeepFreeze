@@ -418,14 +418,6 @@ namespace DF
 
                 if (!start)
                 {
-                    if (type == ProtoCrewMember.KerbalType.Crew)
-                    {
-                        KerbalRoster.SetExperienceTrait(crew, "");
-                    }
-                    else
-                    {
-                        KerbalRoster.SetExperienceTrait(crew, "Tourist");
-                    }
                     crew.RegisterExperienceTraits(part);
                     DFGameEvents.onKerbalUnSetComatose.Fire(part, crew);
                     ScreenMessages.PostScreenMessage(

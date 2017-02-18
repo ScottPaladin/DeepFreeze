@@ -1,6 +1,7 @@
-﻿V0.23.4.0
+﻿V0.23.3.0
 Fix Kerbalism Integration.
-V0.23.3.0
+Freeze Tourists!
+DeepFreeze stock application button is not shown in flight unless the active vessel has a DeepFreezer part.
 Fixed log spam when RPM occlusion fails.
 Work-around for integration issue/bug in USI LS.
 V0.23.2.0

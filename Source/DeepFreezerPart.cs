@@ -1649,8 +1649,7 @@ namespace DF
                     {
                         foreach (var CrewMember in part.protoModuleCrew) // We Add Freeze Events for all active crew in the part
                         {
-                            if (CrewMember.type != ProtoCrewMember.KerbalType.Tourist)
-                                addFreezeEvent(CrewMember);
+                            addFreezeEvent(CrewMember);
                         }
                     }
                     if ((part.protoModuleCrew.Count < part.CrewCapacity) || part.CrewCapacity <= 0)  // If part is not full or zero (should always be true, think this is redundant line)
@@ -1669,8 +1668,7 @@ namespace DF
             try
             {
                 BaseEvent item = Events.Find(v => v.name == "Freeze " + CrewMember.name);  // Search to see if there isn't already a Freeze Event for this CrewMember
-                if (item == null && CrewMember.type == ProtoCrewMember.KerbalType.Crew) // Did we find one? and CrewMember is type=Crew? if so, add new Event.
-                //***** Could change this to Tourists as well but needs more changes.
+                if (item == null && (CrewMember.type == ProtoCrewMember.KerbalType.Crew || CrewMember.type == ProtoCrewMember.KerbalType.Tourist)) // Did we find one? and CrewMember is type=Crew? if so, add new Event.
                 {
                     Events.Add(new BaseEvent(Events, "Freeze " + CrewMember.name, () =>
                     {
@@ -2958,7 +2956,8 @@ namespace DF
         private bool AddKerbal(ProtoCrewMember kerbal, int SeatIndx)
         //Adds a just thawed kerbal to the vessel.
         {
-             Utilities.Log_Debug("Start AddKerbal " + kerbal.name);
+            Utilities.Log_Debug("Start AddKerbal " + kerbal.name);
+            ProtoCrewMember.KerbalType originaltype = ProtoCrewMember.KerbalType.Crew;
             try
             {
                 try
@@ -2990,6 +2989,11 @@ namespace DF
                 {
                     if (DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.ContainsKey(kerbal.name))
                     {
+                        KerbalInfo tmpFrzCrew = DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals[kerbal.name];
+                        if (tmpFrzCrew.experienceTraitName == "Tourist")
+                        {
+                            originaltype = ProtoCrewMember.KerbalType.Tourist;
+                        }
                         DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.Remove(kerbal.name);
                     }
                     if (DeepFreeze.Instance.DFsettings.debugging) DeepFreeze.Instance.DFgameSettings.DmpKnownFznKerbals();
@@ -3003,13 +3007,11 @@ namespace DF
                 }
                 if (partHasInternals && ExternalDoorActive)
                     Utilities.setHelmetshaders(kerbal.KerbalRef, true);
+
+                // Set our newly thawed Popsicle, er Kerbal, to Original type and Assigned status.
+                kerbal.type = originaltype;
+                kerbal.rosterStatus = ProtoCrewMember.RosterStatus.Assigned;
                 
-                // Set our newly thawed Popsicle, er Kerbal, to Crew type and Assigned status.
-                if (kerbal.type != ProtoCrewMember.KerbalType.Crew)
-                {
-                    kerbal.type = ProtoCrewMember.KerbalType.Crew;
-                    kerbal.rosterStatus = ProtoCrewMember.RosterStatus.Assigned;
-                }
                 if (partHasInternals)
                 {
                     if (kerbal.seat != part.internalModel.seats[SeatIndx])

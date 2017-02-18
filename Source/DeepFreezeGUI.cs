@@ -167,9 +167,10 @@ namespace DF
                 }
             }
         }
-
+        
         private void Update()
         {
+            if (Time.timeSinceLevelLoad < 2f) return; //Wait 2 seconds on level load before executing
             if (switchNextUpdate)
             {
                 //Jump to vessel code here.
@@ -195,6 +196,29 @@ namespace DF
                         Game tmpGame = GamePersistence.LoadGame(strret, HighLogic.SaveFolder, false, false);
                         FlightDriver.StartAndFocusVessel(tmpGame, intVesselidx);
                     }
+                }
+            }
+            if (Useapplauncher == false || !HighLogic.LoadedSceneIsFlight)
+            {
+                return;
+            }
+            if (DFIntMemory.Instance != null)
+            {
+                if (DFIntMemory.Instance.DpFrzrActVsl.Count == 0)
+                {
+                    DFMenuAppLToolBar.setAppLSceneVisibility(ApplicationLauncher.AppScenes.SPACECENTER |
+                                                             ApplicationLauncher.AppScenes.SPH |
+                                                             ApplicationLauncher.AppScenes.VAB |
+                                                             ApplicationLauncher.AppScenes.TRACKSTATION);
+                }
+                else
+                {
+                    DFMenuAppLToolBar.setAppLSceneVisibility(ApplicationLauncher.AppScenes.SPACECENTER |
+                                                             ApplicationLauncher.AppScenes.FLIGHT |
+                                                             ApplicationLauncher.AppScenes.MAPVIEW |
+                                                             ApplicationLauncher.AppScenes.SPH |
+                                                             ApplicationLauncher.AppScenes.VAB |
+                                                             ApplicationLauncher.AppScenes.TRACKSTATION);
                 }
             }
         }
@@ -585,25 +609,32 @@ namespace DF
                 }
                 foreach (DeepFreezer frzr in DFIntMemory.Instance.DpFrzrActVsl)
                 {
-                    foreach (ProtoCrewMember crewMember in frzr.part.protoModuleCrew.FindAll(a => a.type == ProtoCrewMember.KerbalType.Crew))
+                    List<ProtoCrewMember> crew = new List<ProtoCrewMember>();
+                    for (int i = 0; i < frzr.part.protoModuleCrew.Count; i++)
                     {
-                        GUILayout.BeginHorizontal();
-                        GUILayout.Label(crewMember.name, Textures.statusStyle, GUILayout.Width(DFtxtWdthName));
-                        GUILayout.Label(crewMember.experienceTrait.Title, Textures.statusStyle, GUILayout.Width(DFtxtWdthProf));
-                        GUILayout.Label(frzr.part.vessel.vesselName, Textures.statusStyle, GUILayout.Width(DFtxtWdthVslN));
-                        if (crewMember.type != ProtoCrewMember.KerbalType.Tourist)
+                        if (!DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.ContainsKey(frzr.part.protoModuleCrew[i].name))
                         {
-                            if (frzr.DFIcrewXferFROMActive || frzr.DFIcrewXferTOActive || (DFInstalledMods.IsSMInstalled && frzr.IsCrewXferRunning)
-                                                        || frzr.IsFreezeActive || frzr.IsThawActive || (DFInstalledMods.IsRTInstalled && !DFInstalledMods.RTVesselConnected(DFIntMemory.Instance.ActVslID)))
-                            {
-                                GUI.enabled = false;
-                            }
-                            if (GUILayout.Button(new GUIContent("Freeze", "Freeze this Kerbal"), GUILayout.Width(50f)))
-                            {
-                                frzr.beginFreezeKerbal(crewMember);
-                            }
-                            GUI.enabled = true;
+                            crew.Add(frzr.part.protoModuleCrew[i]);
                         }
+                    }
+                    for (int i =0; i < crew.Count; i++)
+                    { 
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Label(crew[i].name, Textures.statusStyle, GUILayout.Width(DFtxtWdthName));
+                        GUILayout.Label(crew[i].experienceTrait.Title, Textures.statusStyle, GUILayout.Width(DFtxtWdthProf));
+                        GUILayout.Label(frzr.part.vessel.vesselName, Textures.statusStyle, GUILayout.Width(DFtxtWdthVslN));
+                        
+                        if (frzr.DFIcrewXferFROMActive || frzr.DFIcrewXferTOActive || (DFInstalledMods.IsSMInstalled && frzr.IsCrewXferRunning)
+                                                    || frzr.IsFreezeActive || frzr.IsThawActive || (DFInstalledMods.IsRTInstalled && !DFInstalledMods.RTVesselConnected(DFIntMemory.Instance.ActVslID)))
+                        {
+                            GUI.enabled = false;
+                        }
+                        if (GUILayout.Button(new GUIContent("Freeze", "Freeze this Kerbal"), GUILayout.Width(50f)))
+                        {
+                            frzr.beginFreezeKerbal(crew[i]);
+                        }
+                        GUI.enabled = true;
+                        
                         GUILayout.EndHorizontal();
                     }
                 }
