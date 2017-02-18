@@ -26,6 +26,7 @@ using Random = System.Random;
 
 namespace DF
 {
+    [KSPModule("DeepFreeze Freezer Part")]
     public class DeepFreezer : PartModule, IResourceConsumer
     {
         private float lastUpdate;                  // time since we last updated the part menu
@@ -271,6 +272,8 @@ namespace DF
         public string transparentTransforms = string.Empty; //Set by part.cfg. contains list of transforms that should be transparent | separated.
 
         private bool hasJSITransparentPod;
+        private bool checkRPMPodTransparencySettingError = false;
+        private bool RPMPodOccluderProcessingError = false;
 
         [KSPEvent(active = false, guiActive = true, guiActiveUnfocused = true, guiActiveEditor = true, unfocusedRange = 5f, name = "eventOpenDoors", guiName = "Open Doors")]
         public void eventOpenDoors()
@@ -702,10 +705,14 @@ namespace DF
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                Utilities.Log("DeepFreezer Error checking RPM TransparentPod Setting");
-                //Utilities.Log("DeepFreezer ", ex.Message);
+                if (!checkRPMPodTransparencySettingError)
+                {
+                    Utilities.Log("DeepFreezer Error checking RPM TransparentPod Setting");
+                    Utilities.Log("DeepFreezer ", ex.Message);
+                    checkRPMPodTransparencySettingError = true;
+                }
             }
         }
 
@@ -925,10 +932,14 @@ namespace DF
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                Utilities.Log("DeepFreezer Error setting RPM Occluders");
-                //Utilities.Log("DeepFreezer ", ex.Message);
+                if (!RPMPodOccluderProcessingError)
+                {
+                    Utilities.Log("DeepFreezer Error setting RPM Occluders");
+                    Utilities.Log("DeepFreezer ", ex.Message);
+                    RPMPodOccluderProcessingError = true;
+                }
             }
         }
 
@@ -1638,8 +1649,7 @@ namespace DF
                     {
                         foreach (var CrewMember in part.protoModuleCrew) // We Add Freeze Events for all active crew in the part
                         {
-                            if (CrewMember.type != ProtoCrewMember.KerbalType.Tourist)
-                                addFreezeEvent(CrewMember);
+                            addFreezeEvent(CrewMember);
                         }
                     }
                     if ((part.protoModuleCrew.Count < part.CrewCapacity) || part.CrewCapacity <= 0)  // If part is not full or zero (should always be true, think this is redundant line)
@@ -1658,8 +1668,7 @@ namespace DF
             try
             {
                 BaseEvent item = Events.Find(v => v.name == "Freeze " + CrewMember.name);  // Search to see if there isn't already a Freeze Event for this CrewMember
-                if (item == null && CrewMember.type == ProtoCrewMember.KerbalType.Crew) // Did we find one? and CrewMember is type=Crew? if so, add new Event.
-                //***** Could change this to Tourists as well but needs more changes.
+                if (item == null && (CrewMember.type == ProtoCrewMember.KerbalType.Crew || CrewMember.type == ProtoCrewMember.KerbalType.Tourist)) // Did we find one? and CrewMember is type=Crew? if so, add new Event.
                 {
                     Events.Add(new BaseEvent(Events, "Freeze " + CrewMember.name, () =>
                     {
@@ -2136,23 +2145,7 @@ namespace DF
                 ToFrzeKerbal = "";                    // Set the Active Freeze Kerbal to null
                 ActiveFrzKerbal = null;               // Set the Active Freeze Kerbal to null
                 removeFreezeEvent(CrewMember.name);   // Remove the Freeze Event for this kerbal.
-                if (DFInstalledMods.IsUSILSInstalled) // IF USI LS Installed, remove tracking.
-                {
-                    Utilities.Log_Debug("USI/LS installed untrack kerbal=" + CrewMember.name);
-                    try
-                    {
-                        USIUntrackKerbal(CrewMember.name);
-                        //if (this.part.vessel.GetVesselCrew().Count == 0)
-                        //{
-                        //    USIUntrackVessel(this.part.vessel.id.ToString());
-                        //}
-                    }
-                    catch (Exception ex)
-                    {
-                        Utilities.Log("DeepFreeze Exception attempting to untrack a kerbal and/or vessel in USI/LS. Report this error on the Forum Thread.");
-                        Utilities.Log("DeepFreeze Err: " + ex);
-                    }
-                }
+                
                 if (DFInstalledMods.IskerbalismInstalled) // IF Kerbalism Installed, remove tracking.
                 {
                     Utilities.Log_Debug("kerbalism installed untrack kerbal=" + CrewMember.name);
@@ -2169,10 +2162,30 @@ namespace DF
                 ScreenMessages.PostScreenMessage(CrewMember.name + " frozen", 5.0f, ScreenMessageStyle.UPPER_CENTER);
 
                 onvslchgInternal = true;
+                vessel.RebuildCrewList();
                 DFGameEvents.onKerbalFrozen.Fire(this.part, CrewMember);
                 CrewHatchController.fetch.EnableInterface();
                 GameEvents.onVesselChange.Fire(vessel);
                 GameEvents.onVesselWasModified.Fire(vessel);
+                
+                if (DFInstalledMods.IsUSILSInstalled) // IF USI LS Installed, remove tracking.
+                {
+                    Utilities.Log_Debug("USI/LS installed untrack kerbal=" + CrewMember.name);
+                    try
+                    {
+                        USIUntrackKerbal(CrewMember.name);
+                        if (this.part.vessel.GetVesselCrew().Count == 0)
+                        {
+                            Utilities.Log_Debug("USI/LS installed untrack vessel=" + this.part.vessel.id.ToString());
+                            USIUntrackVessel(this.part.vessel.id.ToString());
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Utilities.Log("DeepFreeze Exception attempting to untrack a kerbal and/or vessel in USI/LS. Report this error on the Forum Thread.");
+                        Utilities.Log("DeepFreeze Err: " + ex);
+                    }
+                }
             }
             Utilities.Log_Debug("FreezeCompleted");
         }
@@ -2187,6 +2200,25 @@ namespace DF
                 if (checkTracked)
                 {
                     Debug.Log("DeepFreeze has been unable to untrack kerbal " + crewmember + " in USI LS mod. Report this error on the Forum Thread.");
+                }
+
+            }
+            else
+            {
+                Debug.Log("DeepFreeze has been unable to connect to USI LS mod. API is not ready. Report this error on the Forum Thread.");
+            }
+        }
+
+        private void USIUntrackVessel(string vesselId)
+        //This will remove tracking of a frozen kerbal from USI Life Support MOD, so that they don't consume resources when they are thawed.
+        {
+            if (USIWrapper.APIReady && USIWrapper.InstanceExists)
+            {
+                USIWrapper.USIActualAPI.UntrackVessel(vesselId);
+                bool checkTracked = USIWrapper.USIActualAPI.IsVesselTracked(vesselId);
+                if (checkTracked)
+                {
+                    Debug.Log("DeepFreeze has been unable to untrack vessel " + vesselId + " in USI LS mod. Report this error on the Forum Thread.");
                 }
 
             }
@@ -2924,7 +2956,8 @@ namespace DF
         private bool AddKerbal(ProtoCrewMember kerbal, int SeatIndx)
         //Adds a just thawed kerbal to the vessel.
         {
-             Utilities.Log_Debug("Start AddKerbal " + kerbal.name);
+            Utilities.Log_Debug("Start AddKerbal " + kerbal.name);
+            ProtoCrewMember.KerbalType originaltype = ProtoCrewMember.KerbalType.Crew;
             try
             {
                 try
@@ -2956,6 +2989,11 @@ namespace DF
                 {
                     if (DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.ContainsKey(kerbal.name))
                     {
+                        KerbalInfo tmpFrzCrew = DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals[kerbal.name];
+                        if (tmpFrzCrew.experienceTraitName == "Tourist")
+                        {
+                            originaltype = ProtoCrewMember.KerbalType.Tourist;
+                        }
                         DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.Remove(kerbal.name);
                     }
                     if (DeepFreeze.Instance.DFsettings.debugging) DeepFreeze.Instance.DFgameSettings.DmpKnownFznKerbals();
@@ -2969,13 +3007,11 @@ namespace DF
                 }
                 if (partHasInternals && ExternalDoorActive)
                     Utilities.setHelmetshaders(kerbal.KerbalRef, true);
+
+                // Set our newly thawed Popsicle, er Kerbal, to Original type and Assigned status.
+                kerbal.type = originaltype;
+                kerbal.rosterStatus = ProtoCrewMember.RosterStatus.Assigned;
                 
-                // Set our newly thawed Popsicle, er Kerbal, to Crew type and Assigned status.
-                if (kerbal.type != ProtoCrewMember.KerbalType.Crew)
-                {
-                    kerbal.type = ProtoCrewMember.KerbalType.Crew;
-                    kerbal.rosterStatus = ProtoCrewMember.RosterStatus.Assigned;
-                }
                 if (partHasInternals)
                 {
                     if (kerbal.seat != part.internalModel.seats[SeatIndx])

@@ -76,7 +76,7 @@ namespace DF
             LogFormatted_DebugOnly("Attempting to Grab KB LS Types...");
 
             //find the base type
-            KBType = getType("KERBALISM.Kerbalism");
+            KBType = getType("KERBALISM.API");
 
             if (KBType == null)
             {
@@ -127,7 +127,7 @@ namespace DF
                 //WORK OUT THE STUFF WE NEED TO HOOK FOR PEOPLE HERE
                 //Methods
                 LogFormatted_DebugOnly("Getting hook_DisableKerbal Method");
-                KBhook_DisableKerbalMethod = KBType.GetMethod("hook_DisableKerbal", BindingFlags.Public | BindingFlags.Static);
+                KBhook_DisableKerbalMethod = KBType.GetMethod("DisableKerbal", BindingFlags.Public | BindingFlags.Static);
                 LogFormatted_DebugOnly("Success: " + (KBhook_DisableKerbalMethod != null));
             }
             

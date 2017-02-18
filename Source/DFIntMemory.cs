@@ -496,8 +496,10 @@ namespace DF
                         kerbalInfo.experienceTraitName = enumerator.Current.experienceTrait.Title;
                         try
                         {
-                            Utilities.Log("Adding dead unknown kerbal " + enumerator.Current.name + " AKA FROZEN kerbal to DeepFreeze List");
-                            DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.Add(enumerator.Current.name, kerbalInfo);
+                            Utilities.Log("Adding dead unknown kerbal " + enumerator.Current.name +
+                                          " AKA FROZEN kerbal to DeepFreeze List");
+                            DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.Add(enumerator.Current.name,
+                                kerbalInfo);
                         }
                         catch (Exception ex)
                         {
