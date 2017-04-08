@@ -1,4 +1,7 @@
-﻿V0.23.3.0
+﻿V0.23.4.0
+Fix issue with launching vessels with DeepFreeze parts with greater capacity than previously launched vessels would cause
+null reference exceptions, lost DeepFreeze tracking and lost frozen kerbals. Thanks to Gnurfos who found the bug.
+V0.23.3.0
 Fix Kerbalism Integration.
 Freeze Tourists!
 DeepFreeze stock application button is not shown in flight unless the active vessel has a DeepFreezer part.
