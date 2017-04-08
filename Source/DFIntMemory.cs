@@ -927,7 +927,7 @@ namespace DF
                 if (frzrpart.Value.vesselID == vessel.id)
                     DpFrzrVsl.Add(frzrpart);
             }
-            for (int i = 0; i < DpFrzrVsl.Count; i++)
+            for (int i = 0; i < DpFrzrActVsl.Count; i++)
             {
                 //calculate the predicated time EC will run out
                 double timeperiod = Planetarium.GetUniversalTime() - DpFrzrVsl[i].Value.timeLastElectricity;
