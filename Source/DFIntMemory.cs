@@ -353,7 +353,7 @@ namespace DF
                 return;
 
             lastFixedUpdateTime = currentTime;
-            //Check if the active vessel has changed and if so, process.
+            //Check if the active vessel has changed and if so, process. Should not happen as this is now called via GameEvent
             if (HighLogic.LoadedSceneIsFlight)
             {
                 if (FlightGlobals.ActiveVessel.id != ActVslID)
@@ -898,9 +898,15 @@ namespace DF
             }
 
             // Delete vessels we don't care about any more.
-            vesselsToDelete.ForEach(id => DeepFreeze.Instance.DFgameSettings.knownVessels.Remove(id));
+            for (int i = 0; i < vesselsToDelete.Count; ++i)
+            {
+                DeepFreeze.Instance.DFgameSettings.knownVessels.Remove(vesselsToDelete[i]);
+            }
             // Delete parts that were part of those vessels.
-            partsToDelete.ForEach(id => DeepFreeze.Instance.DFgameSettings.knownFreezerParts.Remove(id));
+            for (int i = 0; i < partsToDelete.Count; ++i)
+            {
+                DeepFreeze.Instance.DFgameSettings.knownFreezerParts.Remove(partsToDelete[i]);
+            }
 
             // Scan through all in-game vessels and add any new ones we don't know about that have a freezer module.
             foreach (Vessel vessel in FlightGlobals.VesselsLoaded)
@@ -927,7 +933,7 @@ namespace DF
                 if (frzrpart.Value.vesselID == vessel.id)
                     DpFrzrVsl.Add(frzrpart);
             }
-            for (int i = 0; i < DpFrzrActVsl.Count; i++)
+            for (int i = 0; i < DpFrzrVsl.Count; i++)
             {
                 //calculate the predicated time EC will run out
                 double timeperiod = Planetarium.GetUniversalTime() - DpFrzrVsl[i].Value.timeLastElectricity;
