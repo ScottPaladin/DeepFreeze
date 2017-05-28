@@ -2,6 +2,7 @@
 using System.Linq;
 using PreFlightTests;
 using RSTUtils;
+using KSP.Localization;
 
 namespace DF
 {
@@ -56,13 +57,13 @@ namespace DF
         // Title of the problem description
         public override string GetConcernTitle()
         {
-            return "DeepFreeze";
+            return Localizer.Format("#autoLOC_DF_00003"); // "DeepFreeze";
         }
 
         // problem description
         public override string GetConcernDescription()
         {
-            return "There is less than 5 units of Glykerol on-board for your DeepFreeze Freezers";
+            return Localizer.Format("#autoLOC_DF_00108"); // "There is less than 5 units of Glykerol on-board for your DeepFreeze Freezers";
         }
 
         // how bad is the problem

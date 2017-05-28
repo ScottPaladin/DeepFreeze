@@ -23,6 +23,7 @@ using RSTUtils;
 using UnityEngine;
 using Object = System.Object;
 using Random = System.Random;
+using KSP.Localization;
 
 namespace DF
 {
@@ -68,7 +69,7 @@ namespace DF
         [KSPField(isPersistant = true, guiActive = false, guiName = "PodExternal")] //Set to true if Cryopod is External part (eg. CRY-0300R), read from part.cfg.
         public bool isPodExternal = false;
 
-        [KSPField(isPersistant = true, guiActive = true, guiName = "Freezer Capacity")] //Total Size of Freezer, get's read from part.cfg.
+        [KSPField(isPersistant = true, guiActive = true, guiName = "#autoLOC_DF_00054")] //Total Size of Freezer, get's read from part.cfg. #autoLOC_DF_00054 = Freezer Capacity
         public int FreezerSize;
 
         public int DFIFreezerSize
@@ -79,7 +80,7 @@ namespace DF
             }
         }
 
-        [KSPField(isPersistant = true, guiActive = true, guiName = "Total Frozen Kerbals")] //WISOTT Total number of frozen kerbals, just a count of the list object.
+        [KSPField(isPersistant = true, guiActive = true, guiName = "#autoLOC_DF_00055")] //WISOTT Total number of frozen kerbals, just a count of the list object. #autoLOC_DF_00055 = Total Frozen Kerbals
         public int TotalFrozen;
 
         public int DFITotalFrozen
@@ -90,7 +91,7 @@ namespace DF
             }
         }
 
-        [KSPField(isPersistant = true, guiActive = true, guiName = "Freezer Space")] //Total space available for storage. Set by Part.cfg file.
+        [KSPField(isPersistant = true, guiActive = true, guiName = "#autoLOC_DF_00056")] //Total space available for storage. Set by Part.cfg file. #autoLOC_DF_00056 = Freezer Space
         public int FreezerSpace;
 
         public int DFIFreezerSpace
@@ -101,7 +102,7 @@ namespace DF
             }
         }
 
-        [KSPField(isPersistant = true, guiActive = true, guiName = "Part is Full?")] //Is set to true if the part is full (taking into account frozen kerbals in the part).
+        [KSPField(isPersistant = true, guiActive = true, guiName = "#autoLOC_DF_00057")] //Is set to true if the part is full (taking into account frozen kerbals in the part). #autoLOC_DF_00057 = Part is Full?
         public bool PartFull;
 
         public bool DFIPartFull
@@ -117,10 +118,10 @@ namespace DF
             get { return DeepFreeze.Instance.DFsettings.ECreqdForFreezer; }
         }
 
-        [KSPField(isPersistant = false, guiName = "R/T Connection", guiActive = false)]
+        [KSPField(isPersistant = false, guiName = "#autoLOC_DF_00058", guiActive = false)] //#autoLOC_DF_00058 = R/T Connection
         public bool isRTConnected;
 
-        [KSPField(isPersistant = true, guiName = "Freezer Temp", guiActive = true)]
+        [KSPField(isPersistant = true, guiName = "#autoLOC_DF_00059", guiActive = true)] //#autoLOC_DF_00059 = Freezer Temp
         public FrzrTmpStatus _FrzrTmp = FrzrTmpStatus.OK;  // ok, warning and red alert flags for temperature monitoring of the freezer
 
         public FrzrTmpStatus DFIFrzrTmp                     //  Interface var for API = ok, warning and red alert flags for temperature monitoring of the freezer
@@ -143,10 +144,10 @@ namespace DF
             }
         }
 
-        [KSPField(isPersistant = true, guiName = "Cabin Temperature", guiUnits = "K", guiFormat = "F1", guiActive = true)]
+        [KSPField(isPersistant = true, guiName = "#autoLOC_DF_00060", guiUnits = "#autoLOC_DF_00061", guiFormat = "F1", guiActive = true)] //#autoLOC_DF_00060 = Cabin Temerature #autoLOC_DF_00061 = K
         public float CabinTemp;
 
-        [KSPEvent(active = true, guiActive = true, name = "showMenu", guiName = "DeepFreeze Menu")]
+        [KSPEvent(active = true, guiActive = true, name = "showMenu", guiName = "#autoLOC_DF_00062")] //#autoLOC_DF_00062 = DeepFreeze Menu
         public void showMenu()
         {
             DeepFreezeGUI obj = DeepFreeze.Instance.GetComponent("DeepFreezeGUI") as DeepFreezeGUI;
@@ -185,7 +186,7 @@ namespace DF
             }
         }
 
-        [KSPField(isPersistant = false, guiName = "EC p/Kerbal to run", guiUnits = " p/min", guiActive = true)]
+        [KSPField(isPersistant = false, guiName = "#autoLOC_DF_00063", guiUnits = "#autoLOC_DF_00064", guiActive = true)] //#autoLOC_DF_00063 = EC p/Kerbal to run #autoLOC_DF_00064 = \u0020p/min
         public Int32 FrznChargeRequired; //Set by part.cfg. Total EC value required to maintain a frozen kerbal per minute.
 
         public Int32 DFIFrznChargeRequired
@@ -196,7 +197,7 @@ namespace DF
             }
         }
 
-        [KSPField(isPersistant = false, guiActive = true, guiName = "Current EC Usage", guiUnits = " p/sec", guiFormat = "F3")]
+        [KSPField(isPersistant = false, guiActive = true, guiName = "#autoLOC_DF_00065", guiUnits = "#autoLOC_DF_00066", guiFormat = "F3")] //#autoLOC_DF_00065 = Current EC Usage #autoLOC_DF_00066 = \u0020p/sec
         public float FrznChargeUsage;
 
         public float DFIFrznChargeUsage
@@ -207,7 +208,7 @@ namespace DF
             }
         }
 
-        [KSPField(isPersistant = false, guiName = "Glykerol Reqd. to Freeze", guiActive = true)]
+        [KSPField(isPersistant = false, guiName = "#autoLOC_DF_00067", guiActive = true)] //#autoLOC_DF_00067 = Glykerol Reqd. to Freeze
         public Int32 GlykerolRequired; //Set by part.cfg. Total Glykerol value required to freeze a kerbal.
 
         [KSPField]                     // set to active while freezing a kerbal
@@ -235,7 +236,7 @@ namespace DF
         [KSPField]
         public double StoredCharge;      // Stores up EC as we are freezing or thawing over time until we reach what we need.
 
-        [KSPField(isPersistant = false, guiName = "EC p/Kerbal to Frze/Thaw", guiActive = true)]
+        [KSPField(isPersistant = false, guiName = "#autoLOC_DF_00068", guiActive = true)] //#autoLOC_DF_00068 = EC p/Kerbal to Frze/Thaw
         public Int32 ChargeRequired; //Set by part.cfg. Total EC value required for a complete freeze or thaw.
 
         [KSPField(isPersistant = false)]
@@ -378,6 +379,7 @@ namespace DF
         private string CrntVslName = "";
         private bool vesselisinIVA;
         private bool vesselisinInternal;
+        private int internalSeatIdx;
 
         private bool setGameSettings;
 
@@ -411,8 +413,8 @@ namespace DF
         public override string GetInfo()
         {
             string text = string.Empty;
-            text += "\nCryopods: " + FreezerSize;
-            
+            text += Localizer.Format("#autoLOC_DF_00069", FreezerSize); //#autoLOC_DF_00069 = \nCryopods: <<1>>
+
             return text;
         }
 
@@ -447,7 +449,11 @@ namespace DF
                 //part.SpawnIVA();
                 Utilities.spawnInternal(part);
                 resetFrozenKerbals();
-                resetCryopods(true);
+                resetCryopods(true); 
+                if (vesselisinInternal)
+                {
+                    setIVAFrzrCam(internalSeatIdx);
+                }
             }
 
             // If we have an external door (CRY-0300) or external pod (CRY-0300R) check RPM transparency setting and change the door settings as appropriate
@@ -535,12 +541,12 @@ namespace DF
                     //Set the Part temperature in the partmenu
                     if (DeepFreeze.Instance.DFsettings.TempinKelvin)
                     {
-                        Fields["CabinTemp"].guiUnits = "K";
+                        Fields["CabinTemp"].guiUnits = Localizer.Format("#autoLOC_DF_00061"); //#autoLOC_DF_00061 = K
                         CabinTemp = (float)part.temperature;
                     }
                     else
                     {
-                        Fields["CabinTemp"].guiUnits = "C";
+                        Fields["CabinTemp"].guiUnits = Localizer.Format("#autoLOC_DF_00070"); //#autoLOC_DF_00070 = C
                         CabinTemp = Utilities.KelvintoCelsius((float)part.temperature);
                     }
 
@@ -615,7 +621,7 @@ namespace DF
                                 if (SeatIndx != -1)
                                 {
                                     SeatIndx++;
-                                    IVAkerbalPod = new ScreenMessage("Pod:" + SeatIndx, 1, ScreenMessageStyle.UPPER_LEFT);
+                                    IVAkerbalPod = new ScreenMessage(Localizer.Format("#autoLOC_DF_00071", SeatIndx), 1, ScreenMessageStyle.UPPER_LEFT); //#autoLOC_DF_00071 = Pod:<<1>>
                                     IVAkerbalPod.color = Color.white;
                                     ScreenMessages.PostScreenMessage(IVAkerbalPod);
                                 }
@@ -1216,8 +1222,8 @@ namespace DF
             // Utilities.Log_Debug("currenttime = " + currenttime + " timeperiod = " + timeperiod + " updateECTempInterval= " + updateECTempInterval);
             if (timeperiod > updateECTempInterval) //only update every updateECTempInterval to avoid request resource bug when amounts are too small
             {
-                if (TotalFrozen > 0) //We have frozen Kerbals, consume EC
-                {
+                if (TotalFrozen > 0 && !CheatOptions.InfiniteElectricity) //We have frozen Kerbals, consume EC
+                {                    
                     double ECreqd = FrznChargeRequired / 60.0f * timeperiod * TotalFrozen;
                     Utilities.Log_Debug("DeepFreezer Running the freezer parms currenttime = {0} timeperiod = {1} ecreqd = {2}" , currenttime.ToString(), timeperiod.ToString(), ECreqd.ToString());
                     double resTotal = 0f;
@@ -1252,12 +1258,12 @@ namespace DF
                         if (!partInfo.ECWarning)
                         {
                             if (TimeWarp.CurrentRateIndex > 1) Utilities.stopWarp();
-                            ScreenMessages.PostScreenMessage("Insufficient electric charge to monitor frozen kerbals.", 10.0f, ScreenMessageStyle.UPPER_CENTER);
+                            ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00072"), 10.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00072 = Insufficient electric charge to monitor frozen kerbals.
                             partInfo.ECWarning = true;
                             deathCounter = currenttime;
                         }
                         if (OnGoingECMsg != null) ScreenMessages.RemoveMessage(OnGoingECMsg);
-                        OnGoingECMsg = ScreenMessages.PostScreenMessage(" Freezer Out of EC : Systems critical in " + (deathRoll - (currenttime - deathCounter)).ToString("######0") + " secs");
+                        OnGoingECMsg = ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00073", (deathRoll - (currenttime - deathCounter)).ToString("######0"))); //#autoLOC_DF_00073 = \u0020Freezer Out of EC : Systems critical in <<1>> secs
                         _FreezerOutofEC = true;
                         FrznChargeUsage = 0f;
                         Utilities.Log_Debug("DeepFreezer deathCounter = " + deathCounter);
@@ -1272,7 +1278,7 @@ namespace DF
                                 foreach (FrznCrewMbr deathKerbal in _StoredCrewList)
                                 {
                                     DeepFreeze.Instance.KillFrozenCrew(deathKerbal.CrewName);
-                                    ScreenMessages.PostScreenMessage(deathKerbal.CrewName + " died due to lack of Electrical Charge to run cryogenics", 10.0f, ScreenMessageStyle.UPPER_CENTER);
+                                    ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00074", deathKerbal.CrewName), 10.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00074 = <<1>> died due to lack of Electrical Charge to run cryogenics
                                     Utilities.Log("DeepFreezer - kerbal " + deathKerbal.CrewName + " died due to lack of Electrical charge to run cryogenics");
                                     kerbalsToDelete.Add(deathKerbal);
                                     if (!flatline.isPlaying)
@@ -1294,7 +1300,14 @@ namespace DF
                 }
                 else  // no frozen kerbals, so just update last time EC checked
                 {
-                    Utilities.Log_Debug("No frozen kerbals for EC consumption in part " + part.name);
+                    if (CheatOptions.InfiniteElectricity)
+                    {
+                        Utilities.Log_Debug("Infinite EC cheat on");
+                    }
+                    else
+                    {
+                        Utilities.Log_Debug("No frozen kerbals for EC consumption in part " + part.name);
+                    }
                     timeSinceLastECtaken = (float)currenttime;
                     deathCounter = currenttime;
                     FrznChargeUsage = 0f;
@@ -1332,14 +1345,14 @@ namespace DF
                         if (tempdiff <= 40)
                         {
                             _FrzrTmp = FrzrTmpStatus.WARN;
-                            ScreenMessages.PostScreenMessage("Check Temperatures, Freezer getting hot", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                            ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00075"), 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00075 = Check Temperatures, Freezer getting hot
                         }
                         else
                         {
                             if (tempdiff < 20)
                             {
                                 _FrzrTmp = FrzrTmpStatus.RED;
-                                ScreenMessages.PostScreenMessage("Warning!! Check Temperatures NOW, Freezer getting very hot", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                                ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00076"), 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00076 = Warning!! Check Temperatures NOW, Freezer getting very hot
                             }
                         }
                         timeSinceLastTmpChk = (float)currenttime;
@@ -1352,13 +1365,13 @@ namespace DF
                         if (!partInfo.TempWarning)
                         {
                             if (TimeWarp.CurrentRateIndex > 1) Utilities.stopWarp();
-                            ScreenMessages.PostScreenMessage("Temperature getting too hot for kerbals to remain frozen.", 10.0f, ScreenMessageStyle.UPPER_CENTER);
+                            ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00077"), 10.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00077 = Temperature getting too hot for kerbals to remain frozen.
                             partInfo.TempWarning = true;
                         }
                         _FrzrTmp = FrzrTmpStatus.RED;
                         Utilities.Log_Debug("DeepFreezer tmpdeathCounter = {0}" , tmpdeathCounter.ToString());
                         if (TempChkMsg != null) ScreenMessages.RemoveMessage(TempChkMsg);
-                        TempChkMsg = ScreenMessages.PostScreenMessage(" Freezer Over Temp : Systems critical in " + (tmpdeathRoll - (currenttime - tmpdeathCounter)).ToString("######0") + " secs");
+                        TempChkMsg = ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00078", (tmpdeathRoll - (currenttime - tmpdeathCounter)).ToString("######0"))); //#autoLOC_DF_00078 = Freezer Over Temp : Systems critical in <<1>> secs
                         if (currenttime - tmpdeathCounter > tmpdeathRoll)
                         {
                             Utilities.Log_Debug("DeepFreezer tmpdeathRoll reached, roll the dice...");
@@ -1371,7 +1384,7 @@ namespace DF
                                 Utilities.Log_Debug("DeepFreezer A Kerbal dies dice=" + dice);
                                 FrznCrewMbr deathKerbal = _StoredCrewList[dice - 1];
                                 DeepFreeze.Instance.KillFrozenCrew(deathKerbal.CrewName);
-                                ScreenMessages.PostScreenMessage(deathKerbal.CrewName + " died due to overheating, cannot keep frozen", 10.0f, ScreenMessageStyle.UPPER_CENTER);
+                                ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00079", deathKerbal.CrewName), 10.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00079 = <<1>> died due to overheating, cannot keep frozen
                                 Debug.Log("DeepFreezer - kerbal " + deathKerbal.CrewName + " died due to overheating, cannot keep frozen");
                                 _StoredCrewList.Remove(deathKerbal);
 
@@ -1382,7 +1395,7 @@ namespace DF
                             }
                             else  //NON-fatal option set. Thaw them all.
                             {
-                                ScreenMessages.PostScreenMessage("Over Temperature - Emergency Thaw in Progress.", 10.0f, ScreenMessageStyle.UPPER_CENTER);
+                                ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00080"), 10.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00080 = Over Temperature - Emergency Thaw in Progress.
                                 Utilities.Log_Debug("DeepFreezer deathRoll reached, Kerbals all don't die... They just Thaw out...");
                                 //all kerbals thaw out
                                 emergencyThawInProgress = true;  //This will trigger FixedUpdate to thaw all frozen kerbals in the part, one by one.
@@ -1673,7 +1686,7 @@ namespace DF
                     Events.Add(new BaseEvent(Events, "Freeze " + CrewMember.name, () =>
                     {
                         beginFreezeKerbal(CrewMember);
-                    }, new KSPEvent { guiName = "Freeze " + CrewMember.name, guiActive = true }));
+                    }, new KSPEvent { guiName = Localizer.Format("#autoLOC_DF_00199", CrewMember.name), guiActive = true }));
                 }
             }
             catch (Exception ex)
@@ -1724,7 +1737,7 @@ namespace DF
                         {
                             beginThawKerbal(frozenkerbal);
                         }
-                    }, new KSPEvent { guiName = "Thaw " + frozenkerbal, guiActive = true }));
+                    }, new KSPEvent { guiName = Localizer.Format("#autoLOC_DF_00200", frozenkerbal), guiActive = true }));
                 }
             }
             catch (Exception ex)
@@ -1779,7 +1792,7 @@ namespace DF
                     // If we are in IVA mode we switch to the internal camera in front of their cryopod.
                     if (vesselisinIVA || vesselisinInternal)
                     {
-                        setIVAFrzrCam(ToFrzeKerbalSeat);
+                        setIVAFrzrCam(ToFrzeKerbalSeat);                        
                     }
 
                     if (partHasStripLights && DeepFreeze.Instance.DFsettings.StripLightsActive)
@@ -1791,19 +1804,26 @@ namespace DF
 
                 case 1:
                     //get Electric Charge and Glykerol
-                    Utilities.Log_Debug("Freeze Step 1");
+                    Utilities.Log_Debug("Freeze Step 1");                    
                     double ECTotal = 0f;
-                    if (!Utilities.requireResource(vessel, EC, ChargeRate, false, true, false, out ResAvail, out ECTotal))
+                    if (!CheatOptions.InfiniteElectricity && !Utilities.requireResource(vessel, EC, ChargeRate, false, true, false, out ResAvail, out ECTotal))
                     {
-                        ScreenMessages.PostScreenMessage("Insufficient electric charge to freeze kerbal", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00081"), 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00081 = Insufficient electric charge to freeze kerbal
                         FreezeKerbalAbort(ActiveFrzKerbal);
                     }
                     else
                     {
-                        Utilities.requireResource(vessel, EC, ChargeRate, true, true, false, out ResAvail, out ECTotal);
+                        if (CheatOptions.InfiniteElectricity)
+                        {
+                            ECTotal = ChargeRate;
+                        }
+                        else
+                        {
+                            Utilities.requireResource(vessel, EC, ChargeRate, true, true, false, out ResAvail, out ECTotal);
+                        }
                         StoredCharge = StoredCharge + ChargeRate;
                         if (FreezeMsg != null) ScreenMessages.RemoveMessage(FreezeMsg);
-                        FreezeMsg = ScreenMessages.PostScreenMessage(" Cryopod - Charging: " + StoredCharge.ToString("######0"));
+                        FreezeMsg = ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00082", StoredCharge.ToString("######0"))); //#autoLOC_DF_00082 = \u0020Cryopod - Charging: <<1>>
                         if (DeepFreeze.Instance.DFsettings.RegTempReqd)
                         {
                             part.AddThermalFlux(heatamtThawFreezeKerbal);
@@ -1956,7 +1976,7 @@ namespace DF
                     double GlykTotal = 0f;
                     if (!Utilities.requireResource(vessel, Glykerol, GlykerolRequired, false, true, false, out ResAvail, out GlykTotal)) // check we have Glykerol on board. 5 units per freeze event. This should be a part config item not hard coded.
                     {
-                        ScreenMessages.PostScreenMessage("Insufficient Glykerol to freeze kerbal", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00083"), 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00083 = Insufficient Glykerol to freeze kerbal
                     }
                     else // We have enough Glykerol
                     {
@@ -1964,7 +1984,7 @@ namespace DF
                         {
                             if ((float)part.temperature > DeepFreeze.Instance.DFsettings.RegTempFreeze)
                             {
-                                ScreenMessages.PostScreenMessage("Cannot Freeze while Temperature > " + DeepFreeze.Instance.DFsettings.RegTempFreeze.ToString("######0") + Fields["CabinTemp"].guiUnits, 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                                ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00084", DeepFreeze.Instance.DFsettings.RegTempFreeze.ToString("######0") + Fields["CabinTemp"].guiUnits), 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00084 = Cannot Freeze while Temperature greater than <<1>> 
                                 return;
                             }
                         }
@@ -1980,20 +2000,20 @@ namespace DF
                         //if (_crewXferFROMActive || _crewXferTOActive)  // We can't run a freeze process if a crewXfer is active, this is catching Stock Xfers.
                         if (IsCrewXferRunning)  // We can't run a freeze process if a crewXfer is active, this is catching Stock Xfers.
                         {
-                            ScreenMessages.PostScreenMessage("Cannot Freeze while Crew Xfer in progress", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                            ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00085"), 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00085 = Cannot Freeze while Crew Xfer in progress
                             return;
                         }
                         if (IsThawActive || IsFreezeActive)
                         {
-                            ScreenMessages.PostScreenMessage("Cannot run Freeze process on more than one Kerbal at a time", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                            ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00086"), 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00086 = Cannot run Freeze process on more than one Kerbal at a time
                             return;
                         }
                         if (DFInstalledMods.IsRTInstalled)
                         {
                             if (part.vessel.GetCrewCount() == 1 && RTlastKerbalFreezeWarn == false)
                             {
-                                ScreenMessages.PostScreenMessage("RemoteTech Detected. Press Freeze Again if you want to Freeze your Last Active Kerbal", 10.0f, ScreenMessageStyle.UPPER_CENTER);
-                                ScreenMessages.PostScreenMessage("An Active connection or Active Kerbal is Required On-Board to Initiate Thaw Process", 10.0f, ScreenMessageStyle.UPPER_CENTER);
+                                ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00087"), 10.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00087 = RemoteTech Detected. Press Freeze Again if you want to Freeze your Last Active Kerbal
+                                ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00088"), 10.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00088 = An Active connection or Active Kerbal is Required On-Board to Initiate Thaw Process
                                 RTlastKerbalFreezeWarn = true;
                                 return;
                             }
@@ -2005,14 +2025,14 @@ namespace DF
                 else
                 {
                     if (FreezerSpace == 0)
-                        ScreenMessages.PostScreenMessage("Cannot freeze kerbal. Freezer is full", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00089"), 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00089 = Cannot freeze kerbal. Freezer is full
                 }
             }
             catch (Exception ex)
             {
                 Debug.Log("Exception attempting to start Freeze for " + CrewMember);
                 Debug.Log("Err: " + ex);
-                ScreenMessages.PostScreenMessage("Cannot freeze kerbal at this time", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00090"), 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00090 = Cannot freeze kerbal at this time
             }
         }
 
@@ -2051,7 +2071,7 @@ namespace DF
             Utilities.Log_Debug("FreezeKerbal ACtiveFrzKerbal=" + ActiveFrzKerbal.name + ",ToFrzeKerbalSeat=" + ToFrzeKerbalSeat + ",ToFrzeKerbalXformNme=" + ToFrzeKerbalXformNme);
             FreezeStepInProgress = 0;
             IsFreezeActive = true; // Set the Freezer actively freezing mode on
-            ScreenMessages.PostScreenMessage("Starting Freeze process", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+            ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00091"), 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00091 = Starting Freeze process
             Utilities.Log_Debug("ActiveFrzKerbal=" + ActiveFrzKerbal.name + ",ToFrzeKerbal=" + ToFrzeKerbal + ",SeatIdx=" + ToFrzeKerbalSeat + ",seat transform name=" + ToFrzeKerbalXformNme);
             Utilities.Log_Debug("FreezeKerbal ended");
         }
@@ -2061,7 +2081,7 @@ namespace DF
             try
             {
                 Utilities.Log_Debug("FreezeKerbalAbort " + CrewMember.name + " seat " + ToFrzeKerbalSeat);
-                ScreenMessages.PostScreenMessage("Freezing Aborted", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00092"), 5.0f, ScreenMessageStyle.UPPER_CENTER); //autoLOC_DF_00092 = Freezing Aborted
                 Utilities.setFrznKerbalLayer(part, CrewMember, true);
                 if (partHasInternals)
                 {
@@ -2159,13 +2179,11 @@ namespace DF
                         Utilities.Log("DeepFreeze Err: " + ex);
                     }
                 }
-                ScreenMessages.PostScreenMessage(CrewMember.name + " frozen", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00093", CrewMember.name), 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00093 = <<1>> frozen
 
-                onvslchgInternal = true;
                 vessel.RebuildCrewList();
                 DFGameEvents.onKerbalFrozen.Fire(this.part, CrewMember);
-                CrewHatchController.fetch.EnableInterface();
-                GameEvents.onVesselChange.Fire(vessel);
+                CrewHatchController.fetch.EnableInterface();                
                 GameEvents.onVesselWasModified.Fire(vessel);
                 
                 if (DFInstalledMods.IsUSILSInstalled) // IF USI LS Installed, remove tracking.
@@ -2185,6 +2203,10 @@ namespace DF
                         Utilities.Log("DeepFreeze Exception attempting to untrack a kerbal and/or vessel in USI/LS. Report this error on the Forum Thread.");
                         Utilities.Log("DeepFreeze Err: " + ex);
                     }
+                }
+                if ((vesselisinIVA || vesselisinInternal) && part.protoModuleCrew.Count == 0)
+                {
+                    CameraManager.Instance.SetCameraFlight();
                 }
             }
             Utilities.Log_Debug("FreezeCompleted");
@@ -2276,17 +2298,20 @@ namespace DF
                         break;
                     }
                     double totalAvail = 0f;
-                    if (!Utilities.requireResource(vessel, EC, ChargeRate, false, true, false, out ResAvail, out totalAvail))
+                    if (!CheatOptions.InfiniteElectricity && !Utilities.requireResource(vessel, EC, ChargeRate, false, true, false, out ResAvail, out totalAvail))
                     {
-                        ScreenMessages.PostScreenMessage("Insufficient electric charge to thaw kerbal", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00094"), 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00094 = Insufficient electric charge to thaw kerbal
                         ThawKerbalAbort(ToThawKerbal);
                     }
                     else
                     {
-                        Utilities.requireResource(vessel, EC, ChargeRate, true, true, false, out ResAvail, out totalAvail);
+                        if (!CheatOptions.InfiniteElectricity)
+                        {
+                            Utilities.requireResource(vessel, EC, ChargeRate, true, true, false, out ResAvail, out totalAvail);
+                        }
                         StoredCharge = StoredCharge + ChargeRate;
                         if (ThawMsg != null) ScreenMessages.RemoveMessage(ThawMsg);
-                        ThawMsg = ScreenMessages.PostScreenMessage(" Cryopod - Charging: " + StoredCharge.ToString("######0"));
+                        ThawMsg = ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00095", StoredCharge.ToString("######0"))); //#autoLOC_DF_00095 = \u0020Cryopod - Charging:<<1>> 
 
                         if (DeepFreeze.Instance.DFsettings.RegTempReqd)
                         {
@@ -2419,8 +2444,8 @@ namespace DF
                 Utilities.Log_Debug("beginThawKerbal " + frozenkerbal);
                 if (part.protoModuleCrew.Count >= part.CrewCapacity)
                 {
-                    ScreenMessages.PostScreenMessage("Cannot Thaw " + frozenkerbal + " Part is full", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-                     Utilities.Log_Debug("Cannot thaw " + frozenkerbal + " Part is full");
+                    ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00096", frozenkerbal), 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00096 = Cannot Thaw <<1>> Part is full
+                    Utilities.Log_Debug("Cannot thaw " + frozenkerbal + " Part is full");
                 }
                 else
                 {
@@ -2437,12 +2462,12 @@ namespace DF
                     //if (_crewXferFROMActive || _crewXferTOActive)  // We can't run a thaw process if a crewXfer is active, this is catching Stock Xfers.
                     if (IsCrewXferRunning)  // We can't run a thaw process if a crewXfer is active, this is catching Stock Xfers.
                     {
-                        ScreenMessages.PostScreenMessage("Cannot Thaw while Crew Xfer in progress", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00097"), 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00097 = Cannot Thaw while Crew Xfer in progress
                         return;
                     }
                     if (IsThawActive || IsFreezeActive)
                     {
-                        ScreenMessages.PostScreenMessage("Cannot run Thaw process on more than one Kerbal at a time", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00098"), 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00098 = Cannot run Thaw process on more than one Kerbal at a time
                         return;
                     }
 
@@ -2457,7 +2482,7 @@ namespace DF
             {
                 Debug.Log("Exception attempting to start Thaw for " + frozenkerbal);
                 Debug.Log("Err: " + ex);
-                ScreenMessages.PostScreenMessage("Cannot thaw kerbal at this time", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00099"), 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00099 = Cannot thaw kerbal at this time
             }
         }
 
@@ -2565,7 +2590,7 @@ namespace DF
                                     Debug.Log("Exception attempting to add to seat for " + frozenkerbal);
                                     Debug.Log("Part has Internals, and Frozen Kerbal was found codestep = " + codestep);
                                     Debug.Log("Err: " + ex);
-                                    ScreenMessages.PostScreenMessage("Code Error: Cannot thaw kerbal at this time, Check Log", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                                    ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00100"), 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00100 = Code Error: Cannot thaw kerbal at this time, Check Log
                                     ThawKerbalAbort(frozenkerbal);
                                 }
                             }
@@ -2573,7 +2598,7 @@ namespace DF
                             {
                                  Utilities.Log_Debug("Seat taken by someone else, Abort");
                                 Debug.Log("Could not start kerbal Thaw process as seat is taken by another kerbal. Very Very Bad. Report this to Mod thread");
-                                ScreenMessages.PostScreenMessage("Code Error: Cannot thaw kerbal at this time, Check Log", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                                ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00100"), 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00100 = Code Error: Cannot thaw kerbal at this time, Check Log
                                 ThawKerbalAbort(frozenkerbal);
                             }
                         }
@@ -2645,7 +2670,7 @@ namespace DF
                                 Debug.Log("Exception attempting to add to seat for " + frozenkerbal);
                                 Debug.Log("Seat Crew KerbalRef is NULL re-add them at seatidx=" + tmpcrew.SeatIdx + " codestep = " + codestep);
                                 Debug.Log("Err: " + ex);
-                                ScreenMessages.PostScreenMessage("Code Error: Cannot thaw kerbal at this time, Check Log", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                                ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00100"), 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00100 = Code Error: Cannot thaw kerbal at this time, Check Log
                                 ThawKerbalAbort(frozenkerbal);
                             }
                         }
@@ -2664,7 +2689,7 @@ namespace DF
                             Debug.Log("Exception attempting to add to seat for " + frozenkerbal);
                             Debug.Log("Where DeepFreezer Module is attached to internal-LESS part");
                             Debug.Log("Err: " + ex);
-                            ScreenMessages.PostScreenMessage("Code Error: Cannot thaw kerbal at this time, Check Log", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                            ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00100"), 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00100 = Code Error: Cannot thaw kerbal at this time, Check Log
                             ThawKerbalAbort(frozenkerbal);
                         }
                     }
@@ -2672,14 +2697,14 @@ namespace DF
                 else // This should NEVER occur.
                 {
                     Debug.Log("Could not find frozen kerbal in _StoredCrewList to Thaw, Very Very Bad. Report this to Mod thread");
-                    ScreenMessages.PostScreenMessage("Code Error: Cannot thaw kerbal at this time, Check Log", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                    ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00100"), 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00100 = Code Error: Cannot thaw kerbal at this time, Check Log
                     ThawKerbalAbort(frozenkerbal);
                 }
             }
             else // This should NEVER occur.
             {
                 Debug.Log("Could not find frozen kerbal in Unowned Crew List to Thaw, Very Very Bad. Report this to Mod thread");
-                ScreenMessages.PostScreenMessage("Code Error: Cannot thaw kerbal at this time, Check Log", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00100"), 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00100 = Code Error: Cannot thaw kerbal at this time, Check Log
                 ThawKerbalAbort(frozenkerbal);
             }
         }
@@ -2709,7 +2734,7 @@ namespace DF
         private void ThawKerbalAbort(String ThawKerbal)
         {
              Utilities.Log_Debug("ThawkerbalAbort called");
-            ScreenMessages.PostScreenMessage("Thawing Aborted", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+            ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00101"), 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00101 = Thawing Aborted
             IsThawActive = false; // Turn the Freezer actively thawing mode off
             ToThawKerbal = ""; // Set the Active Thaw Kerbal to null
             StoredCharge = 0; // Discharge all EC stored
@@ -2792,10 +2817,10 @@ namespace DF
             IsThawActive = false; // Turn the Freezer actively thawing mode off
             ThawStepInProgress = 0;
             skipThawStep1 = false;
-            ScreenMessages.PostScreenMessage(frozenkerbal + " thawed out", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+            ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00102", frozenkerbal), 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00102 = <<1>> thawed out
             if (emergencyThawInProgress)
             {
-                ScreenMessages.PostScreenMessage(frozenkerbal + " was thawed out due to lack of Electrical Charge to run cryogenics", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00103", frozenkerbal), 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00103 = <<1>> was thawed out due to lack of Electrical Charge to run cryogenics
                 Debug.Log("DeepFreezer - kerbal " + frozenkerbal + " was thawed out due to lack of Electrical charge to run cryogenics");
                 DeepFreeze.Instance.setComatoseKerbal(part, kerbal, ProtoCrewMember.KerbalType.Tourist, true);
 
@@ -2830,15 +2855,14 @@ namespace DF
                 {
                      Utilities.Log("Unable to add to knownfrozenkerbals comatose crewmember " + kerbal.name);
                      Utilities.Log("Err: " + ex);
-                    ScreenMessages.PostScreenMessage("DeepFreezer mechanical failure", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                    ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00104"), 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00104 = DeepFreezer mechanical failure
                 }
             }
             Debug.Log("Thawed out: " + frozenkerbal);
             UpdateCounts(); // Update the Crew counts
             removeThawEvent(frozenkerbal); // Remove the Thaw Event for this kerbal.
             ding_ding.Play();
-            OpenPodAnimPlaying = false;
-            onvslchgInternal = true;
+            OpenPodAnimPlaying = false;            
             if (DFInstalledMods.IskerbalismInstalled) // IF Kerbalism Installed, add tracking.
             {
                 Utilities.Log_Debug("kerbalism installed track kerbal=" + frozenkerbal);
@@ -2853,8 +2877,7 @@ namespace DF
                 }
             }
             CrewHatchController.fetch.EnableInterface();
-            DFGameEvents.onKerbalThaw.Fire(this.part, kerbal);
-            GameEvents.onVesselChange.Fire(vessel);
+            DFGameEvents.onKerbalThaw.Fire(this.part, kerbal);            
             GameEvents.onVesselWasModified.Fire(vessel);
             Utilities.Log_Debug("ThawKerbalConfirm End");
         }
@@ -2916,7 +2939,7 @@ namespace DF
                 {
                      Utilities.Log("Unable to add to knownfrozenkerbals frozen crewmember " + kerbal.name);
                      Utilities.Log("Err: " + ex);
-                    ScreenMessages.PostScreenMessage("DeepFreezer mechanical failure", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                    ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00104"), 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00104 = DeepFreezer mechanical failure
                     return false;
                 }
                 if (partHasInternals && ExternalDoorActive)
@@ -3002,7 +3025,7 @@ namespace DF
                 {
                      Utilities.Log("Unable to remove knownfrozenkerbals frozen crewmember " + kerbal.name);
                      Utilities.Log("Err: " + ex);
-                    ScreenMessages.PostScreenMessage("DeepFreezer mechanical failure", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                    ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00104"), 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00104 = DeepFreezer mechanical failure
                     return false;
                 }
                 if (partHasInternals && ExternalDoorActive)
@@ -3170,14 +3193,14 @@ namespace DF
             //Check a Freeze or Thaw is not in progress, if it is, we must abort.
             if (IsThawActive)
             {
-                ScreenMessages.PostScreenMessage("Vessel about to change, Aborting Thaw process", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-                 Utilities.Log_Debug("Thawisactive - abort");
+                ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00105"), 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00105 = Vessel about to change, Aborting Thaw process
+                Utilities.Log_Debug("Thawisactive - abort");
                 ThawKerbalAbort(ToThawKerbal);
             }
             if (IsFreezeActive)
             {
-                ScreenMessages.PostScreenMessage("Vessel about to change, Aborting Freeze process", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-                 Utilities.Log_Debug("Freezeisactive - abort");
+                ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00106"), 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00106 = Vessel about to change, Aborting Freeze process
+                Utilities.Log_Debug("Freezeisactive - abort");
                 FreezeKerbalAbort(ActiveFrzKerbal);
             }
             //If the vessel we have changed to is the same as the vessel this partmodule is attached to we LOAD persistent vars, otherwise we SAVE persistent vars.
@@ -3230,13 +3253,13 @@ namespace DF
             //Check a Freeze or Thaw is not in progress, if it is, we must abort.
             if (IsThawActive)
             {
-                ScreenMessages.PostScreenMessage("Vessel about to change, Aborting Thaw process", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00105"), 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00105 = Vessel about to change, Aborting Thaw process
                 Utilities.Log_Debug("Thawisactive - abort");
                 ThawKerbalAbort(ToThawKerbal);
             }
             if (IsFreezeActive)
             {
-                ScreenMessages.PostScreenMessage("Vessel about to change, Aborting Freeze process", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00106"), 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00106 = Vessel about to change, Aborting Freeze process
                 Utilities.Log_Debug("Freezeisactive - abort");
                 FreezeKerbalAbort(ActiveFrzKerbal);
             }
@@ -3944,7 +3967,8 @@ namespace DF
         //This method sets the internal camera to the Freezer view prior to thawing or freezing a kerbal so we can see the nice animations.
         private void setIVAFrzrCam(int seatIndx)
         {
-            string camname = "FrzCam" + (seatIndx + 1);            
+            string camname = "FrzCam" + (seatIndx + 1);
+            internalSeatIdx = seatIndx;
             Camera cam = part.internalModel.FindModelComponent<Camera>(camname);
             if (cam != null)  //Found Freezer Camera so switch to it.
             {
@@ -4155,10 +4179,10 @@ namespace DF
         //It will consume ElectricCharge for Freezer that contain frozen kerbals for vessels that are unloaded, if the user has turned on the ECreqdForFreezer option in the settings menu.
         public static void FixedBackgroundUpdate(Vessel v, uint partFlightID, Func<Vessel, float, string, float> resourceRequest, ref Object data)
         {
-            if (Time.timeSinceLevelLoad < 2.0f) // Check not loading level
+            if (Time.timeSinceLevelLoad < 2.0f || CheatOptions.InfiniteElectricity) // Check not loading level
             {
                 return;
-            }
+            }            
             bool debug = true;
             try
             {
@@ -4224,12 +4248,12 @@ namespace DF
                         if (debug) Debug.Log("FixedBackgroundUpdate DeepFreezer Ran out of EC to run the freezer");
                         if (!partInfo.ECWarning)
                         {
-                            ScreenMessages.PostScreenMessage("Insufficient electric charge to monitor frozen kerbals.", 10.0f, ScreenMessageStyle.UPPER_CENTER);
+                            ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00072"), 10.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00072 = Insufficient electric charge to monitor frozen kerbals.
                             partInfo.ECWarning = true;
                             partInfo.deathCounter = currenttime;
                         }
                         if (OnGoingECMsg != null) ScreenMessages.RemoveMessage(OnGoingECMsg);
-                        OnGoingECMsg = ScreenMessages.PostScreenMessage(" Freezer Out of EC : Systems critical in " + (deathRoll - (currenttime - partInfo.deathCounter)).ToString("######0") + " secs");
+                        OnGoingECMsg = ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00073", (deathRoll - (currenttime - partInfo.deathCounter)).ToString("######0"))); //#autoLOC_DF_00073 = \u0020Freezer Out of EC : Systems critical in <<1>> secs
                         partInfo.outofEC = true;
                         if (debug) Debug.Log("FixedBackgroundUpdate deathCounter = " + partInfo.deathCounter);
                         if (currenttime - partInfo.deathCounter > deathRoll)
@@ -4250,7 +4274,7 @@ namespace DF
                                 foreach (string deathKerbal in kerbalsToDelete)
                                 {
                                     DeepFreeze.Instance.KillFrozenCrew(deathKerbal);
-                                    ScreenMessages.PostScreenMessage(deathKerbal + " died due to lack of Electrical Charge to run cryogenics", 10.0f, ScreenMessageStyle.UPPER_CENTER);
+                                    ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00074", deathKerbal), 10.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00074 = <<1>> died due to lack of Electrical Charge to run cryogenics
                                     if (debug) Debug.Log("FixedBackgroundUpdate DeepFreezer - kerbal " + deathKerbal + " died due to lack of Electrical charge to run cryogenics");
                                 }
                                 kerbalsToDelete.ForEach(id => DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.Remove(id));

@@ -18,12 +18,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-//using System.Text.RegularExpressions;
 using RSTUtils;
 using UnityEngine;
-//using Random = System.Random;
 using KSP.UI.Screens;
 using RSTUtils.Extensions;
+using KSP.Localization;
 
 namespace DF
 {
@@ -92,7 +91,163 @@ namespace DF
         
         public bool Useapplauncher;
         private double currentTime;
-        
+
+        #region Cache Strings
+
+        private static string cacheautoLOC_DF_00003;
+        private static string cacheautoLOC_DF_00004;
+        private static string cacheautoLOC_DF_00005;
+        private static string cacheautoLOC_DF_00006;
+        private static string cacheautoLOC_DF_00007;
+        private static string cacheautoLOC_DF_00008;
+        private static string cacheautoLOC_DF_00009;
+        private static string cacheautoLOC_DF_00010;
+        private static string cacheautoLOC_DF_00011;
+        private static string cacheautoLOC_DF_00012;
+        private static string cacheautoLOC_DF_00013;
+        private static string cacheautoLOC_DF_00014;
+        private static string cacheautoLOC_DF_00015;
+        private static string cacheautoLOC_DF_00016;
+        private static string cacheautoLOC_DF_00017;
+        private static string cacheautoLOC_DF_00018;
+        private static string cacheautoLOC_DF_00019;
+        private static string cacheautoLOC_DF_00020;
+        private static string cacheautoLOC_DF_00021;
+        private static string cacheautoLOC_DF_00022;
+        private static string cacheautoLOC_DF_00023;
+        private static string cacheautoLOC_DF_00024;
+        private static string cacheautoLOC_DF_00026;
+        private static string cacheautoLOC_DF_00027;
+        private static string cacheautoLOC_DF_00028;
+        private static string cacheautoLOC_DF_00030;
+        private static string cacheautoLOC_DF_00032;
+        private static string cacheautoLOC_DF_00033;
+        private static string cacheautoLOC_DF_00034;
+        private static string cacheautoLOC_DF_00035;
+        private static string cacheautoLOC_DF_00036;
+        private static string cacheautoLOC_DF_00037;
+        private static string cacheautoLOC_DF_00038;
+        private static string cacheautoLOC_DF_00039;
+        private static string cacheautoLOC_DF_00040;
+        private static string cacheautoLOC_DF_00041;
+        private static string cacheautoLOC_DF_00043;
+        private static string cacheautoLOC_DF_00044;
+        private static string cacheautoLOC_DF_00045;
+        private static string cacheautoLOC_DF_00046;
+        private static string cacheautoLOC_DF_00111;
+        private static string cacheautoLOC_DF_00112;
+        private static string cacheautoLOC_DF_00113;
+        private static string cacheautoLOC_DF_00114;
+        private static string cacheautoLOC_DF_00115;
+        private static string cacheautoLOC_DF_00116;
+        private static string cacheautoLOC_DF_00117;
+        private static string cacheautoLOC_DF_00118;
+        private static string cacheautoLOC_DF_00119;
+        private static string cacheautoLOC_DF_00120;
+        private static string cacheautoLOC_DF_00121;
+        private static string cacheautoLOC_DF_00122;
+        private static string cacheautoLOC_DF_00123;
+        private static string cacheautoLOC_DF_00124;
+        private static string cacheautoLOC_DF_00125;
+        private static string cacheautoLOC_DF_00126;
+        private static string cacheautoLOC_DF_00127;
+        private static string cacheautoLOC_DF_00128;
+        private static string cacheautoLOC_DF_00129;
+        private static string cacheautoLOC_DF_00130;
+        private static string cacheautoLOC_DF_00131;
+        private static string cacheautoLOC_DF_00132;
+        private static string cacheautoLOC_DF_00133;
+        private static string cacheautoLOC_DF_00134;
+        private static string cacheautoLOC_DF_00135;
+        private static string cacheautoLOC_DF_00136;
+        private static string cacheautoLOC_DF_00137;
+        private static string cacheautoLOC_DF_00138;
+        private static string cacheautoLOC_DF_00139;
+        private static string cacheautoLOC_DF_00140;
+        private static string cacheautoLOC_DF_00141;
+        private static string cacheautoLOC_DF_00142;
+        private static string cacheautoLOC_DF_00143;
+
+
+        private static void CacheLocalStrings()
+        {
+            cacheautoLOC_DF_00003 = Localizer.Format("#autoLOC_DF_00003"); //#autoLOC_DF_00003 = DeepFreeze
+            cacheautoLOC_DF_00009 = Localizer.Format("#autoLOC_DF_00004");
+            cacheautoLOC_DF_00009 = Localizer.Format("#autoLOC_DF_00005");
+            cacheautoLOC_DF_00009 = Localizer.Format("#autoLOC_DF_00006");
+            cacheautoLOC_DF_00009 = Localizer.Format("#autoLOC_DF_00007");
+            cacheautoLOC_DF_00008 = Localizer.Format("#autoLOC_DF_00008"); //#autoLOC_DF_00008 = Close Window
+            cacheautoLOC_DF_00009 = Localizer.Format("#autoLOC_DF_00009");
+            cacheautoLOC_DF_00010 = Localizer.Format("#autoLOC_DF_00010");
+            cacheautoLOC_DF_00011 = Localizer.Format("#autoLOC_DF_00011");
+            cacheautoLOC_DF_00012 = Localizer.Format("#autoLOC_DF_00012");
+            cacheautoLOC_DF_00013 = Localizer.Format("#autoLOC_DF_00013");
+            cacheautoLOC_DF_00014 = Localizer.Format("#autoLOC_DF_00014");
+            cacheautoLOC_DF_00015 = Localizer.Format("#autoLOC_DF_00015");
+            cacheautoLOC_DF_00016 = Localizer.Format("#autoLOC_DF_00016");
+            cacheautoLOC_DF_00017 = Localizer.Format("#autoLOC_DF_00017");
+            cacheautoLOC_DF_00018 = Localizer.Format("#autoLOC_DF_00018");
+            cacheautoLOC_DF_00019 = Localizer.Format("#autoLOC_DF_00019");
+            cacheautoLOC_DF_00020 = Localizer.Format("#autoLOC_DF_00020");
+            cacheautoLOC_DF_00021 = Localizer.Format("#autoLOC_DF_00021");
+            cacheautoLOC_DF_00022 = Localizer.Format("#autoLOC_DF_00022");
+            cacheautoLOC_DF_00023 = Localizer.Format("#autoLOC_DF_00023");
+            cacheautoLOC_DF_00024 = Localizer.Format("#autoLOC_DF_00024");
+            cacheautoLOC_DF_00026 = Localizer.Format("#autoLOC_DF_00026");
+            cacheautoLOC_DF_00027 = Localizer.Format("#autoLOC_DF_00027");
+            cacheautoLOC_DF_00028 = Localizer.Format("#autoLOC_DF_00028");
+            cacheautoLOC_DF_00030 = Localizer.Format("#autoLOC_DF_00029");
+            cacheautoLOC_DF_00032 = Localizer.Format("#autoLOC_DF_00032");
+            cacheautoLOC_DF_00033 = Localizer.Format("#autoLOC_DF_00033");
+            cacheautoLOC_DF_00034 = Localizer.Format("#autoLOC_DF_00034");
+            cacheautoLOC_DF_00035 = Localizer.Format("#autoLOC_DF_00035");
+            cacheautoLOC_DF_00036 = Localizer.Format("#autoLOC_DF_00036");
+            cacheautoLOC_DF_00037 = Localizer.Format("#autoLOC_DF_00037");
+            cacheautoLOC_DF_00038 = Localizer.Format("#autoLOC_DF_00038");
+            cacheautoLOC_DF_00039 = Localizer.Format("#autoLOC_DF_00039");
+            cacheautoLOC_DF_00040 = Localizer.Format("#autoLOC_DF_00040");
+            cacheautoLOC_DF_00041 = Localizer.Format("#autoLOC_DF_00041");
+            cacheautoLOC_DF_00043 = Localizer.Format("#autoLOC_DF_00043");
+            cacheautoLOC_DF_00044 = Localizer.Format("#autoLOC_DF_00044");
+            cacheautoLOC_DF_00045 = Localizer.Format("#autoLOC_DF_00045");
+            cacheautoLOC_DF_00046 = Localizer.Format("#autoLOC_DF_00046");
+            cacheautoLOC_DF_00111 = Localizer.Format("#autoLOC_DF_00111");
+            cacheautoLOC_DF_00112 = Localizer.Format("#autoLOC_DF_00112");
+            cacheautoLOC_DF_00113 = Localizer.Format("#autoLOC_DF_00113");
+            cacheautoLOC_DF_00114 = Localizer.Format("#autoLOC_DF_00114");
+            cacheautoLOC_DF_00115 = Localizer.Format("#autoLOC_DF_00115");
+            cacheautoLOC_DF_00116 = Localizer.Format("#autoLOC_DF_00116");
+            cacheautoLOC_DF_00117 = Localizer.Format("#autoLOC_DF_00117");
+            cacheautoLOC_DF_00118 = Localizer.Format("#autoLOC_DF_00118");
+            cacheautoLOC_DF_00119 = Localizer.Format("#autoLOC_DF_00119");
+            cacheautoLOC_DF_00120 = Localizer.Format("#autoLOC_DF_00120");
+            cacheautoLOC_DF_00121 = Localizer.Format("#autoLOC_DF_00121");
+            cacheautoLOC_DF_00122 = Localizer.Format("#autoLOC_DF_00122");
+            cacheautoLOC_DF_00123 = Localizer.Format("#autoLOC_DF_00123");
+            cacheautoLOC_DF_00124 = Localizer.Format("#autoLOC_DF_00124");
+            cacheautoLOC_DF_00125 = Localizer.Format("#autoLOC_DF_00125");
+            cacheautoLOC_DF_00126 = Localizer.Format("#autoLOC_DF_00126");
+            cacheautoLOC_DF_00127 = Localizer.Format("#autoLOC_DF_00127");
+            cacheautoLOC_DF_00128 = Localizer.Format("#autoLOC_DF_00128");
+            cacheautoLOC_DF_00129 = Localizer.Format("#autoLOC_DF_00129");
+            cacheautoLOC_DF_00130 = Localizer.Format("#autoLOC_DF_00130");
+            cacheautoLOC_DF_00131 = Localizer.Format("#autoLOC_DF_00131");
+            cacheautoLOC_DF_00132 = Localizer.Format("#autoLOC_DF_00132");
+            cacheautoLOC_DF_00133 = Localizer.Format("#autoLOC_DF_00133");
+            cacheautoLOC_DF_00134 = Localizer.Format("#autoLOC_DF_00134");
+            cacheautoLOC_DF_00135 = Localizer.Format("#autoLOC_DF_00135");
+            cacheautoLOC_DF_00136 = Localizer.Format("#autoLOC_DF_00136");
+            cacheautoLOC_DF_00137 = Localizer.Format("#autoLOC_DF_00137");
+            cacheautoLOC_DF_00138 = Localizer.Format("#autoLOC_DF_00138");
+            cacheautoLOC_DF_00139 = Localizer.Format("#autoLOC_DF_00139");
+            cacheautoLOC_DF_00140 = Localizer.Format("#autoLOC_DF_00140");
+            cacheautoLOC_DF_00141 = Localizer.Format("#autoLOC_DF_00141");
+            cacheautoLOC_DF_00142 = Localizer.Format("#autoLOC_DF_00142");
+            cacheautoLOC_DF_00143 = Localizer.Format("#autoLOC_DF_00143");
+    }
+
+        #endregion
+
         internal void OnDestroy()
         {
             DFMenuAppLToolBar.Destroy();
@@ -101,6 +256,7 @@ namespace DF
         internal void Start()
         {
             Utilities.Log_Debug("DeepFreezeGUI startup");
+            CacheLocalStrings();
             windowID = Utilities.getnextrandomInt();
             KACwindowID = Utilities.getnextrandomInt();
             VSwindowID = Utilities.getnextrandomInt();
@@ -134,7 +290,7 @@ namespace DF
 
             Utilities.setScaledScreen();
             
-            DFMenuAppLToolBar = new AppLauncherToolBar("DeepFreeze", "DeepFreeze",
+            DFMenuAppLToolBar = new AppLauncherToolBar("DeepFreeze", cacheautoLOC_DF_00003,
                 "REPOSoftTech/DeepFreeze/Icons/DFtoolbar",
                 ApplicationLauncher.AppScenes.SPACECENTER | ApplicationLauncher.AppScenes.FLIGHT |
                 ApplicationLauncher.AppScenes.MAPVIEW | ApplicationLauncher.AppScenes.SPH | ApplicationLauncher.AppScenes.VAB |
@@ -234,13 +390,13 @@ namespace DF
             {
 
                 DFVSwindowPos.ClampToScreen();
-                DFVSwindowPos = GUILayout.Window(VSwindowID, DFVSwindowPos, windowVS, "DeepFreeze Vessel Switch", GUILayout.ExpandWidth(false),
+                DFVSwindowPos = GUILayout.Window(VSwindowID, DFVSwindowPos, windowVS, cacheautoLOC_DF_00004, GUILayout.ExpandWidth(false),
                     GUILayout.ExpandHeight(true), GUILayout.Width(320), GUILayout.MinHeight(100));
             }
             if (showUnabletoSwitchVessel && !switchVesselManual)
             {
                 DFVSFwindowPos.ClampToScreen();
-                DFVSFwindowPos = GUILayout.Window(VSFwindowID, DFVSFwindowPos, windowVSF, "DeepFreeze Vessel Switch Failed", GUILayout.ExpandWidth(false),
+                DFVSFwindowPos = GUILayout.Window(VSFwindowID, DFVSFwindowPos, windowVSF, cacheautoLOC_DF_00005, GUILayout.ExpandWidth(false),
                     GUILayout.ExpandHeight(true), GUILayout.Width(320), GUILayout.MinHeight(100));
             }
             if (switchVesselManual)
@@ -259,13 +415,13 @@ namespace DF
             {
                 GUI.skin = HighLogic.Skin;
                 DFwindowPos.ClampInsideScreen();
-                DFwindowPos = GUILayout.Window(windowID, DFwindowPos, windowDF, "DeepFreeze Kerbals", GUILayout.ExpandWidth(true),
+                DFwindowPos = GUILayout.Window(windowID, DFwindowPos, windowDF, cacheautoLOC_DF_00006, GUILayout.ExpandWidth(true),
                         GUILayout.ExpandHeight(true), GUILayout.MinWidth(200), GUILayout.MinHeight(250));
                 
                 if (showKACGUI)
                 {
                     DFKACwindowPos.ClampInsideScreen();
-                    DFKACwindowPos = GUILayout.Window(KACwindowID, DFKACwindowPos, windowKAC, "DeepFreeze Alarms", GUILayout.ExpandWidth(true),
+                    DFKACwindowPos = GUILayout.Window(KACwindowID, DFKACwindowPos, windowKAC, cacheautoLOC_DF_00007, GUILayout.ExpandWidth(true),
                         GUILayout.ExpandHeight(true), GUILayout.MinWidth(360), GUILayout.MinHeight(150));
                 }
             }
@@ -273,10 +429,10 @@ namespace DF
             if (DeepFreeze.Instance.DFsettings.ToolTips)
                 Utilities.DrawToolTip();
         }
-
+        
         private void windowDF(int id)
         {
-            GUIContent closeContent = new GUIContent(Textures.BtnRedCross, "Close Window");
+            GUIContent closeContent = new GUIContent(Textures.BtnRedCross, cacheautoLOC_DF_00008); //"Close Window"
             Rect closeRect = new Rect(DFwindowPos.width - 21, 4, 16, 16);
             if (GUI.Button(closeRect, closeContent, Textures.ClosebtnStyle))
             {
@@ -287,16 +443,16 @@ namespace DF
             GUIscrollViewVector2 = GUILayout.BeginScrollView(GUIscrollViewVector2, false, false, GUILayout.MaxHeight(140f));
             GUILayout.BeginVertical();
             GUILayout.BeginHorizontal();
-            GUILayout.Label(new GUIContent("Vessel","Vessel Name"), Textures.sectionTitleLeftStyle, GUILayout.Width(DFvslWdthName));
-            GUILayout.Label(new GUIContent("Part", "Part Name"), Textures.sectionTitleLeftStyle, GUILayout.Width(DFvslPrtName));
-            GUILayout.Label(new GUIContent("Tmp", "Part Temperature Status"), Textures.sectionTitleLeftStyle, GUILayout.Width(DFvslPrtTmp));
-            GUILayout.Label(new GUIContent("EC", "Electric Charge Status"), Textures.sectionTitleLeftStyle, GUILayout.Width(DFvslPrtElec));
+            GUILayout.Label(new GUIContent(cacheautoLOC_DF_00009, cacheautoLOC_DF_00010), Textures.sectionTitleLeftStyle, GUILayout.Width(DFvslWdthName)); //"Vessel","Vessel Name"
+            GUILayout.Label(new GUIContent(cacheautoLOC_DF_00011, cacheautoLOC_DF_00012), Textures.sectionTitleLeftStyle, GUILayout.Width(DFvslPrtName)); //"Part", "Part Name"
+            GUILayout.Label(new GUIContent(cacheautoLOC_DF_00013, cacheautoLOC_DF_00014), Textures.sectionTitleLeftStyle, GUILayout.Width(DFvslPrtTmp)); //"Tmp", "Part Temperature Status"
+            GUILayout.Label(new GUIContent(cacheautoLOC_DF_00015, cacheautoLOC_DF_00016), Textures.sectionTitleLeftStyle, GUILayout.Width(DFvslPrtElec)); //"EC", "Electric Charge Status"
             if (DFInstalledMods.IsRTInstalled)
-                GUILayout.Label(new GUIContent("R.T", "Remote Tech Status"), Textures.sectionTitleLeftStyle, GUILayout.Width(DFvslRT));
-            GUILayout.Label(new GUIContent("Alarms", "Press the button for Kerbal Alarm Clock Alarms assigned to this part"), Textures.sectionTitleLeftStyle, GUILayout.Width(DFvslAlarms));
-            GUILayout.Label(new GUIContent("LastUpd", "The Time the part was last updated"), Textures.sectionTitleLeftStyle, GUILayout.Width(DFvslLstUpd));
+                GUILayout.Label(new GUIContent(cacheautoLOC_DF_00017, cacheautoLOC_DF_00018), Textures.sectionTitleLeftStyle, GUILayout.Width(DFvslRT)); //"R.T", "Remote Tech Status"
+            GUILayout.Label(new GUIContent(cacheautoLOC_DF_00019, cacheautoLOC_DF_00020), Textures.sectionTitleLeftStyle, GUILayout.Width(DFvslAlarms)); //"Alarms", "Press the button for Kerbal Alarm Clock Alarms assigned to this part"
+            GUILayout.Label(new GUIContent(cacheautoLOC_DF_00021, cacheautoLOC_DF_00022), Textures.sectionTitleLeftStyle, GUILayout.Width(DFvslLstUpd)); //"LastUpd", "The Time the part was last updated"
             if (DeepFreeze.Instance.DFsettings.ECreqdForFreezer)
-                GUILayout.Label(new GUIContent("TimeRem", "Approx. time remaining before Electric Charge will run out"), Textures.sectionTitleLeftStyle, GUILayout.Width(DFvslLstUpd));
+                GUILayout.Label(new GUIContent(cacheautoLOC_DF_00023, cacheautoLOC_DF_00024), Textures.sectionTitleLeftStyle, GUILayout.Width(DFvslLstUpd)); //"TimeRem", "Approx. time remaining before Electric Charge will run out"
             GUILayout.EndHorizontal();
             foreach (KeyValuePair<uint, PartInfo> frzr in DeepFreeze.Instance.DFgameSettings.knownFreezerParts)
             {
@@ -312,11 +468,11 @@ namespace DF
                 string TempVar;
                 if (DeepFreeze.Instance.DFsettings.TempinKelvin)
                 {
-                    TempVar = frzr.Value.cabinTemp.ToString("###0") + "K";
+                    TempVar = Localizer.Format("#autoLOC_DF_00047", frzr.Value.cabinTemp.ToString("###0")); //"K"
                 }
                 else
                 {
-                    TempVar = Utilities.KelvintoCelsius(frzr.Value.cabinTemp).ToString("###0") + "C";
+                    TempVar = Localizer.Format("#autoLOC_DF_00048", Utilities.KelvintoCelsius(frzr.Value.cabinTemp).ToString("###0")); //"C"
                 }
 
                 if (DeepFreeze.Instance.DFsettings.RegTempReqd && !chgECHeatsettings)
@@ -337,7 +493,7 @@ namespace DF
                             {
                                 GUILayout.Label(TempVar, Textures.StatusRedStyle, GUILayout.Width(DFvslPrtTmp));
                                 switchVessel = FlightGlobals.Vessels.Find(a => a.id == frzr.Value.vesselID);
-                                showSwitchVesselStr = "Vessel " + switchVessel.vesselName + " is Over-Heating.";
+                                showSwitchVesselStr = Localizer.Format("#autoLOC_DF_00025", switchVessel.vesselName); //Vessel <<1>> is Over-Heating.
                                 if (HighLogic.LoadedSceneIsFlight)
                                 {
                                     if (FlightGlobals.ActiveVessel.id != frzr.Value.vesselID && !switchVesselManual)
@@ -351,22 +507,22 @@ namespace DF
                 }
                 else
                 {
-                    GUILayout.Label("OFF", Textures.StatusGrayStyle, GUILayout.Width(DFvslPrtTmp));
+                    GUILayout.Label(cacheautoLOC_DF_00026, Textures.StatusGrayStyle, GUILayout.Width(DFvslPrtTmp)); //"OFF"
                 }
 
                 if (DeepFreeze.Instance.DFsettings.ECreqdForFreezer && !chgECHeatsettings)
                 {
                     if (frzr.Value.numFrznCrew == 0)
                     {
-                        GUILayout.Label("S/BY", Textures.StatusOKStyle, GUILayout.Width(DFvslPrtElec));
+                        GUILayout.Label(cacheautoLOC_DF_00027, Textures.StatusOKStyle, GUILayout.Width(DFvslPrtElec)); //"S/BY"
                     }
                     else
                     {
                         if (frzr.Value.outofEC)
                         {
-                            GUILayout.Label("OUT", Textures.StatusRedStyle, GUILayout.Width(DFvslPrtElec));
+                            GUILayout.Label(cacheautoLOC_DF_00028, Textures.StatusRedStyle, GUILayout.Width(DFvslPrtElec)); //"OUT"
                             switchVessel = FlightGlobals.Vessels.Find(a => a.id == frzr.Value.vesselID);
-                            showSwitchVesselStr = "Vessel " + switchVessel.vesselName + " is out of ElectricCharge.\n Situation Critical.";
+                            showSwitchVesselStr = Localizer.Format("#autoLOC_DF_00029", switchVessel.vesselName); //Vesssel <<1>> is out of ElectricCharge.\n Situation Critical.
                             if (HighLogic.LoadedSceneIsFlight)
                             {
                                 if (FlightGlobals.ActiveVessel.id != frzr.Value.vesselID && !switchVesselManual)
@@ -379,9 +535,9 @@ namespace DF
                         {
                             if (vsl.predictedECOut < DeepFreeze.Instance.DFsettings.EClowCriticalTime)
                             {
-                                GUILayout.Label("ALRT", Textures.StatusRedStyle, GUILayout.Width(DFvslPrtElec));
+                                GUILayout.Label(cacheautoLOC_DF_00030, Textures.StatusRedStyle, GUILayout.Width(DFvslPrtElec)); //"ALRT"
                                 switchVessel = FlightGlobals.Vessels.Find(a => a.id == frzr.Value.vesselID);
-                                showSwitchVesselStr = "Vessel " + switchVessel.vesselName + " is almost out of ElectricCharge.";
+                                showSwitchVesselStr = Localizer.Format("#autoLOC_DF_00031", switchVessel.vesselName); //Vessel <<1>> is almost out of ElectricCharge.
                                 if (HighLogic.LoadedSceneIsFlight)
                                 {
                                     if (FlightGlobals.ActiveVessel.id != frzr.Value.vesselID && !switchVesselManual)
@@ -395,11 +551,11 @@ namespace DF
                                 if (vsl.predictedECOut < DeepFreeze.Instance.DFsettings.ECLowWarningTime)  // ONE HOUR OF EC WARNING
                                 {
                                     // Utilities.Log_Debug("Remaining EC time " + vsl.predictedECOut);
-                                    GUILayout.Label("LOW", Textures.StatusWarnStyle, GUILayout.Width(DFvslPrtElec));
+                                    GUILayout.Label(cacheautoLOC_DF_00032, Textures.StatusWarnStyle, GUILayout.Width(DFvslPrtElec)); //"LOW"
                                 }
                                 else
                                 {
-                                    GUILayout.Label("OK", Textures.StatusOKStyle, GUILayout.Width(DFvslPrtElec));
+                                    GUILayout.Label(cacheautoLOC_DF_00033, Textures.StatusOKStyle, GUILayout.Width(DFvslPrtElec)); //"OK"
                                 }
                             }
                         }
@@ -407,18 +563,18 @@ namespace DF
                 }
                 else
                 {
-                    GUILayout.Label("OFF", Textures.StatusGrayStyle, GUILayout.Width(DFvslPrtElec));
+                    GUILayout.Label(cacheautoLOC_DF_00026, Textures.StatusGrayStyle, GUILayout.Width(DFvslPrtElec)); //"OFF"
                 }
 
                 if (DFInstalledMods.IsRTInstalled)
                 {
                     if (DFInstalledMods.RTVesselConnected(frzr.Value.vesselID))
                     {
-                        GUILayout.Label("OK", Textures.StatusOKStyle, GUILayout.Width(DFvslRT));
+                        GUILayout.Label(cacheautoLOC_DF_00033, Textures.StatusOKStyle, GUILayout.Width(DFvslRT)); //"OK"
                     }
                     else
                     {
-                        GUILayout.Label("NC", Textures.StatusRedStyle, GUILayout.Width(DFvslRT));
+                        GUILayout.Label(cacheautoLOC_DF_00034, Textures.StatusRedStyle, GUILayout.Width(DFvslRT)); //"NC"
                     }
                 }
 
@@ -427,7 +583,7 @@ namespace DF
                 if (DeepFreeze.Instance.DFgameSettings.knownKACAlarms.Any(e => e.Value.VesselID == frzr.Value.vesselID))
                 {
                     //GUILayout.Label("Active", StatusOKStyle, GUILayout.Width(DFvslAlarms));
-                    if (GUILayout.Button(new GUIContent("Alarm", "Go to Alarms"), GUILayout.Width(DFvslAlarms)))
+                    if (GUILayout.Button(new GUIContent(cacheautoLOC_DF_00035, cacheautoLOC_DF_00036), GUILayout.Width(DFvslAlarms))) //"Alarm", "Go to Alarms"
                     {
                         showKACGUI = !showKACGUI;
                     }
@@ -526,16 +682,16 @@ namespace DF
             if (DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals.Count == 0)
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Label("There are currently no Frozen Kerbals", Textures.frozenStyle);
+                GUILayout.Label(cacheautoLOC_DF_00037, Textures.frozenStyle); //"There are currently no Frozen Kerbals"
                 GUILayout.EndHorizontal();
             }
             else
             {
                 Headers = true;
                 GUILayout.BeginHorizontal();
-                GUILayout.Label("Kerbal Name", Textures.sectionTitleLeftStyle, GUILayout.Width(DFtxtWdthName));
-                GUILayout.Label("Profession", Textures.sectionTitleLeftStyle, GUILayout.Width(DFtxtWdthProf));
-                GUILayout.Label("Vessel Name", Textures.sectionTitleLeftStyle, GUILayout.Width(DFtxtWdthVslN));
+                GUILayout.Label(cacheautoLOC_DF_00038, Textures.sectionTitleLeftStyle, GUILayout.Width(DFtxtWdthName)); //"Kerbal Name"
+                GUILayout.Label(cacheautoLOC_DF_00039, Textures.sectionTitleLeftStyle, GUILayout.Width(DFtxtWdthProf)); //"Profession"
+                GUILayout.Label(cacheautoLOC_DF_00010, Textures.sectionTitleLeftStyle, GUILayout.Width(DFtxtWdthVslN)); //"Vessel Name"
                 GUILayout.EndHorizontal();
                 List<KeyValuePair<string, KerbalInfo>> ThawKeysToDelete = new List<KeyValuePair<string, KerbalInfo>>();
                 foreach (KeyValuePair<string, KerbalInfo> kerbal in DeepFreeze.Instance.DFgameSettings.KnownFrozenKerbals)
@@ -559,7 +715,7 @@ namespace DF
                                 {
                                     GUI.enabled = false;
                                 }
-                                if (GUILayout.Button(new GUIContent("Thaw", "Thaw this Kerbal"), GUILayout.Width(50f)))
+                                if (GUILayout.Button(new GUIContent(cacheautoLOC_DF_00040, cacheautoLOC_DF_00041), GUILayout.Width(50f))) //"Thaw", "Thaw this Kerbal"
                                 {
                                     DeepFreezer frzr = DFIntMemory.Instance.DpFrzrActVsl.FirstOrDefault(a => a.part.flightID == kerbal.Value.partID);
                                     if (frzr != null)
@@ -571,14 +727,14 @@ namespace DF
                         }
                         if (HighLogic.LoadedScene == GameScenes.SPACECENTER)
                         {
-                            if (GUILayout.Button(new GUIContent("Thaw", "Thaw this Kerbal"), GUILayout.Width(50f)))
+                            if (GUILayout.Button(new GUIContent(cacheautoLOC_DF_00040, cacheautoLOC_DF_00041), GUILayout.Width(50f))) //"Thaw", "Thaw this Kerbal"
                             {
                                 // We need to check kerbal isn't in a vessel still out there somewhere....
                                 Vessel vessel = FlightGlobals.Vessels.Find(v => v.id == kerbal.Value.vesselID);
                                 if (vessel != null)
                                 {
                                     Utilities.Log_Debug("Cannot thaw, vessel still exists " + vessel.situation + " at " + vessel.mainBody.bodyName);
-                                    ScreenMessages.PostScreenMessage("Cannot thaw " + kerbal.Key + " from KSC. Vessel still exists " + vessel.situation + " at " + vessel.mainBody.bodyName, 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                                    ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00042", kerbal.Key, vessel.situation.displayDescription(), vessel.mainBody.displayName), 5.0f, ScreenMessageStyle.UPPER_CENTER); //Cannot thaw <<1>> from KSC. Vessel still exists <<2>> at <<3>>
                                 }
                                 else
                                 {
@@ -601,9 +757,9 @@ namespace DF
                 if (!Headers)
                 {
                     GUILayout.BeginHorizontal();
-                    GUILayout.Label("Kerbal Name", Textures.sectionTitleLeftStyle, GUILayout.Width(DFtxtWdthName));
-                    GUILayout.Label("Profession", Textures.sectionTitleLeftStyle, GUILayout.Width(DFtxtWdthProf));
-                    GUILayout.Label("Vessel Name", Textures.sectionTitleLeftStyle, GUILayout.Width(DFtxtWdthVslN));
+                    GUILayout.Label(cacheautoLOC_DF_00038, Textures.sectionTitleLeftStyle, GUILayout.Width(DFtxtWdthName)); //"Kerbal Name"
+                    GUILayout.Label(cacheautoLOC_DF_00039, Textures.sectionTitleLeftStyle, GUILayout.Width(DFtxtWdthProf)); //"Profession"
+                    GUILayout.Label(cacheautoLOC_DF_00010, Textures.sectionTitleLeftStyle, GUILayout.Width(DFtxtWdthVslN)); //"Vessel Name"
                     GUILayout.EndHorizontal();
                     Headers = true;
                 }
@@ -629,7 +785,7 @@ namespace DF
                         {
                             GUI.enabled = false;
                         }
-                        if (GUILayout.Button(new GUIContent("Freeze", "Freeze this Kerbal"), GUILayout.Width(50f)))
+                        if (GUILayout.Button(new GUIContent(cacheautoLOC_DF_00043, cacheautoLOC_DF_00044), GUILayout.Width(50f))) //"Freeze", "Freeze this Kerbal"
                         {
                             frzr.beginFreezeKerbal(crew[i]);
                         }
@@ -645,7 +801,7 @@ namespace DF
             GUILayout.Space(24);
             if (KACWrapper.AssemblyExists && KACWrapper.InstanceExists && KACWrapper.APIReady)
             {
-                GUIContent AlarmsContent = new GUIContent("Alarms", "KAC Alarms");
+                GUIContent AlarmsContent = new GUIContent(cacheautoLOC_DF_00019, cacheautoLOC_DF_00045);  //"Alarms", "KAC Alarms"
                 Rect AlarmsRect = new Rect(DFwindowPos.width - 95, DFwindowPos.height - 22, 70, 20);
                 if (GUI.Button(AlarmsRect, AlarmsContent))
                 {
@@ -653,7 +809,7 @@ namespace DF
                 }
             }
             
-            GUIContent resizeContent = new GUIContent(Textures.BtnResize, "Resize Window");
+            GUIContent resizeContent = new GUIContent(Textures.BtnResize, cacheautoLOC_DF_00046); //"Resize Window"
             Rect resizeRect = new Rect(DFwindowPos.width - 21, DFwindowPos.height - 22, 16, 16);
             GUI.Label(resizeRect, resizeContent, Textures.ResizeStyle);
 
@@ -667,7 +823,7 @@ namespace DF
         
         private void windowKAC(int id)
         {
-            GUIContent closeContent = new GUIContent(Textures.BtnRedCross, "Close Window");
+            GUIContent closeContent = new GUIContent(Textures.BtnRedCross, cacheautoLOC_DF_00008); //"Close Window"
             Rect closeRect = new Rect(DFKACwindowPos.width - 21, 4, 16, 16);
             if (GUI.Button(closeRect, closeContent, Textures.ClosebtnStyle))
             {
@@ -681,14 +837,14 @@ namespace DF
             GUIscrollViewVectorKAC = GUILayout.BeginScrollView(GUIscrollViewVectorKAC, false, false);
             GUILayout.BeginVertical();
             GUILayout.BeginHorizontal();
-            GUILayout.Label(new GUIContent("Name", "Alarm Name"), Textures.sectionTitleLeftStyle, GUILayout.Width(KACtxtWdthName));
-            GUILayout.Label(new GUIContent("Alarm Type", "KAC Alarm Type"), Textures.sectionTitleLeftStyle, GUILayout.Width(KACtxtWdthAtyp));
-            GUILayout.Label(new GUIContent("Time Remain.", "Time remaining before Alarm is triggered"), Textures.sectionTitleLeftStyle, GUILayout.Width(KACtxtWdthATme));
+            GUILayout.Label(new GUIContent(cacheautoLOC_DF_00111, cacheautoLOC_DF_00112), Textures.sectionTitleLeftStyle, GUILayout.Width(KACtxtWdthName)); //#autoLOC_DF_00111 = Name #autoLOC_DF_00112 = Alarm Name
+            GUILayout.Label(new GUIContent(cacheautoLOC_DF_00113, cacheautoLOC_DF_00114), Textures.sectionTitleLeftStyle, GUILayout.Width(KACtxtWdthAtyp)); //#autoLOC_DF_00113 = Alarm Type #autoLOC_DF_00114 = KAC Alarm Type
+            GUILayout.Label(new GUIContent(cacheautoLOC_DF_00115, cacheautoLOC_DF_00116), Textures.sectionTitleLeftStyle, GUILayout.Width(KACtxtWdthATme)); //#autoLOC_DF_00115 = Time Remain. #autoLOC_DF_00116 = Time remaining before Alarm is triggered
             GUILayout.EndHorizontal();
             if (KACWrapper.KAC.Alarms.Count == 0)
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Label("There are currently no KAC alarms associated to a DeepFreeze vessel", Textures.frozenStyle);
+                GUILayout.Label(cacheautoLOC_DF_00117, Textures.frozenStyle); //#autoLOC_DF_00117 = There are currently no KAC alarms associated to a DeepFreeze vessel
                 GUILayout.EndHorizontal();
             }
             else
@@ -725,14 +881,14 @@ namespace DF
                         {
                             //If a modify is in progress we turn off the delete button
                             GUI.enabled = false;
-                            GUILayout.Button(new GUIContent("Delete", "Delete this KAC alarm completely"), GUILayout.Width(50));
+                            GUILayout.Button(new GUIContent(cacheautoLOC_DF_00118, cacheautoLOC_DF_00119), GUILayout.Width(50)); //#autoLOC_DF_00118 = Delete #autoLOC_DF_00119 = Delete this KAC alarm completely
                             GUI.enabled = true;
                             // Utilities.Log_Debug("Delete button disabled");
                         }
                         else
                         {
                             if (TmeRemaining <= 0) GUI.enabled = false;
-                            if (GUILayout.Button(new GUIContent("Delete", "Delete this KAC alarm completely"), GUILayout.Width(50)))
+                            if (GUILayout.Button(new GUIContent(cacheautoLOC_DF_00118, cacheautoLOC_DF_00119), GUILayout.Width(50))) //#autoLOC_DF_00118 = Delete #autoLOC_DF_00119 = Delete this KAC alarm completely
                             {
                                 KACWrapper.KAC.DeleteAlarm(alarm.ID);
                             }
@@ -745,36 +901,36 @@ namespace DF
                             if (KACalarmMod.ID != alarm.ID) //If it isn't this alarm we disable the button
                             {
                                 GUI.enabled = false;
-                                GUILayout.Button(new GUIContent("Modify", "Modify this Alarm"), GUILayout.Width(50));
+                                GUILayout.Button(new GUIContent(cacheautoLOC_DF_00120, cacheautoLOC_DF_00121), GUILayout.Width(50)); //#autoLOC_DF_00120 = Modify #autoLOC_DF_00121 = Modify this Alarm
                                 GUI.enabled = true;
                                 // Utilities.Log_Debug("Modify button disabled");
                             }
                             else //We are modifying an alarm and it's this one. So we draw a SAVE and Cancel button to save/cancel changes.
                             {
                                 // Utilities.Log_Debug("mod in progress and it's this one, change to Save/Cancel");
-                                if (GUILayout.Button(new GUIContent("Save", "Save Alarm Changes"), GUILayout.Width(50)))
+                                if (GUILayout.Button(new GUIContent(cacheautoLOC_DF_00122, cacheautoLOC_DF_00123), GUILayout.Width(50))) //#autoLOC_DF_00122 = Save #autoLOC_DF_00123 = Save Alarm Changes
                                 {
                                     if (DFInstalledMods.IsRTInstalled && !DFInstalledMods.RTVesselConnected(tmpid))
                                     {
-                                        ScreenMessages.PostScreenMessage("Cannot Save Alarm. No R/Tech Connection to vessel.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                                        ScreenMessages.PostScreenMessage(cacheautoLOC_DF_00124, 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00124 = Cannot Save Alarm. No R/Tech Connection to vessel.
                                     }
                                     else
                                     {
                                         if (TmeRemaining > 0)
                                         {
                                             DFIntMemory.Instance.ModifyKACAlarm(KACalarmMod, KACAlarm_FrzKbls, KACAlarm_ThwKbls);
-                                            ScreenMessages.PostScreenMessage("DeepFreeze Alarm changes Saved.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                                            ScreenMessages.PostScreenMessage(cacheautoLOC_DF_00125, 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00125 = DeepFreeze Alarm changes Saved.
                                             // Utilities.Log_Debug("DF KAC Modified alarm " + KACalarmMod.ID + " " + KACalarmMod.Name);
                                         }
                                         else
                                         {
-                                            ScreenMessages.PostScreenMessage("DeepFreeze Cannot Save alarm changes, Time is up.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                                            ScreenMessages.PostScreenMessage(cacheautoLOC_DF_00126, 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00126 = DeepFreeze Cannot Save alarm changes, Time is up.
                                             Utilities.Log_Debug("DF KAC Couldn't save Modified alarm time is up");
                                         }
                                     }
                                     ModKACAlarm = false;
                                 }
-                                if (GUILayout.Button(new GUIContent("Cancel", "Cancel any changes"), GUILayout.Width(50)))
+                                if (GUILayout.Button(new GUIContent(cacheautoLOC_DF_00127, cacheautoLOC_DF_00128), GUILayout.Width(50))) //#autoLOC_DF_00127 = Cancel #autoLOC_DF_00128 = Cancel any changes
                                 {
                                     // Utilities.Log_Debug("User cancelled mod");
                                     ModKACAlarm = false;
@@ -783,10 +939,10 @@ namespace DF
                                 GUIscrollViewVectorKACKerbals = GUILayout.BeginScrollView(GUIscrollViewVectorKACKerbals, false, false, GUILayout.MaxHeight(100f));
                                 GUILayout.BeginVertical();
                                 GUILayout.BeginHorizontal();
-                                GUILayout.Label(new GUIContent("Name", "The Kerbals Name"), Textures.sectionTitleLeftStyle, GUILayout.Width(KACtxtWdthKName));
-                                GUILayout.Label(new GUIContent("Trait", "The Kerbals Profession"), Textures.sectionTitleLeftStyle, GUILayout.Width(KACtxtWdthKTyp));
-                                GUILayout.Label(new GUIContent("Thaw", "Thaw this kerbal on alarm activation"), Textures.sectionTitleLeftStyle, GUILayout.Width(KACtxtWdthKTg1));
-                                GUILayout.Label(new GUIContent("Freeze", "Freeze this kerbal on alarm activation"), Textures.sectionTitleLeftStyle, GUILayout.Width(KACtxtWdthKTg2));
+                                GUILayout.Label(new GUIContent(cacheautoLOC_DF_00129, cacheautoLOC_DF_00130), Textures.sectionTitleLeftStyle, GUILayout.Width(KACtxtWdthKName)); //#autoLOC_DF_00129 = Name #autoLOC_DF_00130 = The Kerbals Name
+                                GUILayout.Label(new GUIContent(cacheautoLOC_DF_00131, cacheautoLOC_DF_00132), Textures.sectionTitleLeftStyle, GUILayout.Width(KACtxtWdthKTyp)); //#autoLOC_DF_00131 = Trait #autoLOC_DF_00132 = The Kerbals Profession
+                                GUILayout.Label(new GUIContent(cacheautoLOC_DF_00133, cacheautoLOC_DF_00134), Textures.sectionTitleLeftStyle, GUILayout.Width(KACtxtWdthKTg1)); //#autoLOC_DF_00133 = Thaw #autoLOC_DF_00134 = Thaw this kerbal on alarm activation
+                                GUILayout.Label(new GUIContent(cacheautoLOC_DF_00135, cacheautoLOC_DF_00136), Textures.sectionTitleLeftStyle, GUILayout.Width(KACtxtWdthKTg2)); //#autoLOC_DF_00135 = Freeze #autoLOC_DF_00136 = Freeze this kerbal on alarm activation
                                 GUILayout.EndHorizontal();
                                 //Build the Crew list for the alarm and allow modifications
                                 List<KeyValuePair<uint, PartInfo>> frzrs = DeepFreeze.Instance.DFgameSettings.knownFreezerParts.Where(a => a.Value.vesselID == tmpid).ToList();
@@ -894,7 +1050,7 @@ namespace DF
                         {
                             // Utilities.Log_Debug("no modify in progress so just show modify buttons on KAC alarm");
                             if (TmeRemaining <= 0) GUI.enabled = false;
-                            if (GUILayout.Button(new GUIContent("Modify", "Modify this Alarms settings"), GUILayout.Width(50)))
+                            if (GUILayout.Button(new GUIContent(cacheautoLOC_DF_00137, cacheautoLOC_DF_00138), GUILayout.Width(50))) //#autoLOC_DF_00137 = Modify #autoLOC_DF_00138 = Modify this Alarms settings
                             {
                                 KACalarmMod = alarm;
                                 KACAlarm_FrzKbls.Clear();
@@ -913,7 +1069,7 @@ namespace DF
             GUILayout.EndVertical();
             GUILayout.Space(14);
 
-            GUIContent resizeContent = new GUIContent(Textures.BtnResize, "Resize Window");
+            GUIContent resizeContent = new GUIContent(Textures.BtnResize, cacheautoLOC_DF_00046); //#autoLOC_DF_00046 = Resize Window
             Rect resizeRect = new Rect(DFKACwindowPos.width - 17, DFKACwindowPos.height - 17, 16, 16);
             GUI.Label(resizeRect, resizeContent, Textures.ResizeStyle);
             
@@ -937,14 +1093,14 @@ namespace DF
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button(new GUIContent("Switch to Vessel", "Switch to Vessel"), GUILayout.Width(160)))
+            if (GUILayout.Button(new GUIContent(cacheautoLOC_DF_00139, cacheautoLOC_DF_00139), GUILayout.Width(160))) //#autoLOC_DF_00139 = Switch to Vessel
             {
                 showSwitchVessel = false;
                 if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ready)
                     FlightDriver.SetPause(false);
                 switchNextUpdate = true;
             }
-            if (GUILayout.Button(new GUIContent("Not Now", "Don't switch vessel now"), GUILayout.Width(160)))
+            if (GUILayout.Button(new GUIContent(cacheautoLOC_DF_00140, cacheautoLOC_DF_00141), GUILayout.Width(160))) //#autoLOC_DF_00140 = Not Now #autoLOC_DF_00141 = Don't switch vessel now
             {
                 showSwitchVessel = false;
                 switchVesselManual = true;
@@ -967,11 +1123,11 @@ namespace DF
 
             GUILayout.BeginVertical();
             GUILayout.BeginHorizontal();
-            GUILayout.Box(new GUIContent("Automatic Switch to vessel failed.\nPlease switch manually to vessel Immediately", "Switch to DeepFreeze vessel required"), Textures.statusStyle, GUILayout.Width(280));
+            GUILayout.Box(new GUIContent(cacheautoLOC_DF_00142, cacheautoLOC_DF_00143), Textures.statusStyle, GUILayout.Width(280)); //#autoLOC_DF_00142 = Automatic Switch to vessel failed.\nPlease switch manually to vessel Immediately #autoLOC_DF_00143 = Switch to DeepFreeze vessel required
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button(new GUIContent("OK", "OK")))
+            if (GUILayout.Button(new GUIContent(cacheautoLOC_DF_00033, cacheautoLOC_DF_00033))) //"OK, "OK"
             {
                 showSwitchVessel = false;
                 showUnabletoSwitchVessel = false;
