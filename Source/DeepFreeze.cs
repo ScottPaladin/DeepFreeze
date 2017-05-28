@@ -21,7 +21,8 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using RSTUtils;
-using UnityEngine; 
+using UnityEngine;
+using KSP.Localization;
 
 namespace DF
 {
@@ -237,7 +238,7 @@ namespace DF
                                 realkerbal.type = ProtoCrewMember.KerbalType.Unowned;
                                 realkerbal.rosterStatus = ProtoCrewMember.RosterStatus.Dead;
                                  Utilities.Log_Debug("Kerbal " + realkerbal.name + " " + realkerbal.type + " " + realkerbal.rosterStatus);
-                                ScreenMessages.PostScreenMessage(key + " was stored frozen at KSC", 5.0f, ScreenMessageStyle.UPPER_LEFT);
+                                ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00049", key), 5.0f, ScreenMessageStyle.UPPER_LEFT);
                             }
                         }
                     }
@@ -338,7 +339,7 @@ namespace DF
                         else
                         {
                             Utilities.Log("Not enough funds to thaw kerbal");
-                            ScreenMessages.PostScreenMessage("Insufficient funds to thaw " + kerbal.name + " at this time", 5.0f, ScreenMessageStyle.UPPER_LEFT);
+                            ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00050", kerbal.name), 5.0f, ScreenMessageStyle.UPPER_LEFT);
                             return;
                         }
                     }
@@ -350,18 +351,18 @@ namespace DF
                      Utilities.Log_Debug("Kerbal " + kerbal.name + " " + kerbal.type + " " + kerbal.rosterStatus);
                     if (!fundstaken)
                     {
-                        ScreenMessages.PostScreenMessage(kerbal.name + " was found and thawed out", 5.0f, ScreenMessageStyle.UPPER_LEFT);
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00051", kerbal.name), 5.0f, ScreenMessageStyle.UPPER_LEFT);
                     }
                     else
                     {
-                        ScreenMessages.PostScreenMessage(kerbal.name + " was found and thawed out " + DFsettings.KSCcostToThawKerbal.ToString("########0") + " funds deducted from account", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00052", kerbal.name, DFsettings.KSCcostToThawKerbal.ToString("########0")), 5.0f, ScreenMessageStyle.UPPER_CENTER);
                     }
                     DFgameSettings.KnownFrozenKerbals.Remove(kerbal.name);
                 }
                 else
                 {
                     Utilities.Log("Cannot thaw, vessel still exists " + vessel.situation + " at " + vessel.mainBody.bodyName);
-                    ScreenMessages.PostScreenMessage("Cannot thaw " + kerbal.name + " vessel still exists " + vessel.situation + " at " + vessel.mainBody.bodyName, 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                    ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00053", kerbal.name, vessel.SituationString, vessel.mainBody.displayName), 5.0f, ScreenMessageStyle.UPPER_CENTER);
                 }
             }
         }
@@ -421,12 +422,12 @@ namespace DF
                     crew.RegisterExperienceTraits(part);
                     DFGameEvents.onKerbalUnSetComatose.Fire(part, crew);
                     ScreenMessages.PostScreenMessage(
-                            crew.name + " has recovered from emergency thaw and resumed normal duties.", 5.0f,
+                            Localizer.Format("#autoLOC_DF_00001", crew.name), 5.0f,
                             ScreenMessageStyle.UPPER_CENTER);
                 }
                 else
                 {
-                    ScreenMessages.PostScreenMessage(crew.name + " has been emergency thawed and cannot perform duties for " + Instance.DFsettings.comatoseTime / 60 + " minutes.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                    ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00002", crew.name, Instance.DFsettings.comatoseTime / 60), 5.0f, ScreenMessageStyle.UPPER_CENTER);
                 }
                 
                 return true;

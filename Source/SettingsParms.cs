@@ -1,41 +1,42 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Text;
 using UnityEngine;
+using KSP.Localization;
 
 namespace DF
 {
     public class DeepFreeze_SettingsParms : GameParameters.CustomParameterNode
 
     {
-        public override string Title { get { return "DeepFreeze Options"; } }
+        public override string Title { get { return Localizer.Format("#autoLOC_DF_00144"); } } //#autoLOC_DF_00144 = DeepFreeze Options
         public override GameParameters.GameMode GameMode { get { return GameParameters.GameMode.ANY; } }
         public override bool HasPresets { get { return true; } }
         public override string Section { get { return "DeepFreeze"; } }
+        public override string DisplaySection { get { return Localizer.Format("#autoLOC_DF_00003"); } } //#autoLOC_DF_00003 = DeepFreeze
         public override int SectionOrder { get { return 1; } }
 
         
-        [GameParameters.CustomParameterUI("ElectricCharge Required to run Freezers", autoPersistance = true, toolTip = "If on, EC is required to run freezers")]
+        [GameParameters.CustomParameterUI("#autoLOC_DF_00145", autoPersistance = true, toolTip = "#autoLOC_DF_00146")] //#autoLOC_DF_00145 = ElectricCharge Required to run Freezers #autoLOC_DF_00146 = If on, EC is required to run freezers
         public bool ECreqdForFreezer = false;
 
-        [GameParameters.CustomParameterUI("Fatal EC/Heat Option", autoPersistance = true, toolTip = "If on Kerbals will die if EC runs out or it gets too hot")]
+        [GameParameters.CustomParameterUI("#autoLOC_DF_00147", autoPersistance = true, toolTip = "#autoLOC_DF_00148")] //#autoLOC_DF_00147 = Fatal EC/Heat Option #autoLOC_DF_00148 = If on Kerbals will die if EC runs out or it gets too hot
         public bool fatalOption = false;
 
-        [GameParameters.CustomIntParameterUI("Non Fatal Comatose Time(in secs)", minValue = 60, maxValue = 10000, stepSize = 60, autoPersistance = true, toolTip = "The time in seconds a kerbal is comatose\n if fatal EC / Heat option is off")]
+        [GameParameters.CustomIntParameterUI("#autoLOC_DF_00149", minValue = 60, maxValue = 10000, stepSize = 60, autoPersistance = true, toolTip = "#autoLOC_DF_00150")] //#autoLOC_DF_00149 = Non Fatal Comatose Time(in secs) #autoLOC_DF_00150 = The time in seconds a kerbal is comatose\n if fatal EC / Heat option is off
         public int comatoseTime = 300;
 
-        [GameParameters.CustomParameterUI("AutoRecover Frozen Kerbals at KSC", autoPersistance = true, toolTip = "If on, will AutoRecover Frozen Kerbals at the KSC\n and deduct the Cost from your funds")]
+        [GameParameters.CustomParameterUI("#autoLOC_DF_00151", autoPersistance = true, toolTip = "#autoLOC_DF_00152")] //#autoLOC_DF_00151 = AutoRecover Frozen Kerbals at KSC #autoLOC_DF_00152 = If on, will AutoRecover Frozen Kerbals at the KSC\n and deduct the Cost from your funds
         public bool AutoRecoverFznKerbals = false;
 
-        [GameParameters.CustomFloatParameterUI("Cost to Thaw a Kerbal at KSC",toolTip = "Amt of currency Reqd to Freeze a Kerbal from the KSC", minValue = 0, maxValue = 500000, gameMode = GameParameters.GameMode.CAREER)]
+        [GameParameters.CustomFloatParameterUI("#autoLOC_DF_00153", toolTip = "#autoLOC_DF_00154", minValue = 0, maxValue = 500000, gameMode = GameParameters.GameMode.CAREER)] //#autoLOC_DF_00153 = Cost to Thaw a Kerbal at KSC #autoLOC_DF_00154 = Amt of currency Reqd to Freeze a Kerbal from the KSC
         public float KSCcostToThawKerbal = 10000f;
 
-        [GameParameters.CustomIntParameterUI("EC Reqd to Freeze/Thaw a Kerbal", autoPersistance = true, minValue = 0, maxValue = 10000, stepSize = 10, toolTip = "Amt of ElecCharge Reqd to Freeze/Thaw a Kerbal.")]
+        [GameParameters.CustomIntParameterUI("#autoLOC_DF_00155", autoPersistance = true, minValue = 0, maxValue = 10000, stepSize = 10, toolTip = "#autoLOC_DF_00156")] //#autoLOC_DF_00155 = EC Reqd to Freeze/Thaw a Kerbal #autoLOC_DF_00156 = Amt of ElecCharge Reqd to Freeze/Thaw a Kerbal.
         public int ECReqdToFreezeThaw = 3000;
 
-        [GameParameters.CustomIntParameterUI("Glykerol Reqd to Freeze a Kerbal", autoPersistance = true, minValue = 0, maxValue = 50, toolTip = "Amt of Glykerol used to Freeze a Kerbal,\nOverrides Part values.")]
+        [GameParameters.CustomIntParameterUI("#autoLOC_DF_00157", autoPersistance = true, minValue = 0, maxValue = 50, toolTip = "#autoLOC_DF_00158")] //#autoLOC_DF_00157 = Glykerol Reqd to Freeze a Kerbal #autoLOC_DF_00158 = Amt of Glykerol used to Freeze a Kerbal,\nOverrides Part values.
         public int GlykerolReqdToFreeze = 5;
         
         public override void SetDifficultyPreset(GameParameters.Preset preset)
@@ -117,31 +118,32 @@ namespace DF
     public class DeepFreeze_SettingsParms_Sec2 : GameParameters.CustomParameterNode
 
     {
-        public override string Title { get { return "DeepFreeze Temperatures"; } }
+        public override string Title { get { return Localizer.Format("#autoLOC_DF_00159"); } } //#autoLOC_DF_00159 = DeepFreeze Temperatures
         public override GameParameters.GameMode GameMode { get { return GameParameters.GameMode.ANY; } }
         public override bool HasPresets { get { return true; } }
         public override string Section { get { return "DeepFreeze"; } }
+        public override string DisplaySection { get { return Localizer.Format("#autoLOC_DF_00003"); } } //#autoLOC_DF_00003 = DeepFreeze
         public override int SectionOrder { get { return 2; } }
         
-        [GameParameters.CustomStringParameterUI("Test String UI", lines = 3, title = "", toolTip = "Get your calculator out.")]
-        public string CBstring = "Temps are in (K)elvin. (K) = (C)elcius + 273.15. (K) = ((F)arenheit + 459.67) × 5/9. Get your calculator out.";
+        [GameParameters.CustomStringParameterUI("Test String UI", lines = 3, title = "", toolTip = "#autoLOC_DF_00160")] //#autoLOC_DF_00160 = Get your calculator out.
+        public string CBstring = "#autoLOC_DF_00161"; //#autoLOC_DF_00161 = Temps are in (K)elvin. (K) = (C)elcius + 273.15. (K) = ((F)arenheit + 459.67) × 5/9. Get your calculator out
 
-        [GameParameters.CustomParameterUI("Regulated Temperatures Required", autoPersistance = true, toolTip = "If on, Regulated Temps apply to freeze\nand keep Kerbals Frozen.")]
+        [GameParameters.CustomParameterUI("#autoLOC_DF_00162", autoPersistance = true, toolTip = "#autoLOC_DF_00163")] //#autoLOC_DF_00162 = Regulated Temperatures Required #autoLOC_DF_00163 = If on, Regulated Temps apply to freeze\nand keep Kerbals Frozen.
         public bool RegTempReqd = false;
 
-        [GameParameters.CustomFloatParameterUI("Min. Temp. for Freezer to Freeze(K)", autoPersistance = true, minValue = 0, maxValue = 400, toolTip = "The minimum temperature (in Kelvin) for a Freezer\nto be able to Freeze a Kerbal.")]
+        [GameParameters.CustomFloatParameterUI("#autoLOC_DF_00164", autoPersistance = true, minValue = 0, maxValue = 400, toolTip = "#autoLOC_DF_00165")] //#autoLOC_DF_00164 = Min. Temp. for Freezer to Freeze(K) #autoLOC_DF_00165 = The minimum temperature (in Kelvin) for a Freezer\nto be able to Freeze a Kerbal.
         public float RegTempFreeze = 300f;
 
-        [GameParameters.CustomFloatParameterUI("Max. Temp. to keep Kerbals Frozen(K)", autoPersistance = true, minValue = 0, maxValue = 800, toolTip = "The maximum temperature (in Kelvin) for a Freezer\nto keep Kerbals frozen.")]
+        [GameParameters.CustomFloatParameterUI("#autoLOC_DF_00166", autoPersistance = true, minValue = 0, maxValue = 800, toolTip = "#autoLOC_DF_00167")] //#autoLOC_DF_00166 = Max. Temp. to keep Kerbals Frozen(K) #autoLOC_DF_00167 = The maximum temperature (in Kelvin) for a Freezer\nto keep Kerbals frozen.
         public float RegTempMonitor = 400f;
 
-        [GameParameters.CustomFloatParameterUI("Heat generated per kerbal (kW/min)", autoPersistance = true, minValue = 10, maxValue = 1000, toolTip = "Amount of thermal heat (kW) generated\nby equipment for each frozen kerbal per minute.")]
+        [GameParameters.CustomFloatParameterUI("#autoLOC_DF_00168", autoPersistance = true, minValue = 10, maxValue = 1000, toolTip = "#autoLOC_DF_00169")] //#autoLOC_DF_00168 = Heat generated per kerbal (kW/min) #autoLOC_DF_00169 = Amount of thermal heat (kW) generated\nby equipment for each frozen kerbal per minute.
         public float heatamtMonitoringFrznKerbals = 100f;
 
-        [GameParameters.CustomFloatParameterUI("Heat generated freezer process(kW)", autoPersistance = true, minValue = 10, maxValue = 3000, toolTip = "Amount of thermal heat (kW) generated\nwith each thaw/freeze process.")]
+        [GameParameters.CustomFloatParameterUI("#autoLOC_DF_00170", autoPersistance = true, minValue = 10, maxValue = 3000, toolTip = "#autoLOC_DF_00171")] //#autoLOC_DF_00170 = Heat generated freezer process(kW) #autoLOC_DF_00171 = Amount of thermal heat (kW) generated\nwith each thaw/freeze process.
         public float heatamtThawFreezeKerbal = 1000f;
 
-        [GameParameters.CustomParameterUI("Show Part Temperatures in Kelvin", autoPersistance = true, toolTip = "If on Part right click will show temp in Kelvin,\nif Off will show in Celcius.")]
+        [GameParameters.CustomParameterUI("#autoLOC_DF_00172", autoPersistance = true, toolTip = "#autoLOC_DF_00173")] //#autoLOC_DF_00172 = Show Part Temperatures in Kelvin #autoLOC_DF_00173 = If on Part right click will show temp in Kelvin,\nif Off will show in Celcius.
         public bool TempinKelvin = false;
         
         public override void SetDifficultyPreset(GameParameters.Preset preset)
@@ -187,25 +189,26 @@ namespace DF
     public class DeepFreeze_SettingsParms_Sec3 : GameParameters.CustomParameterNode
 
     {
-        public override string Title { get { return "DeepFreeze Misc."; } }
+        public override string Title { get { return Localizer.Format("#autoLOC_DF_00174"); } } //#autoLOC_DF_00174 = DeepFreeze Misc.
         public override GameParameters.GameMode GameMode { get { return GameParameters.GameMode.ANY; } }
         public override bool HasPresets { get { return false; } }
         public override string Section { get { return "DeepFreeze"; } }
+        public override string DisplaySection { get { return Localizer.Format("#autoLOC_DF_00003"); } } //#autoLOC_DF_00003 = DeepFreeze
         public override int SectionOrder { get { return 3; } }
         
-        [GameParameters.CustomParameterUI("Freezer Strip Lights On", autoPersistance = true, toolTip = "Turn off if you do not want the internal\nfreezer strip lights to function.")]
+        [GameParameters.CustomParameterUI("#autoLOC_DF_00175", autoPersistance = true, toolTip = "#autoLOC_DF_00176")] //#autoLOC_DF_00175 = Freezer Strip Lights On #autoLOC_DF_00176 = Turn off if you do not want the internal\nfreezer strip lights to function.
         public bool StripLightsActive = true;
 
-        [GameParameters.CustomParameterUI("ToolTips On", autoPersistance = true, toolTip = "Turn the Tooltips on and off.")]
+        [GameParameters.CustomParameterUI("#autoLOC_DF_00177", autoPersistance = true, toolTip = "#autoLOC_DF_00178")] //#autoLOC_DF_00177 = ToolTips On #autoLOC_DF_00178 = Turn the Tooltips on and off.
         public bool ToolTips = true;
 
-        [GameParameters.CustomParameterUI("Editor Filter", autoPersistance = true, toolTip = "Turn the DeepFreeze Editor filter Category on and off.")]
+        [GameParameters.CustomParameterUI("#autoLOC_DF_00179", autoPersistance = true, toolTip = "#autoLOC_DF_00180")] //#autoLOC_DF_00179 = Editor Filter #autoLOC_DF_00180 = Turn the DeepFreeze Editor filter Category on and off.
         public bool EditorFilter = true;
 
-        [GameParameters.CustomParameterUI("Use Stock App Launcher Icon", toolTip = "If on, the Stock Application launcher will be used,\nif off will use Blizzy Toolbar if installed.")]
+        [GameParameters.CustomParameterUI("#autoLOC_DF_00181", toolTip = "#autoLOC_DF_00182")] //#autoLOC_DF_00181 = Use Stock App Launcher Icon #autoLOC_DF_00182 = If on, the Stock Application launcher will be used,\nif off will use Blizzy Toolbar if installed.
         public bool UseAppLToolbar = true;
 
-        [GameParameters.CustomParameterUI("Extra Debug Logging", toolTip = "Turn this On to capture lots of extra information\ninto the KSP log for reporting a problem.")]
+        [GameParameters.CustomParameterUI("#autoLOC_DF_00183", toolTip = "#autoLOC_DF_00184")] //#autoLOC_DF_00183 = Extra Debug Logging #autoLOC_DF_00184 = Turn this On to capture lots of extra information\ninto the KSP log for reporting a problem.
         public bool DebugLogging = false;
         
         public override bool Interactible(MemberInfo member, GameParameters parameters)

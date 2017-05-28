@@ -166,7 +166,7 @@ namespace DF
             sectionTitleLeftStyle = new GUIStyle(GUI.skin.label);
             sectionTitleLeftStyle.alignment = TextAnchor.MiddleLeft;
             sectionTitleLeftStyle.stretchWidth = true;
-            sectionTitleLeftStyle.normal.textColor = Color.blue;
+            sectionTitleLeftStyle.normal.textColor = Color.cyan;
             sectionTitleLeftStyle.fontStyle = FontStyle.Bold;
 
             sectionTitleCenterStyle = new GUIStyle(GUI.skin.label);

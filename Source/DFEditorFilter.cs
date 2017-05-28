@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using KSP.UI.Screens;
 using RUI.Icons.Selectable;
 using UnityEngine;
+using KSP.Localization;
 
 namespace DF
 {
@@ -30,9 +31,8 @@ namespace DF
         // and the GlykerolTankRadial.
         private static List<AvailablePart> avPartItems = new List<AvailablePart>();
         public static DFEditorFilter Instance;
-        internal string category = "Filter by Function";
-        internal string subCategoryTitle = "DeepFreeze Items";
-        internal string defaultTitle = "DF";
+        internal string category = "Filter by function";
+        internal string subCategoryTitle = "DeepFreeze Items";        
 
         //internal string iconName = "R&D_node_icon_evatech";
         //create and the icons
@@ -156,7 +156,7 @@ namespace DF
             RemoveSubFilter();
             Icon filterDeepFreeze = new Icon("DeepFreezeEditor", Textures.DeepFreeze_Editor, Textures.DeepFreeze_Editor, true);
             PartCategorizer.Category Filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == category);
-            PartCategorizer.AddCustomSubcategoryFilter(Filter, subCategoryTitle, filterDeepFreeze, p => EditorItemsFilter(p));
+            PartCategorizer.AddCustomSubcategoryFilter(Filter, subCategoryTitle, Localizer.Format("#autoLOC_DF_00107"), filterDeepFreeze, p => EditorItemsFilter(p));
         }
     }
 }

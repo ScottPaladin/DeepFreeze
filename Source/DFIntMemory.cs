@@ -21,6 +21,7 @@ using KSP.UI.Screens;
 using PreFlightTests;
 using RSTUtils;
 using UnityEngine;
+using KSP.Localization;
 
 namespace DF
 {
@@ -313,7 +314,7 @@ namespace DF
                     // Set Top Left messages for FreezerCam mode
 
                     // See if there is a kerbal seated/frozen in that seat get their reference
-                    IVAkerbalPod = new ScreenMessage("Pod:" + ActFrzrCams[lastFrzrCam].FrzrCamSeatIndex, 1, ScreenMessageStyle.UPPER_LEFT);
+                    IVAkerbalPod = new ScreenMessage(Localizer.Format("autoLOC_DF_00071", ActFrzrCams[lastFrzrCam].FrzrCamSeatIndex), 1, ScreenMessageStyle.UPPER_LEFT); //autoLOC_DF_00071 = Pod:<<1>>
                     IVAkerbalPod.color = Color.white;
                     ScreenMessages.PostScreenMessage(IVAkerbalPod);
                     IVAkerbalPart = new ScreenMessage(ActFrzrCams[lastFrzrCam].FrzrCamPartName, 1, ScreenMessageStyle.UPPER_LEFT);
@@ -1120,7 +1121,7 @@ namespace DF
 
         private void SwitchVslAlarmMsg(string vesselname)
         {
-            ScreenMessages.PostScreenMessage("A DeepFreeze Alarm event has occurred. Please Switch to " + vesselname + " to execute.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+            ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00109", vesselname), 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00109 = A DeepFreeze Alarm event has occurred. Please Switch to <<1>> to execute.
         }
 
         private void CheckKACAlarmsUpdate()
@@ -1158,7 +1159,7 @@ namespace DF
                     {
                         // we are all done. Delete the alarm. Do a message.
                          Utilities.Log_Debug("Execution of alarm for vessel " + entry.Value.Name + " is complete");
-                        ScreenMessages.PostScreenMessage("DeepFreeze Alarm processing completed.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00110"), 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00110 = DeepFreeze Alarm processing completed.
                         alarmstoDelete.Add(entry.Key);
                         continue;
                     }
