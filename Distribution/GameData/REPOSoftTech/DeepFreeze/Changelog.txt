@@ -1,4 +1,8 @@
-﻿V0.23.5.0
+﻿V0.23.6.0
+Russian Localization texts added - Thanks go to forum user- Artem Kerman.
+Spanish Localization texts added - Thanks go to forum user- Fitiales.
+Resized UI elements to fit other languages.
+V0.23.5.0
 Compile for KSP 1.3.0
 Localization ready (but all in English) - Translation volunteers welcome. ;)
 If Infinite EC is turned on DeepFreeze will not consume EC.

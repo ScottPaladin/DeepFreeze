@@ -30,9 +30,9 @@ namespace DF
     {
         //GUI Properties
         internal AppLauncherToolBar DFMenuAppLToolBar;
-        private float DFWINDOW_WIDTH = 560;
+        private float DFWINDOW_WIDTH = 500;
         //private float CFWINDOW_WIDTH = 340;
-        private float KACWINDOW_WIDTH = 485;
+        private float KACWINDOW_WIDTH = 500;
         private float VSWINDOW_WIDTH = 340;
         private float WINDOW_BASE_HEIGHT = 350;
         private Rect DFwindowPos;
@@ -275,8 +275,8 @@ namespace DF
             KACtxtWdthATme = Mathf.Round((KACWINDOW_WIDTH - 38f) * .2f);
             KACtxtWdthKName = Mathf.Round((KACWINDOW_WIDTH - 48f) * .2f);
             KACtxtWdthKTyp = Mathf.Round((KACWINDOW_WIDTH - 48f) * .2f);
-            KACtxtWdthKTg1 = Mathf.Round((KACWINDOW_WIDTH - 48f) * .16f);
-            KACtxtWdthKTg2 = Mathf.Round((KACWINDOW_WIDTH - 48f) * .16f);
+            KACtxtWdthKTg1 = Mathf.Round((KACWINDOW_WIDTH - 48f) * .25f);
+            KACtxtWdthKTg2 = Mathf.Round((KACWINDOW_WIDTH - 48f) * .25f);
 
             DFvslWdthName = Mathf.Round((DFWINDOW_WIDTH - 28f) * .28f);
             DFvslPrtName = Mathf.Round((DFWINDOW_WIDTH - 28f) * .2f);
@@ -715,7 +715,7 @@ namespace DF
                                 {
                                     GUI.enabled = false;
                                 }
-                                if (GUILayout.Button(new GUIContent(cacheautoLOC_DF_00040, cacheautoLOC_DF_00041), GUILayout.Width(50f))) //"Thaw", "Thaw this Kerbal"
+                                if (GUILayout.Button(new GUIContent(cacheautoLOC_DF_00040, cacheautoLOC_DF_00041), GUILayout.Width(70f))) //"Thaw", "Thaw this Kerbal"
                                 {
                                     DeepFreezer frzr = DFIntMemory.Instance.DpFrzrActVsl.FirstOrDefault(a => a.part.flightID == kerbal.Value.partID);
                                     if (frzr != null)
@@ -727,7 +727,7 @@ namespace DF
                         }
                         if (HighLogic.LoadedScene == GameScenes.SPACECENTER)
                         {
-                            if (GUILayout.Button(new GUIContent(cacheautoLOC_DF_00040, cacheautoLOC_DF_00041), GUILayout.Width(50f))) //"Thaw", "Thaw this Kerbal"
+                            if (GUILayout.Button(new GUIContent(cacheautoLOC_DF_00040, cacheautoLOC_DF_00041), GUILayout.Width(70f))) //"Thaw", "Thaw this Kerbal"
                             {
                                 // We need to check kerbal isn't in a vessel still out there somewhere....
                                 Vessel vessel = FlightGlobals.Vessels.Find(v => v.id == kerbal.Value.vesselID);
@@ -785,7 +785,7 @@ namespace DF
                         {
                             GUI.enabled = false;
                         }
-                        if (GUILayout.Button(new GUIContent(cacheautoLOC_DF_00043, cacheautoLOC_DF_00044), GUILayout.Width(50f))) //"Freeze", "Freeze this Kerbal"
+                        if (GUILayout.Button(new GUIContent(cacheautoLOC_DF_00043, cacheautoLOC_DF_00044), GUILayout.Width(70f))) //"Freeze", "Freeze this Kerbal"
                         {
                             frzr.beginFreezeKerbal(crew[i]);
                         }
@@ -881,14 +881,14 @@ namespace DF
                         {
                             //If a modify is in progress we turn off the delete button
                             GUI.enabled = false;
-                            GUILayout.Button(new GUIContent(cacheautoLOC_DF_00118, cacheautoLOC_DF_00119), GUILayout.Width(50)); //#autoLOC_DF_00118 = Delete #autoLOC_DF_00119 = Delete this KAC alarm completely
+                            GUILayout.Button(new GUIContent(cacheautoLOC_DF_00118, cacheautoLOC_DF_00119), GUILayout.Width(80)); //#autoLOC_DF_00118 = Delete #autoLOC_DF_00119 = Delete this KAC alarm completely
                             GUI.enabled = true;
                             // Utilities.Log_Debug("Delete button disabled");
                         }
                         else
                         {
                             if (TmeRemaining <= 0) GUI.enabled = false;
-                            if (GUILayout.Button(new GUIContent(cacheautoLOC_DF_00118, cacheautoLOC_DF_00119), GUILayout.Width(50))) //#autoLOC_DF_00118 = Delete #autoLOC_DF_00119 = Delete this KAC alarm completely
+                            if (GUILayout.Button(new GUIContent(cacheautoLOC_DF_00118, cacheautoLOC_DF_00119), GUILayout.Width(80))) //#autoLOC_DF_00118 = Delete #autoLOC_DF_00119 = Delete this KAC alarm completely
                             {
                                 KACWrapper.KAC.DeleteAlarm(alarm.ID);
                             }
@@ -901,14 +901,14 @@ namespace DF
                             if (KACalarmMod.ID != alarm.ID) //If it isn't this alarm we disable the button
                             {
                                 GUI.enabled = false;
-                                GUILayout.Button(new GUIContent(cacheautoLOC_DF_00120, cacheautoLOC_DF_00121), GUILayout.Width(50)); //#autoLOC_DF_00120 = Modify #autoLOC_DF_00121 = Modify this Alarm
+                                GUILayout.Button(new GUIContent(cacheautoLOC_DF_00120, cacheautoLOC_DF_00121), GUILayout.Width(80)); //#autoLOC_DF_00120 = Modify #autoLOC_DF_00121 = Modify this Alarm
                                 GUI.enabled = true;
                                 // Utilities.Log_Debug("Modify button disabled");
                             }
                             else //We are modifying an alarm and it's this one. So we draw a SAVE and Cancel button to save/cancel changes.
                             {
                                 // Utilities.Log_Debug("mod in progress and it's this one, change to Save/Cancel");
-                                if (GUILayout.Button(new GUIContent(cacheautoLOC_DF_00122, cacheautoLOC_DF_00123), GUILayout.Width(50))) //#autoLOC_DF_00122 = Save #autoLOC_DF_00123 = Save Alarm Changes
+                                if (GUILayout.Button(new GUIContent(cacheautoLOC_DF_00122, cacheautoLOC_DF_00123), GUILayout.Width(80))) //#autoLOC_DF_00122 = Save #autoLOC_DF_00123 = Save Alarm Changes
                                 {
                                     if (DFInstalledMods.IsRTInstalled && !DFInstalledMods.RTVesselConnected(tmpid))
                                     {
@@ -930,7 +930,7 @@ namespace DF
                                     }
                                     ModKACAlarm = false;
                                 }
-                                if (GUILayout.Button(new GUIContent(cacheautoLOC_DF_00127, cacheautoLOC_DF_00128), GUILayout.Width(50))) //#autoLOC_DF_00127 = Cancel #autoLOC_DF_00128 = Cancel any changes
+                                if (GUILayout.Button(new GUIContent(cacheautoLOC_DF_00127, cacheautoLOC_DF_00128), GUILayout.Width(80))) //#autoLOC_DF_00127 = Cancel #autoLOC_DF_00128 = Cancel any changes
                                 {
                                     // Utilities.Log_Debug("User cancelled mod");
                                     ModKACAlarm = false;
@@ -1050,7 +1050,7 @@ namespace DF
                         {
                             // Utilities.Log_Debug("no modify in progress so just show modify buttons on KAC alarm");
                             if (TmeRemaining <= 0) GUI.enabled = false;
-                            if (GUILayout.Button(new GUIContent(cacheautoLOC_DF_00137, cacheautoLOC_DF_00138), GUILayout.Width(50))) //#autoLOC_DF_00137 = Modify #autoLOC_DF_00138 = Modify this Alarms settings
+                            if (GUILayout.Button(new GUIContent(cacheautoLOC_DF_00137, cacheautoLOC_DF_00138), GUILayout.Width(80))) //#autoLOC_DF_00137 = Modify #autoLOC_DF_00138 = Modify this Alarms settings
                             {
                                 KACalarmMod = alarm;
                                 KACAlarm_FrzKbls.Clear();
@@ -1211,8 +1211,8 @@ namespace DF
                         KACtxtWdthATme = Mathf.Round((KACWINDOW_WIDTH - 38f) * .2f);
                         KACtxtWdthKName = Mathf.Round((KACWINDOW_WIDTH - 48f) * .2f);
                         KACtxtWdthKTyp = Mathf.Round((KACWINDOW_WIDTH - 48f) * .2f);
-                        KACtxtWdthKTg1 = Mathf.Round((KACWINDOW_WIDTH - 48f) * .16f);
-                        KACtxtWdthKTg2 = Mathf.Round((KACWINDOW_WIDTH - 48f) * .16f);
+                        KACtxtWdthKTg1 = Mathf.Round((KACWINDOW_WIDTH - 48f) * .25f);
+                        KACtxtWdthKTg2 = Mathf.Round((KACWINDOW_WIDTH - 48f) * .25f);
                     }
                     else
                     {
