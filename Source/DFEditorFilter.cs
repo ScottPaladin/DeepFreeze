@@ -31,7 +31,7 @@ namespace DF
         // and the GlykerolTankRadial.
         private static List<AvailablePart> avPartItems = new List<AvailablePart>();
         public static DFEditorFilter Instance;
-        internal string category = "Filter by function";
+        internal string category = "Filter by Function";
         internal string subCategoryTitle = "DeepFreeze Items";        
 
         //internal string iconName = "R&D_node_icon_evatech";
