@@ -1,5 +1,6 @@
-﻿V0.23.9.0
-Re-compile for KSP 1.4.5
+﻿
+V0.23.9.0
+Re-compile for KSP 1.5.x
 Added German Translation (thanks Nils277)
 Some GC/performance improvements.
 Updated CRP to v0.10.
