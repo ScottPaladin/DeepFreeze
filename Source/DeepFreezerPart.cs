@@ -39,6 +39,8 @@ namespace DF
         internal static float tmpdeathRoll = 120f;        // time delay until the chance of a frozen kerbal dying due to part being too hot
         internal static float deathRoll = 240f;           // time delay until the chance of a frozen kerbal dying due to lack of EC
         internal double timeLoadedOffrails;        // time the vessel this part is attached to was loaded or came off rails.
+        private Transform External_Window_Occluder;
+        private Transform CRY_0300_Doors_Occluder;
 
         // EC and Temp Functions Vars
         private Random rnd = new Random();  // Random seed for Killing Kerbals when we run out of EC to keep the Freezer running.
@@ -510,7 +512,7 @@ namespace DF
                                     if (extwindowrenderer.material.shader != TransparentSpecularShader)
                                     {
                                         setCryopodWindowTransparent(i);
-                                        Utilities.SetInternalDepthMask(part, false, "External_Window_Occluder");
+                                        External_Window_Occluder = Utilities.SetInternalDepthMask(part, false, "External_Window_Occluder", External_Window_Occluder);
                                     }
                                 }
                             }
@@ -527,7 +529,7 @@ namespace DF
                 //CameraManager.Instance.ivaFOV = 95f;
                 //Turn OFF the Door occluders so we can see outside.
                 if (_externaldoorstate != DoorState.CLOSED)
-                    Utilities.SetInternalDepthMask(part, false, "CRY_0300_Doors_Occluder");
+                    CRY_0300_Doors_Occluder = Utilities.SetInternalDepthMask(part, false, "CRY_0300_Doors_Occluder", CRY_0300_Doors_Occluder);
             }
 
             if (Time.time - lastUpdate > updatetnterval && Time.time - lastRemove > updatetnterval) // We only update every updattnterval time interval.
@@ -887,17 +889,17 @@ namespace DF
                                         //Otherwise is it ON and we see the closed/closing/opening doors.
                                         if (Utilities.StockOverlayCamIsOn)
                                         {
-                                            Utilities.SetInternalDepthMask(part, false, "CRY_0300_Doors_Occluder");
+                                            CRY_0300_Doors_Occluder = Utilities.SetInternalDepthMask(part, false, "CRY_0300_Doors_Occluder", CRY_0300_Doors_Occluder);
                                         }
                                         else
                                         {
-                                            Utilities.SetInternalDepthMask(part, true, "CRY_0300_Doors_Occluder");
+                                            CRY_0300_Doors_Occluder = Utilities.SetInternalDepthMask(part, true, "CRY_0300_Doors_Occluder", CRY_0300_Doors_Occluder);
                                         }
                                     }
                                     else
                                     //Door is Open we turn the Occluder OFF so we can see inside RPM style or Stock style, doesn't matter.
                                     {
-                                        Utilities.SetInternalDepthMask(part, false, "CRY_0300_Doors_Occluder");
+                                        CRY_0300_Doors_Occluder = Utilities.SetInternalDepthMask(part, false, "CRY_0300_Doors_Occluder", CRY_0300_Doors_Occluder);
                                     }
                                 }
                                 else //Podsetting is OFF or AUTO
@@ -906,12 +908,12 @@ namespace DF
                                     //This will be ok and the Internal should be there because when Stock Overlay is on TransparentPods turns itself OFF
                                     if (Utilities.StockOverlayCamIsOn)
                                     {
-                                        Utilities.SetInternalDepthMask(part, false, "External_Window_Occluder");
+                                        External_Window_Occluder = Utilities.SetInternalDepthMask(part, false, "External_Window_Occluder", External_Window_Occluder);
                                     }
                                     else
                                     //So Stock Overlay is off we want to see the CLOSED Doors so overlay is ON so we see the doors.
                                     {
-                                        Utilities.SetInternalDepthMask(part, true, "External_Window_Occluder");
+                                        External_Window_Occluder = Utilities.SetInternalDepthMask(part, true, "External_Window_Occluder", External_Window_Occluder);
                                     }
                                 }
 
@@ -926,12 +928,12 @@ namespace DF
                                     return;
                                 if (!cryopodstateclosed[0] && transparentPodSetting == "ON") //No frozen kerbal inside
                                 {
-                                    Utilities.SetInternalDepthMask(part, false, "External_Window_Occluder");
+                                    External_Window_Occluder = Utilities.SetInternalDepthMask(part, false, "External_Window_Occluder", External_Window_Occluder);
 
                                 }
                                 else //Frozen kerbal inside or OFF or AUTO model.
                                 {
-                                    Utilities.SetInternalDepthMask(part, true, "External_Window_Occluder");
+                                    External_Window_Occluder = Utilities.SetInternalDepthMask(part, true, "External_Window_Occluder", External_Window_Occluder);
                                 }
                             }
                         }
@@ -963,11 +965,11 @@ namespace DF
                         //Otherwise is it ON.
                         if (Utilities.StockOverlayCamIsOn)
                         {
-                            Utilities.SetInternalDepthMask(part, false, "CRY_0300_Doors_Occluder");
+                            CRY_0300_Doors_Occluder = Utilities.SetInternalDepthMask(part, false, "CRY_0300_Doors_Occluder", CRY_0300_Doors_Occluder);
                         }
                         else
                         {
-                            Utilities.SetInternalDepthMask(part, true, "CRY_0300_Doors_Occluder");
+                            CRY_0300_Doors_Occluder = Utilities.SetInternalDepthMask(part, true, "CRY_0300_Doors_Occluder", CRY_0300_Doors_Occluder);
                         }
                     }
                     else //CRY-0300R
@@ -979,12 +981,12 @@ namespace DF
                         
                         if (!cryopodstateclosed[0] && (!IsThawActive || !IsFreezeActive)) //No frozen kerbal inside
                         {
-                            Utilities.SetInternalDepthMask(part, false, "External_Window_Occluder");
+                            External_Window_Occluder = Utilities.SetInternalDepthMask(part, false, "External_Window_Occluder", External_Window_Occluder);
 
                         }
                         else  //Frozen kerbal inside or freeze/thaw occuring. Can't see inside.
                         {
-                            Utilities.SetInternalDepthMask(part, true, "External_Window_Occluder");
+                            External_Window_Occluder = Utilities.SetInternalDepthMask(part, true, "External_Window_Occluder", External_Window_Occluder);
                         }
                     }
                 }
@@ -3716,7 +3718,7 @@ namespace DF
             if (isPodExternal)
             {
                 _extwindowAnimation = part.FindModelComponent<Animation>(windowname);
-                Utilities.SetInternalDepthMask(part, false, "External_Window_Occluder"); //Set window occluder off
+                External_Window_Occluder = Utilities.SetInternalDepthMask(part, false, "External_Window_Occluder", External_Window_Occluder); //Set window occluder off
             }
 
             if (_windowAnimation == null)
