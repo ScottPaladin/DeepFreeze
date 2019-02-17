@@ -1,4 +1,7 @@
-﻿
+﻿V0.24.0.0
+Re-compile for KSP 1.6.x
+Fix shader assignments.
+Fix animations in Cryopods.
 V0.23.9.0
 Re-compile for KSP 1.5.x
 Added German Translation (thanks Nils277)

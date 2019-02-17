@@ -1443,17 +1443,38 @@ namespace DF
             }
 
             //Set Shaders for changing the Crypod Windows
-            HashSet<Shader> shaders = new HashSet<Shader>();
-            var sh = Resources.FindObjectsOfTypeAll<Shader>();
-            for (int i = 0; i < sh.Length; ++i)
+            try
             {
-                shaders.Add(sh[i]);
+                TransparentSpecularShader = Shader.Find("Legacy Shaders/Transparent/Specular");
             }
-            List<Shader> listshaders = new List<Shader>(shaders);
-            TransparentSpecularShader = listshaders.Find(a => a.name == "Legacy Shaders/Transparent/Specular");
-            KSPSpecularShader = listshaders.Find(b => b.name == "KSP/Specular");
-
+            catch (Exception ex)
+            {
+                Utilities.Log_Debug("Get transparentShader Legacy Shaders/Transparent/Specular failed. Error:" + ex);
+            }
+            if (TransparentSpecularShader == null)
+            {
+                Utilities.Log_Debug("transpartShader Legacy Shaders/Transparent/Specular not found.");
+            }
+            try
+            {
+                KSPSpecularShader = Shader.Find("KSP/Specular");
+            }
+            catch (Exception ex)
+            {
+                Utilities.Log_Debug("Get KSPSpecularShader KSP/Specular failed. Error:" + ex);
+            }
+            if (KSPSpecularShader == null)
+            {
+                Utilities.Log_Debug("KSPSpecularShader KSP/Specular not found.");
+            }
             // Setup the sounds
+            ext_door = gameObject.AddComponent<AudioSource>();
+            ext_door.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/externaldoorswitch");
+            ext_door.volume = .7F;
+            ext_door.panStereo = 0;
+            ext_door.spatialBlend = 0;
+            ext_door.rolloffMode = AudioRolloffMode.Linear;
+            ext_door.Stop();
             if (state != StartState.None && state != StartState.Editor)
             {
                 mon_beep = gameObject.AddComponent<AudioSource>();
@@ -1504,15 +1525,6 @@ namespace DF
                 mon_beep.spatialBlend = 0;
                 ding_ding.rolloffMode = AudioRolloffMode.Linear;
                 ding_ding.Stop();
-                List<UrlDir.UrlFile> databaseAudioFiles = new List<UrlDir.UrlFile>();
-                databaseAudioFiles = GameDatabase.Instance.databaseAudioFiles;
-                ext_door = gameObject.AddComponent<AudioSource>();
-                ext_door.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/externaldoorswitch");
-                ext_door.volume = .7F;
-                ext_door.panStereo = 0;
-                mon_beep.spatialBlend = 0;
-                ext_door.rolloffMode = AudioRolloffMode.Linear;
-                ext_door.Stop();
                 charge_up = gameObject.AddComponent<AudioSource>();
                 charge_up.clip = GameDatabase.Instance.GetAudioClip("REPOSoftTech/DeepFreeze/Sounds/charge_up");
                 charge_up.volume = 1;
