@@ -82,6 +82,7 @@
     <Compile Include="DFExtDoorMgr.cs" />
     <Compile Include="DFGameSettings.cs" />
     <Compile Include="DFInstalledMods.cs" />
+    <Compile Include="DFPartEvents.cs" />
     <Compile Include="DFSettings.cs" />
     <Compile Include="DFIntMemory.cs" />
     <Compile Include="APIs\DFWrapper.cs" />
