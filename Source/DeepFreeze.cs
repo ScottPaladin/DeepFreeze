@@ -37,12 +37,36 @@ namespace DF
         private ConfigNode globalNode = new ConfigNode();
         internal readonly List<Component> children = new List<Component>();
         private List<KeyValuePair<string, KerbalInfo>> _frozenKerbalsList = new List<KeyValuePair<string, KerbalInfo>>();
+        private List<KeyValuePair<Guid, VesselInfo>> _knownVesselList = new List<KeyValuePair<Guid, VesselInfo>>();
+
+        public bool DFIECReqd
+        {
+            get { return DFsettings.ECreqdForFreezer; }
+        }
 
         public Dictionary<string, KerbalInfo> FrozenKerbals
         {
             get
             {
                 return DFgameSettings.KnownFrozenKerbals;
+            }
+        }
+
+        public Dictionary<Guid, VesselInfo> KnownVessels
+        { 
+            get
+            {
+                return DFgameSettings.knownVessels;
+            }
+        }
+
+        public List<KeyValuePair<Guid, VesselInfo>> KnownVesselsList
+        {
+            get
+            {
+                _knownVesselList.Clear();
+                _knownVesselList = DFgameSettings.knownVessels.ToList();
+                return _knownVesselList;
             }
         }
 

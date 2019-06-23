@@ -18,7 +18,7 @@ using RSTUtils;
 
 namespace DF
 {
-    internal class VesselInfo
+    public class VesselInfo
     {
         //This class stores Info about vessels that have the DeepFreezer parts attached.
         //VesselName                - Name of the vessel
@@ -33,20 +33,20 @@ namespace DF
         //lastUpdate                - Time this class entry was last updated
         //storedEC                  - How much ElectricCharge the vessel has
         //predictedECOut            - Predicted time in seconds ElectricCharge will run out (by just running the freezers)
-        internal const string ConfigNodeName = "VesselInfo";
+        public const string ConfigNodeName = "VesselInfo";
 
-        internal string vesselName;
-        internal VesselType vesselType = VesselType.Unknown;
-        internal int numCrew;
-        internal int numSeats;
-        internal int numOccupiedParts;
-        internal int numFrznCrew;
-        internal bool hibernating;
-        internal bool hasextDoor;
-        internal bool hasextPod;
-        internal double lastUpdate;
-        internal double storedEC;
-        internal double predictedECOut;
+        public string vesselName;
+        public VesselType vesselType = VesselType.Unknown;
+        public int numCrew;
+        public int numSeats;
+        public int numOccupiedParts;
+        public int numFrznCrew;
+        public bool hibernating;
+        public bool hasextDoor;
+        public bool hasextPod;
+        public double lastUpdate;
+        public double storedEC;
+        public double predictedECOut;
 
         internal VesselInfo(string vesselName, double currentTime)
         {
