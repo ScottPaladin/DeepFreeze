@@ -4209,7 +4209,12 @@ namespace DF
             if (Time.timeSinceLevelLoad < 2.0f || CheatOptions.InfiniteElectricity) // Check not loading level
             {
                 return;
-            }            
+            }
+
+            if (DFIntMemory.Instance && DFIntMemory.Instance.BGRinstalled) //If Background Resources mod is installed. Don't do BackgroundProcessing Mod work.
+            {
+                return;
+            }
             bool debug = true;
             try
             {

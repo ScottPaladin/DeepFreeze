@@ -21,6 +21,9 @@ namespace DF
         [GameParameters.CustomParameterUI("#autoLOC_DF_00145", autoPersistance = true, toolTip = "#autoLOC_DF_00146")] //#autoLOC_DF_00145 = ElectricCharge Required to run Freezers #autoLOC_DF_00146 = If on, EC is required to run freezers
         public bool ECreqdForFreezer = false;
 
+        [GameParameters.CustomParameterUI("#autoLOC_DF_00201", autoPersistance = true, toolTip = "#autoLOC_DF_00202")] //#autoLOC_DF_00201 = Unloaded Vessel Processing  //#autoLOC_DF_00202 = If enabled DeepFreeze will process resources on unloaded vessels. If disabled, it won't and play the catchup and estimation game.
+        public bool backgroundresources = true;
+        
         [GameParameters.CustomParameterUI("#autoLOC_DF_00147", autoPersistance = true, toolTip = "#autoLOC_DF_00148")] //#autoLOC_DF_00147 = Fatal EC/Heat Option #autoLOC_DF_00148 = If on Kerbals will die if EC runs out or it gets too hot
         public bool fatalOption = false;
 
@@ -46,6 +49,7 @@ namespace DF
             {
                 case GameParameters.Preset.Easy:
                     this.ECreqdForFreezer = false;
+                    this.backgroundresources = false;
                     this.AutoRecoverFznKerbals = true;
                     this.KSCcostToThawKerbal = 5000f;
                     this.ECReqdToFreezeThaw = 1000;
@@ -53,6 +57,7 @@ namespace DF
                     break;
                 case GameParameters.Preset.Normal:
                     this.ECreqdForFreezer = false;
+                    this.backgroundresources = false;
                     this.AutoRecoverFznKerbals = true;
                     this.KSCcostToThawKerbal = 10000f;
                     this.ECReqdToFreezeThaw = 2000;
@@ -60,6 +65,7 @@ namespace DF
                     break;
                 case GameParameters.Preset.Moderate:
                     this.ECreqdForFreezer = true;
+                    this.backgroundresources = true;
                     this.AutoRecoverFznKerbals = false;
                     this.KSCcostToThawKerbal = 20000f;
                     this.ECReqdToFreezeThaw = 3000;
@@ -67,6 +73,7 @@ namespace DF
                     break;
                 case GameParameters.Preset.Hard:
                     this.ECreqdForFreezer = true;
+                    this.backgroundresources = true;
                     this.AutoRecoverFznKerbals = false;
                     this.KSCcostToThawKerbal = 30000f;
                     this.ECReqdToFreezeThaw = 4000;
@@ -97,6 +104,11 @@ namespace DF
                     return false;
                 }
             }
+            if (member.Name == "backgroundresources")
+            {
+                return DFInstalledMods.IsBGRInstalled;
+            }
+            
             if (member.Name == "fatalOption")
             {
                 return parameters.CustomParams<DeepFreeze_SettingsParms>().ECreqdForFreezer;

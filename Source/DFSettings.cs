@@ -15,6 +15,9 @@
  *
  */
 
+using System;
+using System.Collections.Generic;
+using BackgroundResources;
 using DeepFreeze;
 using RSTUtils;
 
@@ -34,6 +37,7 @@ namespace DF
         internal bool UseAppLauncher ;
         internal bool debugging ;
         internal bool ECreqdForFreezer ;
+        internal bool backgroundresources;
         internal bool fatalOption ;
         internal float comatoseTime ;
         internal bool AutoRecoverFznKerbals ;
@@ -72,6 +76,7 @@ namespace DF
             UseAppLauncher = true;
             debugging = true;
             ECreqdForFreezer = true;
+            backgroundresources = true;
             fatalOption = true;
             comatoseTime = 300;
             AutoRecoverFznKerbals = true;
@@ -109,8 +114,6 @@ namespace DF
 
                 DFsettingsNode.TryGetValue("DFwindowPosX", ref DFwindowPosX);
                 DFsettingsNode.TryGetValue("DFwindowPosY", ref DFwindowPosY);
-                //DFsettingsNode.TryGetValue("CFwindowPosX", ref CFwindowPosX);
-                //DFsettingsNode.TryGetValue("CFwindowPosY", ref CFwindowPosY);
                 DFsettingsNode.TryGetValue("DFKACwindowPosX", ref DFKACwindowPosX);
                 DFsettingsNode.TryGetValue("DFKACwindowPosY", ref DFKACwindowPosY);
                 DFsettingsNode.TryGetValue("defaultTimeoutforCrewXfer", ref defaultTimeoutforCrewXfer);
@@ -126,26 +129,6 @@ namespace DF
 
 
                 ApplySettings();
-                /*
-                                DFsettingsNode.TryGetValue("ECreqdForFreezer", ref ECreqdForFreezer);
-                                DFsettingsNode.TryGetValue("fatalOption", ref fatalOption);
-                                DFsettingsNode.TryGetValue("comatoseTime", ref comatoseTime);
-                                DFsettingsNode.TryGetValue("UseAppLauncher", ref UseAppLauncher);
-                                DFsettingsNode.TryGetValue("debugging", ref debugging);
-                                DFsettingsNode.TryGetValue("ToolTips", ref ToolTips);
-                                DFsettingsNode.TryGetValue("AutoRecoverFznKerbals", ref AutoRecoverFznKerbals);
-                                DFsettingsNode.TryGetValue("KSCcostToThawKerbal", ref KSCcostToThawKerbal);
-                                DFsettingsNode.TryGetValue("ECReqdToFreezeThaw", ref ECReqdToFreezeThaw);
-                                DFsettingsNode.TryGetValue("GlykerolReqdToFreeze", ref GlykerolReqdToFreeze);
-                                DFsettingsNode.TryGetValue("RegTempReqd", ref RegTempReqd);
-                                DFsettingsNode.TryGetValue("RegTempFreeze", ref RegTempFreeze);
-                                DFsettingsNode.TryGetValue("RegTempMonitor", ref RegTempMonitor);
-                                DFsettingsNode.TryGetValue("heatamtMonitoringFrznKerbals", ref heatamtMonitoringFrznKerbals);
-                                DFsettingsNode.TryGetValue("heatamtThawFreezeKerbal", ref heatamtThawFreezeKerbal);
-                                DFsettingsNode.TryGetValue("TempinKelvin", ref TempinKelvin);
-                                DFsettingsNode.TryGetValue("EditorFilter", ref EditorFilter);
-                                DFsettingsNode.TryGetValue("StripLightsActive", ref StripLightsActive);
-                                Utilities.Log_Debug("DFSettings load complete");*/
             }
         }
 
@@ -164,8 +147,6 @@ namespace DF
 
             settingsNode.AddValue("DFwindowPosX", DFwindowPosX);
             settingsNode.AddValue("DFwindowPosY", DFwindowPosY);
-            //settingsNode.AddValue("CFwindowPosX", CFwindowPosX);
-            //settingsNode.AddValue("CFwindowPosY", CFwindowPosY);
             settingsNode.AddValue("DFKACwindowPosX", DFKACwindowPosX);
             settingsNode.AddValue("DFKACwindowPosY", DFKACwindowPosY);
             settingsNode.AddValue("defaultTimeoutforCrewXfer", defaultTimeoutforCrewXfer);
@@ -179,26 +160,6 @@ namespace DF
             settingsNode.AddValue("internalNxtFrzrCamCode", internalNxtFrzrCamCode);
             settingsNode.AddValue("internalPrvFrzrCamCode", internalPrvFrzrCamCode);
 
-            
-            /*
-            settingsNode.AddValue("ECreqdForFreezer", ECreqdForFreezer);
-            settingsNode.AddValue("fatalOption", fatalOption);
-            settingsNode.AddValue("comatoseTime", comatoseTime);
-            settingsNode.AddValue("UseAppLauncher", UseAppLauncher);
-            settingsNode.AddValue("debugging", debugging);
-            settingsNode.AddValue("ToolTips", ToolTips);
-            settingsNode.AddValue("AutoRecoverFznKerbals", AutoRecoverFznKerbals);
-            settingsNode.AddValue("KSCcostToThawKerbal", KSCcostToThawKerbal);
-            settingsNode.AddValue("ECReqdToFreezeThaw", ECReqdToFreezeThaw);
-            settingsNode.AddValue("GlykerolReqdToFreeze", GlykerolReqdToFreeze);
-            settingsNode.AddValue("RegTempReqd", RegTempReqd);
-            settingsNode.AddValue("RegTempFreeze", RegTempFreeze);
-            settingsNode.AddValue("RegTempMonitor", RegTempMonitor);
-            settingsNode.AddValue("heatamtMonitoringFrznKerbals", heatamtMonitoringFrznKerbals);
-            settingsNode.AddValue("heatamtThawFreezeKerbal", heatamtThawFreezeKerbal);
-            settingsNode.AddValue("TempinKelvin", TempinKelvin);
-            settingsNode.AddValue("EditorFilter", EditorFilter);
-            settingsNode.AddValue("StripLightsActive", StripLightsActive);*/
             Utilities.Log_Debug("DFSettings save complete");
         }
 
@@ -223,6 +184,16 @@ namespace DF
                         }
                     }
                     ECreqdForFreezer = DF_SettingsParms.ECreqdForFreezer;
+                    //If user switches off backgroundresources - and it was on. remove background processing if in loaded game.
+                    if (backgroundresources && !DF_SettingsParms.backgroundresources && DFInstalledMods.IsBGRInstalled && UnloadedResources.Instance && DeepFreeze.Instance && HighLogic.LoadedSceneIsGame)
+                    {
+                        List<KeyValuePair<Guid, VesselInfo>> knownVessels = DeepFreeze.Instance.KnownVesselsList;
+                        for (int i = 0; i < knownVessels.Count; i++)
+                        {
+                            UnloadedResources.Instance.RemoveInterestedVessel(knownVessels[i].Key);
+                        }
+                    }
+                    backgroundresources = DF_SettingsParms.backgroundresources;
                     fatalOption = DF_SettingsParms.fatalOption;
                     comatoseTime = DF_SettingsParms.comatoseTime;
                     if (UseAppLauncher != DF_SettingsParms_Sec3.UseAppLToolbar)

@@ -17,6 +17,7 @@
 
 using System;
 using System.Collections.Generic;
+using BackgroundResources;
 using KSP.UI.Screens;
 using PreFlightTests;
 using RSTUtils;
@@ -55,6 +56,7 @@ namespace DF
         internal bool ActVslHasDpFrezr;
         internal Guid ActVslID;
         internal bool BGPinstalled;
+        internal bool BGRinstalled;
         internal double invalidKACGUIDItems;
         internal int ActFrzrCamPart = 0;
         internal List<VslFrzrCams> ActFrzrCams = new List<VslFrzrCams>();  //This array of transforms stores the transforms for the cryopod cameras for the active vessel.
@@ -94,6 +96,7 @@ namespace DF
             if (KACWrapper.APIReady)
                 KACWrapper.KAC.onAlarmStateChanged += KAC_onAlarmStateChanged;
             BGPinstalled = DFInstalledMods.IsBGPInstalled;  //Background Processing Mod
+            BGRinstalled = DFInstalledMods.IsBGRInstalled; //Background Resources Mod
             GameEvents.onVesselRename.Add(onVesselRename);
             GameEvents.onVesselChange.Add(onVesselChange);
             GameEvents.onVesselLoaded.Add(onVesselLoad);
@@ -890,10 +893,14 @@ namespace DF
                 }
                 else //vessel not loaded
                 {
-                    //if (!DFInstalledMods.IsBGPInstalled || !Utilities.timewarpIsValid(5))
-                    //{
+                    if ((DFInstalledMods.IsBGRInstalled || !Utilities.timewarpIsValid(5)) && DeepFreeze.Instance.DFsettings.backgroundresources)
+                    {
+                        if (UnloadedResources.Instance != null)
+                        {
+                            UnloadedResources.Instance.AddInterestedVessel(vessel.protoVessel);
+                        }
+                    }
                     UpdatePredictedVesselEC(vesselInfo, vessel, currentTime);
-                    //}
                     vesselInfo.hibernating = true;
                 }
             }
@@ -901,6 +908,13 @@ namespace DF
             // Delete vessels we don't care about any more.
             for (int i = 0; i < vesselsToDelete.Count; ++i)
             {
+                if (DFInstalledMods.IsBGRInstalled && DeepFreeze.Instance.DFsettings.backgroundresources)
+                {
+                    if (UnloadedResources.Instance != null)
+                    {
+                        UnloadedResources.Instance.RemoveInterestedVessel(vesselsToDelete[i]);
+                    }
+                }
                 DeepFreeze.Instance.DFgameSettings.knownVessels.Remove(vesselsToDelete[i]);
             }
             // Delete parts that were part of those vessels.

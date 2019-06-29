@@ -18,6 +18,8 @@ namespace MyPlugin_DFWrapper
     {
         internal static System.Type DFType;
         internal static System.Type KerbalInfoType;
+        internal static System.Type VesselInfoType;
+        internal static System.Type PartInfoType;
         internal static System.Type DeepFreezerType;
         internal static System.Type FrznCrewMbrType;
         internal static Object actualDF = null;
@@ -71,12 +73,14 @@ namespace MyPlugin_DFWrapper
                 DeepFreezeAPI = null;
                 DFType = null;
                 KerbalInfoType = null;
+                VesselInfoType = null;
+                PartInfoType = null;
                 DeepFreezerType = null;
                 FrznCrewMbrType = null;
                 LogFormatted("Attempting to Grab DeepFreeze Types...");
 
                 //find the base type
-                DFType = getType("DF.DeepFreeze"); 
+                DFType = getType("DF.DeepFreeze");
 
                 if (DFType == null)
                 {
@@ -86,15 +90,31 @@ namespace MyPlugin_DFWrapper
                 LogFormatted("DeepFreeze Version:{0}", DFType.Assembly.GetName().Version.ToString());
 
                 //now the KerbalInfo Type
-                KerbalInfoType = getType("DF.KerbalInfo"); 
+                KerbalInfoType = getType("DF.KerbalInfo");
 
                 if (KerbalInfoType == null)
                 {
                     return false;
                 }
 
+                //now the VesselInfo Type
+                VesselInfoType = getType("DF.VesselInfo");
+
+                if (VesselInfoType == null)
+                {
+                    return false;
+                }
+
+                //now the PartInfo Type
+                PartInfoType = getType("DF.PartInfo");
+
+                if (PartInfoType == null)
+                {
+                    return false;
+                }
+
                 //now the DeepFreezer (partmodule) Type
-                DeepFreezerType = getType("DF.DeepFreezer"); 
+                DeepFreezerType = getType("DF.DeepFreezer");
 
                 if (DeepFreezerType == null)
                 {
@@ -102,7 +122,7 @@ namespace MyPlugin_DFWrapper
                 }
 
                 //now the FrznCrewMbr Type
-                FrznCrewMbrType = getType("DF.FrznCrewMbr"); 
+                FrznCrewMbrType = getType("DF.FrznCrewMbr");
                 if (FrznCrewMbrType == null)
                 {
                     return false;
@@ -178,6 +198,10 @@ namespace MyPlugin_DFWrapper
                     APIReadyField = DFType.GetField("APIReady", BindingFlags.Public | BindingFlags.Static);
                     LogFormatted("Success: " + (APIReadyField != null).ToString());
 
+                    LogFormatted("Getting KillFrozenCrew Method Object");
+                    ActualKillFrozenCrewMethod = DFType.GetMethod("KillFrozenCrew", BindingFlags.Public | BindingFlags.Instance);
+                    LogFormatted("Success: " + (ActualKillFrozenCrewMethod != null).ToString());
+
                     LogFormatted("Getting FrozenKerbals Object");
                     FrozenKerbalsMethod = DFType.GetMethod("get_FrozenKerbals", BindingFlags.Public | BindingFlags.Instance);
                     actualFrozenKerbals = FrozenKerbalsMethod.Invoke(actualDFAPI, null);
@@ -187,6 +211,36 @@ namespace MyPlugin_DFWrapper
                     FrozenKerbalsListMethod = DFType.GetMethod("get_FrozenKerbalsList", BindingFlags.Public | BindingFlags.Instance);
                     actualFrozenKerbalsList = FrozenKerbalsListMethod.Invoke(actualDFAPI, null);
                     LogFormatted("Success: " + (actualFrozenKerbalsList != null).ToString());
+
+                    LogFormatted("Getting KnownVessels Object");
+                    knownVesselsMethod = DFType.GetMethod("get_KnownVessels", BindingFlags.Public | BindingFlags.Instance);
+                    actualKnownVessels = knownVesselsMethod.Invoke(actualDFAPI, null);
+                    LogFormatted("Success: " + (actualKnownVessels != null).ToString());
+
+                    LogFormatted("Getting KnownVessels Object");
+                    knownVesselsListMethod = DFType.GetMethod("get_KnownVesselsList", BindingFlags.Public | BindingFlags.Instance);
+                    actualKnownVesselsList = knownVesselsListMethod.Invoke(actualDFAPI, null);
+                    LogFormatted("Success: " + (actualKnownVesselsList != null).ToString());
+
+                    LogFormatted("Getting KnownFreezerParts Object");
+                    knownFreezerPartsMethod = DFType.GetMethod("get_KnownFreezerParts", BindingFlags.Public | BindingFlags.Instance);
+                    actualKnownFreezerParts = knownFreezerPartsMethod.Invoke(actualDFAPI, null);
+                    LogFormatted("Success: " + (actualKnownFreezerParts != null).ToString());
+
+                    LogFormatted("Getting KnownFreezerParts Object");
+                    knownFreezerPartsListMethod = DFType.GetMethod("get_KnownFreezerPartsList", BindingFlags.Public | BindingFlags.Instance);
+                    actualKnownFreezerPartsList = knownFreezerPartsListMethod.Invoke(actualDFAPI, null);
+                    LogFormatted("Success: " + (actualKnownFreezerPartsList != null).ToString());
+
+                    LogFormatted("Getting EcRequired Object");
+                    ActualECReqdMethod = DFType.GetMethod("get_DFIECReqd");
+                    actualECReqdField = ActualECReqdMethod.Invoke(actualDFAPI, null);
+                    LogFormatted("Success: " + (actualECReqdField != null).ToString());
+
+                    LogFormatted("Getting DeathFatal Object");
+                    ActualDeathFatalMethod = DFType.GetMethod("get_DFIDeathFatal");
+                    ActualDeathFatalField = ActualDeathFatalMethod.Invoke(actualDFAPI, null);
+                    LogFormatted("Success: " + (ActualDeathFatalField != null).ToString());
                 }
                 catch (Exception ex)
                 {
@@ -213,6 +267,45 @@ namespace MyPlugin_DFWrapper
 
                     return (Boolean)APIReadyField.GetValue(null);
                 }
+            }
+
+            private object actualECReqdField;
+            private MethodInfo ActualECReqdMethod;
+            /// <summary>
+            /// Is EC required to run the DeepFreeze Freezers (Deepfreeze difficulty setting)
+            /// </summary>
+            public bool ECReqd
+            {
+                get
+                {
+                    if (actualECReqdField == null)
+                        return false;
+
+                    return (Boolean)actualECReqdField;
+                }
+            }
+
+            private object ActualDeathFatalField;
+            private MethodInfo ActualDeathFatalMethod;
+            /// <summary>
+            /// Is Death fatal or do kerals respawn? (Deepfreeze difficulty setting)
+            /// </summary>
+            public bool DeathFatal
+            {
+                get
+                {
+                    if (ActualDeathFatalField == null)
+                        return false;
+
+                    return (Boolean)ActualDeathFatalField;
+                }
+            }
+
+            private MethodInfo ActualKillFrozenCrewMethod;
+
+            public void KillFrozenCrew(string crewMember)
+            {
+                ActualKillFrozenCrewMethod.Invoke(actualDFAPI, new object[] { crewMember });
             }
 
             #region Frozenkerbals
@@ -298,12 +391,182 @@ namespace MyPlugin_DFWrapper
                     }
                     actualFrozenKerbalsList = null;
                     actualFrozenKerbalsList = FrozenKerbalsListMethod.Invoke(actualDFAPI, null);
-                    returnvalue = (List < KeyValuePair < string, KerbalInfo >> )actualFrozenKerbalsList;
+                    returnvalue = (List<KeyValuePair<string, KerbalInfo>>)actualFrozenKerbalsList;
                     return returnvalue;
                 }
             }
 
             #endregion Frozenkerbals
+
+            #region KnownVessels
+
+            private object actualKnownVessels;
+            private MethodInfo knownVesselsMethod;
+
+            /// <summary>
+            /// The dictionary of Known Vessels that are currently active in game
+            /// </summary>
+            /// <returns>
+            /// Dictionary <Guid, VesselInfo> of Known Vessels
+            /// </returns>
+            internal Dictionary<Guid, VesselInfo> KnownVessels
+            {
+                get
+                {
+                    Dictionary<Guid, VesselInfo> returnvalue = new Dictionary<Guid, VesselInfo>();
+                    if (knownVesselsMethod == null)
+                    {
+                        LogFormatted("Error getting KnownVessels - Reflection Method is Null");
+                        return returnvalue;
+                    }
+                    actualKnownVessels = null;
+                    actualKnownVessels = knownVesselsMethod.Invoke(actualDFAPI, null);
+                    returnvalue = ExtractKnownVesselsDict(actualKnownVessels);
+                    return returnvalue;
+                }
+            }
+
+            /// <summary>
+            /// This converts the actualKnownVessels actual object to a new dictionary for consumption
+            /// </summary>
+            /// <param name="actualKnownVessels"></param>
+            /// <returns>
+            /// Dictionary <string, VesselInfo> of Known Vessels
+            /// </returns>
+            private Dictionary<Guid, VesselInfo> ExtractKnownVesselsDict(Object actualKnownVessels)
+            {
+                Dictionary<Guid, VesselInfo> DictToReturn = new Dictionary<Guid, VesselInfo>();
+                try
+                {
+                    foreach (var item in (IDictionary)actualKnownVessels)
+                    {
+                        var typeitem = item.GetType();
+                        PropertyInfo[] itemprops = typeitem.GetProperties(BindingFlags.Instance | BindingFlags.Public);
+                        Guid itemkey = (Guid)itemprops[0].GetValue(item, null);
+                        object itemvalue = (object)itemprops[1].GetValue(item, null);
+                        VesselInfo itemVesselInfo = new VesselInfo(itemvalue);
+                        DictToReturn[itemkey] = itemVesselInfo;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogFormatted("Unable to extract KnownVessels Dictionary: {0}", ex.Message);
+                }
+                return DictToReturn;
+            }
+
+            private object actualKnownVesselsList;
+            private MethodInfo knownVesselsListMethod;
+
+            /// <summary>
+            /// This converts the actualKnownVessels actual object to a new List keyvaluepair for consumption
+            /// </summary>
+            /// /// <returns>
+            /// List<KeyValuePair<Guid, VesselInfo>> of Known Vessels
+            /// </returns>
+            internal List<KeyValuePair<Guid, VesselInfo>> KnownVesselsList
+            {
+                get
+                {
+                    List<KeyValuePair<Guid, VesselInfo>> returnvalue = new List<KeyValuePair<Guid, VesselInfo>>();
+                    if (knownVesselsListMethod == null)
+                    {
+                        LogFormatted("Error getting KnownVessels - Reflection Method is Null");
+                        return returnvalue;
+                    }
+                    actualKnownVesselsList = null;
+                    actualKnownVesselsList = knownVesselsListMethod.Invoke(actualDFAPI, null);
+                    returnvalue = (List<KeyValuePair<Guid, VesselInfo>>)actualKnownVesselsList;
+                    return returnvalue;
+                }
+            }
+
+            #endregion KnownVessels
+
+            #region KnownFreezerParts
+
+            private object actualKnownFreezerParts;
+            private MethodInfo knownFreezerPartsMethod;
+
+            /// <summary>
+            /// The dictionary of Known Parts that are currently active in game
+            /// </summary>
+            /// <returns>
+            /// Dictionary <uint, PartInfo> of Known Freezer Parts
+            /// </returns>
+            internal Dictionary<uint, PartInfo> KnownFreezerParts
+            {
+                get
+                {
+                    Dictionary<uint, PartInfo> returnvalue = new Dictionary<uint, PartInfo>();
+                    if (knownFreezerPartsMethod == null)
+                    {
+                        LogFormatted("Error getting KnownFreezerParts - Reflection Method is Null");
+                        return returnvalue;
+                    }
+                    actualKnownFreezerParts = null;
+                    actualKnownFreezerParts = knownFreezerPartsMethod.Invoke(actualDFAPI, null);
+                    returnvalue = ExtractKnownFreezerPartsDict(actualKnownFreezerParts);
+                    return returnvalue;
+                }
+            }
+
+            /// <summary>
+            /// This converts the actualKnownFreezerParts actual object to a new dictionary for consumption
+            /// </summary>
+            /// <param name="actualKnownFreezerParts"></param>
+            /// <returns>
+            /// Dictionary <uint, PartInfo> of Known Vessels
+            /// </returns>
+            private Dictionary<uint, PartInfo> ExtractKnownFreezerPartsDict(Object actualKnownFreezerParts)
+            {
+                Dictionary<uint, PartInfo> DictToReturn = new Dictionary<uint, PartInfo>();
+                try
+                {
+                    foreach (var item in (IDictionary)actualKnownFreezerParts)
+                    {
+                        var typeitem = item.GetType();
+                        PropertyInfo[] itemprops = typeitem.GetProperties(BindingFlags.Instance | BindingFlags.Public);
+                        uint itemkey = (uint)itemprops[0].GetValue(item, null);
+                        object itemvalue = (object)itemprops[1].GetValue(item, null);
+                        PartInfo itemPartInfo = new PartInfo(itemvalue);
+                        DictToReturn[itemkey] = itemPartInfo;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogFormatted("Unable to extract KnownFreezerParts Dictionary: {0}", ex.Message);
+                }
+                return DictToReturn;
+            }
+
+            private object actualKnownFreezerPartsList;
+            private MethodInfo knownFreezerPartsListMethod;
+
+            /// <summary>
+            /// This converts the actualKnownFreezerParts actual object to a new List keyvaluepair for consumption
+            /// </summary>
+            /// /// <returns>
+            /// List<KeyValuePair<uint, PartInfo>> of Known Freezer Parts
+            /// </returns>
+            internal List<KeyValuePair<uint, PartInfo>> KnownFreezerPartsList
+            {
+                get
+                {
+                    List<KeyValuePair<uint, PartInfo>> returnvalue = new List<KeyValuePair<uint, PartInfo>>();
+                    if (knownFreezerPartsListMethod == null)
+                    {
+                        LogFormatted("Error getting KnownFreezerParts - Reflection Method is Null");
+                        return returnvalue;
+                    }
+                    actualKnownFreezerPartsList = null;
+                    actualKnownFreezerPartsList = knownFreezerPartsListMethod.Invoke(actualDFAPI, null);
+                    returnvalue = (List<KeyValuePair<uint, PartInfo>>)actualKnownFreezerPartsList;
+                    return returnvalue;
+                }
+            }
+
+            #endregion KnownFreezerParts
         }
 
         #region DeepFreezerPart
@@ -797,6 +1060,402 @@ namespace MyPlugin_DFWrapper
                 get { return (string)experienceTraitNameField.GetValue(actualFrozenKerbalInfo); }
             }
         }
+
+        /// <summary>
+        /// The Value Class of the KnownVesselsList Dictionary that is an analogue of the real KnownVessels Dictionary in the DeepFreezer Class.
+        /// </summary>
+        public class VesselInfo
+        {
+            internal VesselInfo(Object a)
+            {
+                actualVesselInfo = a;
+                vesselNameField = VesselInfoType.GetField("vesselName");
+                vesselTypeField = VesselInfoType.GetField("vesselType");
+                numCrewField = VesselInfoType.GetField("numCrew");
+                numSeatsField = VesselInfoType.GetField("numSeats");
+                numOccupiedPartsField = VesselInfoType.GetField("numOccupiedParts");
+                numFrozenCrewField = VesselInfoType.GetField("numFrznCrew");
+                hibernatingField = VesselInfoType.GetField("hibernating");
+                hasExternalDoorField = VesselInfoType.GetField("hasextDoor");
+                hasExternalPodField = VesselInfoType.GetField("hasextPod");
+                lastUpdateField = VesselInfoType.GetField("lastUpdate");
+                storedECField = VesselInfoType.GetField("storedEC");
+                predictedECOutField = VesselInfoType.GetField("predictedECOut");
+            }
+
+            private Object actualVesselInfo;
+
+            private FieldInfo vesselNameField;
+
+            /// <summary>
+            /// The Vessel Name
+            /// </summary>
+            public string vesselName
+            {
+                get { return (string)vesselNameField.GetValue(actualVesselInfo); }
+            }
+            private FieldInfo vesselTypeField;
+
+            /// <summary>
+            /// last time the FrozenKerbalInfo was updated
+            /// </summary>
+            public VesselType vesselType
+            {
+                get { return (VesselType)vesselTypeField.GetValue(actualVesselInfo); }
+            }
+
+            private FieldInfo numCrewField;
+
+            /// <summary>
+            /// Number of Crew
+            /// </summary>
+            public int numCrew
+            {
+                get { return (int)numCrewField.GetValue(actualVesselInfo); }
+            }
+
+            private FieldInfo numSeatsField;
+
+            /// <summary>
+            /// Number of Seats
+            /// </summary>
+            public int numSeats
+            {
+                get { return (int)numSeatsField.GetValue(actualVesselInfo); }
+            }
+
+            private FieldInfo numOccupiedPartsField;
+
+            /// <summary>
+            /// Number of Occupied parts
+            /// </summary>
+            public int numOccupiedParts
+            {
+                get { return (int)numOccupiedPartsField.GetValue(actualVesselInfo); }
+            }
+
+            private FieldInfo numFrozenCrewField;
+
+            /// <summary>
+            /// Number of Frozen Crew
+            /// </summary>
+            public int numFrozenCrew
+            {
+                get { return (int)numFrozenCrewField.GetValue(actualVesselInfo); }
+            }
+
+            private FieldInfo hibernatingField;
+
+            /// <summary>
+            /// Is the vessel hibernating
+            /// </summary>
+            public bool hibernating
+            {
+                get { return (bool)hibernatingField.GetValue(actualVesselInfo); }
+            }
+
+            private FieldInfo hasExternalDoorField;
+
+            /// <summary>
+            /// If there's an external door
+            /// </summary>
+            public bool hasExternalDoor
+            {
+                get { return (bool)hasExternalDoorField.GetValue(actualVesselInfo); }
+            }
+
+            private FieldInfo hasExternalPodField;
+
+            /// <summary>
+            /// If there's an external pod
+            /// </summary>
+            public bool hasExternalPod
+            {
+                get { return (bool)hasExternalPodField.GetValue(actualVesselInfo); }
+            }
+
+            private FieldInfo lastUpdateField;
+
+            /// <summary>
+            /// Last time updated
+            /// </summary>
+            public double lastUpdate
+            {
+                get { return (double)lastUpdateField.GetValue(actualVesselInfo); }
+            }
+
+            private FieldInfo storedECField;
+
+            /// <summary>
+            /// How much EC it has stored
+            /// </summary>
+            public double storedEC
+            {
+                get { return (double)storedECField.GetValue(actualVesselInfo); }
+                set { storedECField.SetValue(actualVesselInfo, value); }
+            }
+
+            private FieldInfo predictedECOutField;
+
+            /// <summary>
+            /// Predicted time EC will run out
+            /// </summary>
+            public double predictedECOut
+            {
+                get { return (double)predictedECOutField.GetValue(actualVesselInfo); }
+            }
+        }
+
+
+        /// <summary>
+        /// The Value Class of the KnownFreezerPartsList Dictionary that is an analogue of the real KnownFreezerParts Dictionary in the DeepFreezer Class.
+        /// </summary>
+        public class PartInfo
+        {
+            internal PartInfo(Object a)
+            {
+                actualPartInfo = a;
+                vesselIDField = PartInfoType.GetField("vesselID");
+                partNameField = PartInfoType.GetField("PartName");
+                numSeatsField = PartInfoType.GetField("numSeats");
+                numCrewField = PartInfoType.GetField("numCrew");
+                crewMembersField = PartInfoType.GetField("crewMembers");
+                crewMemberTraitsField = PartInfoType.GetField("crewMemberTraits");
+                numFrznCrewField = PartInfoType.GetField("numFrznCrew");
+                hibernatingField = PartInfoType.GetField("hibernating");
+                hasExternalDoorField = PartInfoType.GetField("hasextDoor");
+                hasExternalPodField = PartInfoType.GetField("hasextPod");
+                timeLastElectricityField = PartInfoType.GetField("timeLastElectricity");
+                frznChargeRequiredField = PartInfoType.GetField("frznChargeRequired");
+                timeLastTempCheckField = PartInfoType.GetField("timeLastTempCheck");
+                deathCounterField = PartInfoType.GetField("deathCounter");
+                tmpdeathCounterField = PartInfoType.GetField("tmpdeathCounter");
+                outofECField = PartInfoType.GetField("outofEC");
+                TmpStatusField = PartInfoType.GetField("TmpStatus");
+                ECWarningField = PartInfoType.GetField("ECWarning");
+                TempWarningField = PartInfoType.GetField("TempWarning");
+                cabinTempField = PartInfoType.GetField("cabinTemp");
+                lastUpdateField = PartInfoType.GetField("lastUpdate");
+            }
+
+            private Object actualPartInfo;
+
+            private FieldInfo vesselIDField;
+
+            /// <summary>
+            /// Guid of the vessel of the Part
+            /// </summary>
+            public Guid vesselID
+            {
+                get { return (Guid)vesselIDField.GetValue(actualPartInfo); }
+            }
+
+            private FieldInfo partNameField;
+
+            /// <summary>
+            /// The Part Name
+            /// </summary>
+            public string partName
+            {
+                get { return (string)partNameField.GetValue(actualPartInfo); }
+            }
+
+            private FieldInfo numSeatsField;
+
+            /// <summary>
+            /// Number of Seats
+            /// </summary>
+            public int numSeats
+            {
+                get { return (int)numSeatsField.GetValue(actualPartInfo); }
+            }
+
+            private FieldInfo numCrewField;
+
+            /// <summary>
+            /// Number of Crew
+            /// </summary>
+            public int numCrew
+            {
+                get { return (int)numCrewField.GetValue(actualPartInfo); }
+                set { numCrewField.SetValue(actualPartInfo, value); }
+            }
+
+            private FieldInfo crewMembersField;
+
+            /// <summary>
+            /// List of Crew Members names
+            /// </summary>
+            public List<string> crewMembers
+            {
+                get { return (List<string>)crewMembersField.GetValue(actualPartInfo); }
+                set { crewMembersField.SetValue(actualPartInfo, value); }
+            }
+
+            private FieldInfo crewMemberTraitsField;
+
+            /// <summary>
+            /// List of Crew Members traits
+            /// </summary>
+            public List<string> crewMemberTraits
+            {
+                get { return (List<string>)crewMemberTraitsField.GetValue(actualPartInfo); }
+                set { crewMemberTraitsField.SetValue(actualPartInfo, value); }
+            }
+
+            private FieldInfo numFrznCrewField;
+
+            /// <summary>
+            /// Number of Frozen Crew
+            /// </summary>
+            public int numFrznCrew
+            {
+                get { return (int)numFrznCrewField.GetValue(actualPartInfo); }
+                set { numFrznCrewField.SetValue(actualPartInfo, value); }
+            }
+
+            private FieldInfo hibernatingField;
+
+            /// <summary>
+            /// Is the vessel hibernating
+            /// </summary>
+            public bool hibernating
+            {
+                get { return (bool)hibernatingField.GetValue(actualPartInfo); }
+            }
+
+            private FieldInfo hasExternalDoorField;
+
+            /// <summary>
+            /// If there's an external door
+            /// </summary>
+            public bool hasExternalDoor
+            {
+                get { return (bool)hasExternalDoorField.GetValue(actualPartInfo); }
+            }
+
+            private FieldInfo hasExternalPodField;
+
+            /// <summary>
+            /// If there's an external pod
+            /// </summary>
+            public bool hasExternalPod
+            {
+                get { return (bool)hasExternalPodField.GetValue(actualPartInfo); }
+            }
+
+            private FieldInfo timeLastElectricityField;
+            /// <summary>
+            /// Time last EC was taken
+            /// </summary>
+            public double timeLastElectricity
+            {
+                get { return (double)timeLastElectricityField.GetValue(actualPartInfo); }
+                set { timeLastElectricityField.SetValue(actualPartInfo, value); }
+            }
+
+            private FieldInfo frznChargeRequiredField;
+            /// <summary>
+            /// The amount of EC required to keep a kerbal frozen.
+            /// </summary>
+            public double frznChargeRequired
+            {
+                get { return (double)frznChargeRequiredField.GetValue(actualPartInfo); }
+                set { frznChargeRequiredField.SetValue(actualPartInfo, value); }
+            }
+
+            private FieldInfo timeLastTempCheckField;
+            /// <summary>
+            /// The time the temperature was last checked.
+            /// </summary>
+            public double timeLastTempCheck
+            {
+                get { return (double)timeLastTempCheckField.GetValue(actualPartInfo); }
+                set { timeLastTempCheckField.SetValue(actualPartInfo, value); }
+            }
+
+            private FieldInfo deathCounterField;
+            /// <summary>
+            /// The time counter until death occurs after EC runs out.
+            /// </summary>
+            public double deathCounter
+            {
+                get { return (double)deathCounterField.GetValue(actualPartInfo); }
+                set { deathCounterField.SetValue(actualPartInfo, value); }
+            }
+
+            private FieldInfo tmpdeathCounterField;
+            /// <summary>
+            /// The amount of EC required to keep a kerbal frozen.
+            /// </summary>
+            public double tmpdeathCounter
+            {
+                get { return (double)tmpdeathCounterField.GetValue(actualPartInfo); }
+                set { tmpdeathCounterField.SetValue(actualPartInfo, value); }
+            }
+
+            private FieldInfo outofECField;
+            /// <summary>
+            /// If the part freezer is out of EC or not.
+            /// </summary>
+            public bool outofEC
+            {
+                get { return (bool)outofECField.GetValue(actualPartInfo); }
+                set { outofECField.SetValue(actualPartInfo, value); }
+            }
+
+            private FieldInfo TmpStatusField;
+            /// <summary>
+            /// The freezer temperature status.
+            /// </summary>
+            public FrzrTmpStatus TmpStatus
+            {
+                get { return (FrzrTmpStatus)TmpStatusField.GetValue(actualPartInfo); }
+                set { TmpStatusField.SetValue(actualPartInfo, value); }
+            }
+
+            private FieldInfo ECWarningField;
+            /// <summary>
+            /// If the part freezer is out of EC or not.
+            /// </summary>
+            public bool ECWarning
+            {
+                get { return (bool)ECWarningField.GetValue(actualPartInfo); }
+                set { ECWarningField.SetValue(actualPartInfo, value); }
+            }
+
+            private FieldInfo TempWarningField;
+            /// <summary>
+            /// If a temperature warning is in effect.
+            /// </summary>
+            public bool TempWarning
+            {
+                get { return (bool)TempWarningField.GetValue(actualPartInfo); }
+                set { TempWarningField.SetValue(actualPartInfo, value); }
+            }
+
+            private FieldInfo cabinTempField;
+            /// <summary>
+            /// The cabin temperature.
+            /// </summary>
+            public float cabinTempRequired
+            {
+                get { return (float)cabinTempField.GetValue(actualPartInfo); }
+                set { cabinTempField.SetValue(actualPartInfo, value); }
+            }
+
+            private FieldInfo lastUpdateField;
+
+            /// <summary>
+            /// Last time updated
+            /// </summary>
+            public double lastUpdate
+            {
+                get { return (double)lastUpdateField.GetValue(actualPartInfo); }
+                set { lastUpdateField.SetValue(actualPartInfo, value); }
+            }
+        }
+
 
         #region Logging Stuff
 
