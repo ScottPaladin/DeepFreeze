@@ -92,6 +92,14 @@ namespace DF
             }
         }
 
+        internal static bool IsBGRInstalled
+        {
+            get
+            {
+                return IsModInstalled("BackgroundResources");
+            }
+        }
+
         internal static bool IsTexReplacerInstalled
         {
             get

@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using BackgroundResources;
 using RSTUtils;
 using UnityEngine;
 using KSP.Localization;
@@ -38,10 +39,16 @@ namespace DF
         internal readonly List<Component> children = new List<Component>();
         private List<KeyValuePair<string, KerbalInfo>> _frozenKerbalsList = new List<KeyValuePair<string, KerbalInfo>>();
         private List<KeyValuePair<Guid, VesselInfo>> _knownVesselList = new List<KeyValuePair<Guid, VesselInfo>>();
+        private List<KeyValuePair<uint, PartInfo>> _knownFreezerPartsList = new List<KeyValuePair<uint, PartInfo>>();
 
         public bool DFIECReqd
         {
             get { return DFsettings.ECreqdForFreezer; }
+        }
+
+        public bool DFIDeathFatal
+        {
+            get { return DFsettings.fatalOption; }
         }
 
         public Dictionary<string, KerbalInfo> FrozenKerbals
@@ -67,6 +74,24 @@ namespace DF
                 _knownVesselList.Clear();
                 _knownVesselList = DFgameSettings.knownVessels.ToList();
                 return _knownVesselList;
+            }
+        }
+
+        public Dictionary<uint, PartInfo> KnownFreezerParts
+        {
+            get
+            {
+                return DFgameSettings.knownFreezerParts;
+            }
+        }
+
+        public List<KeyValuePair<uint, PartInfo>> KnownFreezerPartsList
+        {
+            get
+            {
+                _knownFreezerPartsList.Clear();
+                _knownFreezerPartsList = DFgameSettings.knownFreezerParts.ToList();
+                return _knownFreezerPartsList;
             }
         }
 
@@ -288,6 +313,13 @@ namespace DF
             var partsToDelete = new List<uint>();
             partsToDelete.AddRange(Instance.DFgameSettings.knownFreezerParts.Where(e => e.Value.vesselID == vessel.vesselID).Select(e => e.Key).ToList());
             partsToDelete.ForEach(id => Instance.DFgameSettings.knownFreezerParts.Remove(id));
+            if (DFInstalledMods.IsBGRInstalled && DeepFreeze.Instance.DFsettings.backgroundresources)
+            {
+                if (UnloadedResources.Instance != null)
+                {
+                    UnloadedResources.Instance.RemoveInterestedVessel(vessel);
+                }
+            }
             if (DFgameSettings.knownVessels.ContainsKey(vessel.vesselID))
             {
                 DFgameSettings.knownVessels.Remove(vessel.vesselID);
@@ -310,6 +342,13 @@ namespace DF
             var partsToDelete = new List<uint>();
             partsToDelete.AddRange(Instance.DFgameSettings.knownFreezerParts.Where(e => e.Value.vesselID == vessel.vesselID).Select(e => e.Key).ToList());
             partsToDelete.ForEach(id => Instance.DFgameSettings.knownFreezerParts.Remove(id));
+            if (DFInstalledMods.IsBGRInstalled && DeepFreeze.Instance.DFsettings.backgroundresources)
+            {
+                if (UnloadedResources.Instance != null)
+                {
+                    UnloadedResources.Instance.RemoveInterestedVessel(vessel);
+                }
+            }
             if (DFgameSettings.knownVessels.ContainsKey(vessel.vesselID))
             {
                 DFgameSettings.knownVessels.Remove(vessel.vesselID);
@@ -332,6 +371,13 @@ namespace DF
             var partsToDelete = new List<uint>();
             partsToDelete.AddRange(Instance.DFgameSettings.knownFreezerParts.Where(e => e.Value.vesselID == vessel.id).Select(e => e.Key).ToList());
             partsToDelete.ForEach(id => Instance.DFgameSettings.knownFreezerParts.Remove(id));
+            if (DFInstalledMods.IsBGRInstalled && DeepFreeze.Instance.DFsettings.backgroundresources)
+            {
+                if (UnloadedResources.Instance != null)
+                {
+                    UnloadedResources.Instance.RemoveInterestedVessel(vessel.id);
+                }
+            }
             if (DFgameSettings.knownVessels.ContainsKey(vessel.id))
             {
                 DFgameSettings.knownVessels.Remove(vessel.id);
@@ -391,7 +437,7 @@ namespace DF
             }
         }
 
-        internal void KillFrozenCrew(string FrozenCrew)
+        public void KillFrozenCrew(string FrozenCrew)
         {
             Utilities.Log("DeepFreezeEvents KillFrozenCrew " + FrozenCrew);
             Instance.DFgameSettings.KnownFrozenKerbals.Remove(FrozenCrew);

@@ -44,6 +44,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\KSPDLLs\Assembly-CSharp-firstpass.dll</HintPath>
     </Reference>
+    <Reference Include="BackgroundResources">
+      <HintPath>..\..\REPOSoftTechKSPUtils\BackgroundResources\bin\Release\BackgroundResources.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -152,6 +155,7 @@ if %25ERRORLEVEL%25 == 1 (
    echo Packaging build
   ) 
 if exist "$(SolutionDir)..\Distribution\$(ProjectName)_V@(VersionNumber).zip" del "$(SolutionDir)..\Distribution\$(ProjectName)_V@(VersionNumber).zip"
+if exist "$(SolutionDir)..\GameData\" xcopy /E /Y "$(SolutionDir)..\GameData"  "$(SolutionDir)..\Distribution\GameData"
    
 %25ZA_DIR%257za.exe a -tzip -r  "$(SolutionDir)..\Distribution\$(ProjectName)_V@(VersionNumber).zip" "$(SolutionDir)..\Distribution\GameData"
 cd "$(SolutionDir)..\Distribution\GameData\RepoSoftTech\$(ProjectName)\Icons"

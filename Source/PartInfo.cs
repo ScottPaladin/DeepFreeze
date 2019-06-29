@@ -21,7 +21,7 @@ using UnityEngine;
 
 namespace DF
 {
-    internal class PartInfo
+    public class PartInfo
     {
         //This class stores Info about DeepFreezer Parts that have the DeepFreezer partmodule attached.
         //VesselID              - VesselID of the Vessel this part is a part of.
@@ -46,27 +46,27 @@ namespace DF
         //
         internal const string ConfigNodeName = "PartInfo";
 
-        internal Guid vesselID;
-        internal string PartName;
-        internal int numSeats;
-        internal int numCrew;
-        internal List<string> crewMembers;
-        internal List<string> crewMemberTraits;
-        internal int numFrznCrew;
-        internal bool hibernating;
-        internal bool hasextDoor;
-        internal bool hasextPod;
-        internal double timeLastElectricity;
-        internal double frznChargeRequired;
-        internal double timeLastTempCheck;
-        internal double deathCounter;
-        internal double tmpdeathCounter;
-        internal bool outofEC;
-        internal FrzrTmpStatus TmpStatus = FrzrTmpStatus.OK;
-        internal bool ECWarning;
-        internal bool TempWarning;
-        internal float cabinTemp;
-        internal double lastUpdate;
+        public Guid vesselID;
+        public string PartName;
+        public int numSeats;
+        public int numCrew;
+        public List<string> crewMembers;
+        public List<string> crewMemberTraits;
+        public int numFrznCrew;
+        public bool hibernating;
+        public bool hasextDoor;
+        public bool hasextPod;
+        public double timeLastElectricity;
+        public double frznChargeRequired;
+        public double timeLastTempCheck;
+        public double deathCounter;
+        public double tmpdeathCounter;
+        public bool outofEC;
+        public FrzrTmpStatus TmpStatus = FrzrTmpStatus.OK;
+        public bool ECWarning;
+        public bool TempWarning;
+        public float cabinTemp;
+        public double lastUpdate;
 
         internal PartInfo(Guid vesselid, string PartName, double currentTime)
         {
