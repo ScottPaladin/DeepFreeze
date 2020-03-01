@@ -16,6 +16,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using RSTUtils;
@@ -27,11 +28,33 @@ namespace DF
         // Class used to check what Other mods we are interested in are installed.
         
         private static Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+        private static List<ModInfo> modInfo;
+
+        internal class ModInfo
+        {
+            public string name;
+            public bool alreadyChecked;
+            public bool installed;
+
+            public ModInfo(string name)
+            {
+                this.name = name;
+            }
+        }
 
         internal static bool IsSMInstalled
         {
             get
             {
+                ModInfo info = GetInfo("ShipManifest");
+                if (info.alreadyChecked)
+                {
+                    return info.installed;
+                }
+                else
+                {
+                    
+                }
                 return IsModInstalled("ShipManifest");
             }
         }
@@ -118,18 +141,46 @@ namespace DF
 
         internal static bool IsModInstalled(string assemblyName)
         {
+            ModInfo info = GetInfo(assemblyName);
+            if (info.alreadyChecked)
+            {
+                return info.installed;
+            }
+            
             try
             {
                 Assembly assembly = (from a in assemblies
                                      where a.FullName.Split(',')[0] == assemblyName
                                      select a).First();
-                return assembly != null;
+                info.alreadyChecked = true;
+                info.installed = assembly != null;
+                return info.installed;
             }
             catch
             {
                 return false;
             }
         }
+        
+        internal static ModInfo GetInfo(string name)
+        {
+            if (modInfo == null)
+            {
+                modInfo = new List<ModInfo>();
+            }
+            for (int i = 0; i < modInfo.Count; i++)
+            {
+                ModInfo info = modInfo[i];
+                if (modInfo[i].name == name)
+                {
+                    return modInfo[i];
+                }
+            }
+            ModInfo newInfo = new ModInfo(name);
+            modInfo.Add(newInfo);
+            return newInfo;
+        }
+
 
         internal static bool RTVesselConnected(Guid id)
         {
