@@ -373,6 +373,11 @@ namespace DF
                     }                    
                 }
             }
+            UIPartActionWindow window = UIPartActionController.Instance.GetItem(partRef);
+            if (window != null)
+            {
+                window.displayDirty = true;
+            }
         }
     }    
 }
