@@ -35,6 +35,10 @@ namespace DF
             //GameEvents.onGameSceneSwitchRequested.Add(onGameSceneSwitchRequested);
             DFGameEvents.onKerbalFrozen = new EventData<Part, ProtoCrewMember>("onKerbalFrozen");
             DFGameEvents.onKerbalThaw = new EventData<Part, ProtoCrewMember>("onKerbalThaw");
+            DFGameEvents.onKerbalFreezing = new EventData<Part, string>("onKerbalFreezing");
+            DFGameEvents.onKerbalThawing = new EventData<Part, string>("onKerbalThawing");
+            DFGameEvents.onKerbalFreezeAbort = new EventData<Part, string>("onKerbalFreezeAbort");
+            DFGameEvents.onKerbalThawAbort = new EventData<Part, string>("onKerbalThawAbort");
             DFGameEvents.onKerbalSetComatose = new EventData<Part, ProtoCrewMember>("onKerbalSetComatose");
             DFGameEvents.onKerbalUnSetComatose = new EventData<Part, ProtoCrewMember>("onKerbalUnSetComatose");
             DFGameEvents.onFrozenKerbalDied = new EventData<ProtoCrewMember>("onFrozenKerbalDied");
