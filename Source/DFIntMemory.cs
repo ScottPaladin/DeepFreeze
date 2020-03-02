@@ -101,7 +101,7 @@ namespace DF
 
         protected DFIntMemory()
         {
-            Utilities.Log("DFIntMemory Constructor");
+            //Utilities.Log("DFIntMemory Constructor");
             Instance = this;
         }
 
