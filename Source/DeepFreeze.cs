@@ -107,13 +107,13 @@ namespace DF
 
         public DeepFreeze()
         {
-            Utilities.Log("DeepFreeze Constructor");
+            //Utilities.Log("DeepFreeze Constructor");
             Instance = this;
             APIReady = false;
             DFsettings = new DFSettings();
             DFgameSettings = new DFGameSettings();
             globalConfigFilename = Path.Combine(_AssemblyFolder, "PluginData/Config.cfg").Replace("\\", "/");
-            Utilities.Log("globalConfigFilename = " + globalConfigFilename);
+            //Utilities.Log("globalConfigFilename = " + globalConfigFilename);
             DeepFreezeEventAdd();
         }
 
@@ -239,25 +239,25 @@ namespace DF
 
         protected void OnGameSceneLoadRequested(GameScenes gameScene)
         {
-            Utilities.Log("Game scene load requested: " + gameScene);
+            //Utilities.Log("Game scene load requested: " + gameScene);
         }
 
         protected void DeepFreezeEventAdd()
         {
-            Utilities.Log("DeepFreezeEvents DeepFreezeEventAdd");
+            //Utilities.Log("DeepFreezeEvents DeepFreezeEventAdd");
             GameEvents.onVesselRecovered.Add(onVesselRecovered);
             GameEvents.onVesselTerminated.Add(onVesselTerminated);
             GameEvents.onVesselWillDestroy.Add(onVesselWillDestroy);
-            Utilities.Log("DeepFreezeEvents DeepFreezeEventAdd ended");
+            //Utilities.Log("DeepFreezeEvents DeepFreezeEventAdd ended");
         }
 
         protected void DeepFreezeEventRem()
         {
-            Utilities.Log("DeepFreezeEvents DeepFreezeEventRem");
+            //Utilities.Log("DeepFreezeEvents DeepFreezeEventRem");
             GameEvents.onVesselRecovered.Remove(onVesselRecovered);
             GameEvents.onVesselTerminated.Remove(onVesselTerminated);
             GameEvents.onVesselWillDestroy.Remove(onVesselWillDestroy);
-            Utilities.Log("DeepFreezeEvents DeepFreezeEventRem ended");
+            //Utilities.Log("DeepFreezeEvents DeepFreezeEventRem ended");
         }
 
         protected void onVesselRecovered(ProtoVessel vessel, bool notSureWhatFor)
