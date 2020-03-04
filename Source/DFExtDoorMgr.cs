@@ -53,7 +53,7 @@ namespace DF
             {
                 //Door is open so we trigger a closedoor.
                 Freezer.eventCloseDoors();
-                Utilities.Log_Debug("DFExtDoorMgr ButtonExtDoor fired triggerred eventCloseDoors");
+                Utilities.Log_Debug("DFExtDoorMgr ButtonExtDoor fired triggered eventCloseDoors");
             }
             else
             {
@@ -61,7 +61,7 @@ namespace DF
                 {
                     //Door is closed so we trigger a opendoor.
                     Freezer.eventOpenDoors();
-                    Utilities.Log_Debug("DFExtDoorMgr ButtonExtDoor fired triggerred eventOpenDoors");
+                    Utilities.Log_Debug("DFExtDoorMgr ButtonExtDoor fired triggered eventOpenDoors");
                 }
                 else
                 {

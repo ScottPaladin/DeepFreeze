@@ -82,13 +82,30 @@ namespace DF
         private VesselInfo vesselInfo;
         private PartInfo partInfo;
         private List<DeepFreezer> DpFrzrLoadedVsl = new List<DeepFreezer>();
+        private bool freezeThawActive;
+        /// <summary>
+        /// True if a Freeze or Thaw is active in any DeepFreezer
+        /// </summary>
+        public static bool FreezeThawActive
+        {
+            get
+            {
+                if (Instance != null)
+                {
+                    return Instance.freezeThawActive;
+                }
+
+                return false;
+            }
+        }
 
         protected DFIntMemory()
         {
-            Utilities.Log("DFIntMemory Constructor");
+            //Utilities.Log("DFIntMemory Constructor");
             Instance = this;
         }
 
+        #region MonoBehavior
         private void Awake()
         {
              Utilities.Log_Debug("DFIntMemory Awake");
@@ -103,6 +120,30 @@ namespace DF
             GameEvents.onVesselCreate.Add(onVesselCreate);
             GameEvents.onPartCouple.Add(onPartCouple);
             GameEvents.onGUIEngineersReportReady.Add(AddTests);
+            if (DFGameEvents.onKerbalFreezing != null)
+            {
+                DFGameEvents.onKerbalFreezing.Add(ThawFreezeStart);
+            }
+            if (DFGameEvents.onKerbalThawing != null)
+            {
+                DFGameEvents.onKerbalThawing.Add(ThawFreezeStart);
+            }
+            if (DFGameEvents.onKerbalFrozen != null)
+            {
+                DFGameEvents.onKerbalFrozen.Add(ThawFreezeEnd);
+            }
+            if (DFGameEvents.onKerbalThaw != null)
+            {
+                DFGameEvents.onKerbalThaw.Add(ThawFreezeEnd);
+            }
+            if (DFGameEvents.onKerbalFreezeAbort != null)
+            {
+                DFGameEvents.onKerbalFreezeAbort.Add(ThawFreezeAbort);
+            }
+            if (DFGameEvents.onKerbalThawAbort != null)
+            {
+                DFGameEvents.onKerbalThawAbort.Add(ThawFreezeAbort);
+            }
 
             try
             {
@@ -163,7 +204,31 @@ namespace DF
             GameEvents.onVesselLoaded.Remove(onVesselLoad);
             GameEvents.onVesselCreate.Remove(onVesselCreate);
             GameEvents.onPartCouple.Remove(onPartCouple);
-            GameEvents.onGUIEngineersReportReady.Remove(AddTests);   
+            GameEvents.onGUIEngineersReportReady.Remove(AddTests);
+            if (DFGameEvents.onKerbalFreezing != null)
+            {
+                DFGameEvents.onKerbalFreezing.Remove(ThawFreezeStart);
+            }
+            if (DFGameEvents.onKerbalThawing != null)
+            {
+                DFGameEvents.onKerbalThawing.Remove(ThawFreezeStart);
+            }
+            if (DFGameEvents.onKerbalFrozen != null)
+            {
+                DFGameEvents.onKerbalFrozen.Remove(ThawFreezeEnd);
+            }
+            if (DFGameEvents.onKerbalThaw != null)
+            {
+                DFGameEvents.onKerbalThaw.Remove(ThawFreezeEnd);
+            }
+            if (DFGameEvents.onKerbalFreezeAbort != null)
+            {
+                DFGameEvents.onKerbalFreezeAbort.Remove(ThawFreezeAbort);
+            }
+            if (DFGameEvents.onKerbalThawAbort != null)
+            {
+                DFGameEvents.onKerbalThawAbort.Remove(ThawFreezeAbort);
+            }
         }
 
         private void Update()
@@ -350,7 +415,7 @@ namespace DF
 
         private void FixedUpdate()
         {
-            if (HighLogic.LoadedSceneIsEditor || Time.timeSinceLevelLoad < 5f) return; //Wait 5 seconds on level load before executing
+            if (HighLogic.LoadedSceneIsEditor || Time.timeSinceLevelLoad < 5f || freezeThawActive) return; //Wait 5 seconds on level load before executing
             currentTime = Planetarium.GetUniversalTime();
             //We only update every THREE seconds.
             if (currentTime - lastFixedUpdateTime < 3f)
@@ -404,7 +469,7 @@ namespace DF
                 Utilities.Log("Err: " + ex);
             }
         }
-
+        #endregion
         private void CheckComaUpdate()
         {
             // Check the knownfrozenkerbals for any tourists kerbals (IE: Comatose) if their time is up and reset them if it is.
@@ -541,6 +606,22 @@ namespace DF
             }
             Utilities.Log("There are " + i + " crew Kerbals in the game roster.");
 
+        }
+
+        #region Events
+        private void ThawFreezeStart(Part part, string name)
+        {
+            freezeThawActive = true;
+        }
+
+        private void ThawFreezeEnd(Part part, ProtoCrewMember crew)
+        {
+            freezeThawActive = false;
+        }
+
+        private void ThawFreezeAbort(Part part, string name)
+        {
+            freezeThawActive = false;
         }
 
         internal void onVesselRename(GameEvents.HostedFromToAction<Vessel, string> fromToAction)
@@ -713,6 +794,7 @@ namespace DF
             }
         }
 
+        #endregion
         internal void AddTests()
         {
              Utilities.Log_Debug("Adding DF Engineer Test");

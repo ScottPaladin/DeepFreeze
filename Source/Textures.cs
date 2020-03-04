@@ -27,7 +27,7 @@ namespace DF
             Instance = this;
             Textures.LoadIconAssets();
             DontDestroyOnLoad(this);
-            Utilities.Log("DeepFreeze LoadGlobals Awake Complete");
+            //Utilities.Log("DeepFreeze LoadGlobals Awake Complete");
         }
 
         public void Start()
@@ -35,6 +35,10 @@ namespace DF
             //GameEvents.onGameSceneSwitchRequested.Add(onGameSceneSwitchRequested);
             DFGameEvents.onKerbalFrozen = new EventData<Part, ProtoCrewMember>("onKerbalFrozen");
             DFGameEvents.onKerbalThaw = new EventData<Part, ProtoCrewMember>("onKerbalThaw");
+            DFGameEvents.onKerbalFreezing = new EventData<Part, string>("onKerbalFreezing");
+            DFGameEvents.onKerbalThawing = new EventData<Part, string>("onKerbalThawing");
+            DFGameEvents.onKerbalFreezeAbort = new EventData<Part, string>("onKerbalFreezeAbort");
+            DFGameEvents.onKerbalThawAbort = new EventData<Part, string>("onKerbalThawAbort");
             DFGameEvents.onKerbalSetComatose = new EventData<Part, ProtoCrewMember>("onKerbalSetComatose");
             DFGameEvents.onKerbalUnSetComatose = new EventData<Part, ProtoCrewMember>("onKerbalUnSetComatose");
             DFGameEvents.onFrozenKerbalDied = new EventData<ProtoCrewMember>("onFrozenKerbalDied");
@@ -62,9 +66,9 @@ namespace DF
         {
             try
             {
-                Utilities.Log("DeepFreeze AssemblyFolder = " + DeepFreeze._AssemblyFolder);
-                Utilities.Log("PathIconsPath = " + PathIconsPath);
-                Utilities.Log("PathToolbarIconsPath = " + PathToolbarIconsPath);
+                //Utilities.Log("DeepFreeze AssemblyFolder = " + DeepFreeze._AssemblyFolder);
+                //Utilities.Log("PathIconsPath = " + PathIconsPath);
+                //Utilities.Log("PathToolbarIconsPath = " + PathToolbarIconsPath);
                 LoadImageFromFile(ref TooltipBox, "DFToolTipBox.png", PathIconsPath);
                 LoadImageFromFile(ref BtnRedCross, "DFbtnRedCross.png", PathIconsPath);
                 LoadImageFromFile(ref BtnResize, "DFbtnResize.png", PathIconsPath);
