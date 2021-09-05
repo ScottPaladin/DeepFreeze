@@ -59,6 +59,8 @@ namespace DF
         internal float ECLowWarningTime ;
         internal float EClowCriticalTime ;
         internal bool StripLightsActive ;
+        internal bool BeepSoundsActive;
+        internal bool OtherSoundsActive;
         internal int internalFrzrCamCode ;
         internal int internalNxtFrzrCamCode ;
         internal int internalPrvFrzrCamCode ;
@@ -97,6 +99,8 @@ namespace DF
             ECLowWarningTime = 3600f;
             EClowCriticalTime = 900f;
             StripLightsActive = true;
+            BeepSoundsActive = true;
+            OtherSoundsActive = true;
             internalFrzrCamCode = 100;
             internalNxtFrzrCamCode = 110;
             internalPrvFrzrCamCode = 98;
@@ -226,6 +230,8 @@ namespace DF
                     heatamtMonitoringFrznKerbals = DF_SettingsParms_Sec2.heatamtMonitoringFrznKerbals;
                     TempinKelvin = DF_SettingsParms_Sec2.TempinKelvin;
                     StripLightsActive = DF_SettingsParms_Sec3.StripLightsActive;
+                    BeepSoundsActive = DF_SettingsParms_Sec3.BeepSoundsActive;
+                    OtherSoundsActive = DF_SettingsParms_Sec3.OtherSoundsActive;
                     if (EditorFilter != DF_SettingsParms_Sec3.EditorFilter)
                     {
                         EditorFilter = DF_SettingsParms_Sec3.EditorFilter;

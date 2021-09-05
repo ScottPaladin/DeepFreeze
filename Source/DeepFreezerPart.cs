@@ -25,6 +25,7 @@ using UnityEngine;
 using Object = System.Object;
 using Random = System.Random;
 using KSP.Localization;
+using KSP.UI.Screens.Flight;
 
 namespace DF
 {
@@ -321,7 +322,8 @@ namespace DF
                     anim["DOORHandle"].normalizedTime = 0;
                     anim.Play("DOORHandle");
                 }
-                ext_door.Play();
+                if (DeepFreeze.Instance.DFsettings.OtherSoundsActive)
+                    ext_door.Play();
             }
             catch (Exception ex)
             {
@@ -353,7 +355,8 @@ namespace DF
                     anim["DOORHandle"].normalizedTime = 1;
                     anim.Play("DOORHandle");
                 }
-                ext_door.Play();
+                if (DeepFreeze.Instance.DFsettings.OtherSoundsActive)
+                    ext_door.Play();
             }
             catch (Exception ex)
             {
@@ -533,6 +536,7 @@ namespace DF
                 InternalModelCreated();
                 resetFrozenKerbals();
                 resetCryopods(true); 
+                StartCoroutine(UnregisterPortraits());
                 if (vesselisinInternal)
                 {
                     setIVAFrzrCam(internalSeatIdx);
@@ -731,7 +735,7 @@ namespace DF
                             }
                         }
                         //monitoring beep
-                        if (TotalFrozen > 0 && !mon_beep.isPlaying)
+                        if (TotalFrozen > 0 && !mon_beep.isPlaying && DeepFreeze.Instance.DFsettings.BeepSoundsActive)
                         {
                             mon_beep.Play();
                         }
@@ -746,7 +750,7 @@ namespace DF
                         if (Utilities.IsActiveVessel(vessel) && Utilities.IsInInternal)
                         {
                             vesselisinInternal = true;
-                            if (TotalFrozen > 0 && !mon_beep.isPlaying)
+                            if (TotalFrozen > 0 && !mon_beep.isPlaying && DeepFreeze.Instance.DFsettings.BeepSoundsActive)
                             {
                                 mon_beep.Play();
                             }
@@ -1103,6 +1107,7 @@ namespace DF
             {
                 Utilities.Log("Part " + part.name + "(" + part.flightID + ") is loaded and internalModel has disappeared, so re-instantiate it");
                 Utilities.spawnInternal(part);
+                StartCoroutine(UnregisterPortraits());
             }
 
             resetFrozenKerbals();
@@ -1341,7 +1346,7 @@ namespace DF
                                     ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00074", deathKerbal.CrewName), 10.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00074 = <<1>> died due to lack of Electrical Charge to run cryogenics
                                     Utilities.Log("DeepFreezer - kerbal " + deathKerbal.CrewName + " died due to lack of Electrical charge to run cryogenics");
                                     kerbalsToDelete.Add(deathKerbal);
-                                    if (!flatline.isPlaying)
+                                    if (!flatline.isPlaying && DeepFreeze.Instance.DFsettings.BeepSoundsActive)
                                     {
                                         flatline.Play();
                                     }
@@ -1448,7 +1453,7 @@ namespace DF
                                 Debug.Log("DeepFreezer - kerbal " + deathKerbal.CrewName + " died due to overheating, cannot keep frozen");
                                 _StoredCrewList.Remove(deathKerbal);
 
-                                if (!flatline.isPlaying)
+                                if (!flatline.isPlaying && DeepFreeze.Instance.DFsettings.BeepSoundsActive)
                                 {
                                     flatline.Play();
                                 }
@@ -1491,6 +1496,7 @@ namespace DF
                     {
                         part.internalModel.Initialize(part);
                         part.internalModel.SpawnCrew();
+                        StartCoroutine(UnregisterPortraits());
                     }
                 }
                 for (int i = 0; i < FreezerSize; i++)
@@ -1538,6 +1544,53 @@ namespace DF
             }
         }
 
+        private IEnumerator UnregisterPortraits(bool activeCheck = true)
+        {
+            yield return null;
+            //If not the active vessel. Unregister the portraits.
+            if (FlightGlobals.ActiveVessel != null && (!activeCheck || (part.vessel.persistentId != FlightGlobals.ActiveVessel.persistentId)))
+            {
+                if (KerbalPortraitGallery.Instance != null)
+                {
+                    for (int i = 0; i < part.internalModel.seats.Count; i++)
+                    {
+                        if (part.internalModel.seats[i].crew != null && part.internalModel.seats[i].crew.KerbalRef != null)
+                        {
+                            KerbalPortraitGallery.Instance.UnregisterActiveCrew(part.internalModel.seats[i].crew.KerbalRef);
+                        }
+                    }
+                }
+            }
+        }
+
+        private IEnumerator AddPortraits()
+        {
+            yield return null;
+            if (KerbalPortraitGallery.Instance != null)
+            {
+                var activeCrew = KerbalPortraitGallery.Instance.ActiveCrewItems;
+                for (int i = 0; i < part.internalModel.seats.Count; i++)
+                {
+                    if (part.internalModel.seats[i].crew != null && part.internalModel.seats[i].crew.KerbalRef != null)
+                    {
+                        bool found = false;
+                        for (int j = 0; j < activeCrew.Count; j++)
+                        {
+                            if (activeCrew[j].kerbal.name == part.internalModel.seats[i].crew.name)
+                            {
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (!found)
+                        {
+                            KerbalPortraitGallery.Instance.RegisterActiveCrew(part.internalModel.seats[i].crew.KerbalRef);
+                        }
+                    }
+                }
+            }
+        }
+
         public override void OnLoad(ConfigNode node)
         {
             //Debug.Log("DeepFreezer onLoad");
@@ -1568,6 +1621,7 @@ namespace DF
                 GameEvents.onVesselCrewWasModified.Add(OnVesselCrewModified);
                 DFGameEvents.onKerbalFrozen.Add(OnKerbalFreezeThaw);
                 DFGameEvents.onKerbalThaw.Add(OnKerbalFreezeThaw);
+                GameEvents.onVesselSwitching.Add(OnVesselSwitching);
                 onATPPodSettingChanged = GameEvents.FindEvent<EventData<Part, string>>("onATPPodSettingChanged");
                 if (onATPPodSettingChanged != null)
                 {
@@ -1760,8 +1814,7 @@ namespace DF
         {
             //Remove GameEvent callbacks.
             Debug.Log("DeepFreezer OnDestroy");
-            if (HighLogic.LoadedSceneIsFlight)
-            {
+            
                 GameEvents.onCrewTransferPartListCreated.Remove(onCrewTransferPartListCreated);
                 GameEvents.onCrewTransferred.Remove(onCrewTransferred);
                 GameEvents.onVesselChange.Remove(OnVesselChange);
@@ -1773,12 +1826,52 @@ namespace DF
                 GameEvents.onVesselCrewWasModified.Remove(OnVesselCrewModified);
                 DFGameEvents.onKerbalFrozen.Remove(OnKerbalFreezeThaw);
                 DFGameEvents.onKerbalThaw.Remove(OnKerbalFreezeThaw);
+                GameEvents.onVesselSwitching.Remove(OnVesselSwitching);
                 if (onATPPodSettingChanged != null)
                 {
                     onATPPodSettingChanged.Remove(OnATPPodSettingChanged);
                 }
-            }
+            
             Debug.Log("DeepFreezer END OnDestroy");
+        }
+
+        private void OnVesselSwitching(Vessel oldVsl, Vessel newVsl)
+        {
+            if (part.vessel == null)
+            {
+                return;
+            }
+
+            if (oldVsl.persistentId == part.vessel.persistentId)
+            {
+                StartCoroutine(UnregisterPortraits(false));
+                return;
+            }
+
+            if (newVsl.persistentId == part.vessel.persistentId)
+            {
+                if (HighLogic.LoadedSceneIsFlight || (HighLogic.LoadedSceneIsEditor && DFInstalledMods.IsJSITransparentPodsInstalled && JSITransparentPodModule != null))
+                {
+                    if (part.internalModel == null)
+                    {
+                        part.CreateInternalModel();
+                        if (part.internalModel != null && HighLogic.LoadedSceneIsFlight)
+                        {
+                            part.internalModel.Initialize(part);
+                        }
+                    }
+                    InternalSeat seat;
+                    for (int i = 0, iC = part.internalModel.seats.Count; i < iC; ++i)
+                    {
+                        seat = part.internalModel.seats[i];
+                        if (seat.kerbalRef == null)
+                        {
+                            seat.SpawnCrew();
+                        }
+                    }
+                    StartCoroutine(AddPortraits());
+                }
+            }
         }
 
         private void OnATPPodSettingChanged(Part inPart, string setting)
@@ -1881,8 +1974,11 @@ namespace DF
                 case 0:
                     //Begin
                     Utilities.Log_Debug("Freeze Step 0");
-                    charge_up.Play();  // Play the sound effects.
-                    charge_up.loop = true;
+                    if (DeepFreeze.Instance.DFsettings.OtherSoundsActive)
+                    {
+                        charge_up.Play(); // Play the sound effects.
+                        charge_up.loop = true;
+                    }
                     // If we are in IVA mode we switch to the internal camera in front of their cryopod.
                     if (vesselisinIVA || vesselisinInternal)
                     {
@@ -1960,9 +2056,12 @@ namespace DF
                             if (!ClosePodAnimPlaying)  // If animation not already playing start it playing.
                             {
                                 Utilities.Log_Debug("Closing the cryopod");
-                                hatch_lock.Play();  // Play the sound effects.
-                                machine_hum.Play();
-                                machine_hum.loop = true;
+                                if (DeepFreeze.Instance.DFsettings.OtherSoundsActive)
+                                {
+                                    hatch_lock.Play(); // Play the sound effects.
+                                    machine_hum.Play();
+                                    machine_hum.loop = true;
+                                }
                                 ClosePodAnimPlaying = true;
                                 closeCryopod(ToFrzeKerbalSeat, 1f);
                                 //cryopodstateclosed[ToFrzeKerbalSeat] = true;
@@ -1970,9 +2069,9 @@ namespace DF
                             }
                             else  // Animation is already playing, check if it has finished.
                             {
-                                if (cryopodVariables[ToFrzeKerbalSeat].windowAnimation != null)
+                                if (cryopodVariables[ToFrzeKerbalSeat].podAnimation != null)
                                 {
-                                    if (cryopodVariables[ToFrzeKerbalSeat].windowAnimation.IsPlaying("Close"))
+                                    if (cryopodVariables[ToFrzeKerbalSeat].podAnimation.IsPlaying("Close"))
                                     {
                                         Utilities.Log_Debug("waiting for the pod animation to complete the freeze");
                                         ClosePodAnimPlaying = true;
@@ -2014,7 +2113,8 @@ namespace DF
                         {
                             Utilities.Log_Debug("freezing the cryopod window");
                             machine_hum.Stop(); // stop the sound effects
-                            ice_freeze.Play();
+                            if (DeepFreeze.Instance.DFsettings.OtherSoundsActive)
+                                ice_freeze.Play();
                             FreezeWindowAnimPlaying = true;
                             freezeCryopodWindow(ToFrzeKerbalSeat, 1f);
                         }
@@ -2134,7 +2234,7 @@ namespace DF
                         {
                             if ((float)part.temperature > DeepFreeze.Instance.DFsettings.RegTempFreeze)
                             {
-                                ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00084", DeepFreeze.Instance.DFsettings.RegTempFreeze.ToString("######0") + Fields["CabinTemp"].guiUnits), 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00084 = Cannot Freeze while Temperature greater than <<1>> 
+                                ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_DF_00084", (DeepFreeze.Instance.DFsettings.TempinKelvin ? DeepFreeze.Instance.DFsettings.RegTempFreeze.ToString("######0") : (DeepFreeze.Instance.DFsettings.RegTempFreeze - 273.15d).ToString("######0")) + Fields["CabinTemp"].guiUnits), 5.0f, ScreenMessageStyle.UPPER_CENTER); //#autoLOC_DF_00084 = Cannot Freeze while Temperature greater than <<1>> 
                                 return;
                             }
                         }
@@ -2434,9 +2534,11 @@ namespace DF
                     {
                         setIVAFrzrCam(ToThawKerbalSeat);
                     }
-                    charge_up.Play();  // Play the sound effects.
-                    charge_up.loop = true;
-
+                    if (DeepFreeze.Instance.DFsettings.OtherSoundsActive)
+                    {
+                        charge_up.Play(); // Play the sound effects.
+                        charge_up.loop = true;
+                    }
                     ThawStepInProgress = 1;
                     break;
 
@@ -2490,7 +2592,8 @@ namespace DF
                         if (!ThawWindowAnimPlaying)  // If animation not already playing start it playing.
                         {
                             Utilities.Log_Debug("Thawing the cryopod window");
-                            ice_freeze.Play();
+                            if (DeepFreeze.Instance.DFsettings.OtherSoundsActive)
+                                ice_freeze.Play();
                             ThawWindowAnimPlaying = true;
                             if (isPartAnimated || (isPodExternal && DFInstalledMods.IsJSITransparentPodsInstalled && _prevRPMTransparentpodSetting == "ON"))
                             {
@@ -2581,12 +2684,15 @@ namespace DF
                     // Utilities.Log_Debug("Thaw Step 3");
                     if (partHasInternals && isPartAnimated)
                     {
-                        if (!OpenPodAnimPlaying)  // If animation not already playing start it playing.
+                        if (!OpenPodAnimPlaying) // If animation not already playing start it playing.
                         {
                             Utilities.Log_Debug("Opening the cryopod");
-                            hatch_lock.Play();  // Play the sound effects.
-                            machine_hum.Play();
-                            machine_hum.loop = true;
+                            if (DeepFreeze.Instance.DFsettings.OtherSoundsActive)
+                            { 
+                                hatch_lock.Play(); // Play the sound effects.
+                                machine_hum.Play();
+                                machine_hum.loop = true;
+                            }
                             OpenPodAnimPlaying = true;
                             openCryopod(ToThawKerbalSeat, 1f);
                             //cryopodstateclosed[ToThawKerbalSeat] = false;
@@ -3010,6 +3116,7 @@ namespace DF
                 if (enumerator.Current.name == frozenkerbal)
                     kerbal = enumerator.Current;
             }
+            enumerator.Dispose();
             if (!AddKerbal(kerbal, ToThawKerbalSeat))
             {
                 ThawKerbalAbort(frozenkerbal);
@@ -3076,7 +3183,8 @@ namespace DF
             Debug.Log("Thawed out: " + frozenkerbal);
             UpdateCounts(); // Update the Crew counts
             removeThawEvent(frozenkerbal); // Remove the Thaw Event for this kerbal.
-            ding_ding.Play();
+            if (DeepFreeze.Instance.DFsettings.OtherSoundsActive)
+                ding_ding.Play();
             OpenPodAnimPlaying = false;            
             if (DFInstalledMods.IskerbalismInstalled) // IF Kerbalism Installed, add tracking.
             {

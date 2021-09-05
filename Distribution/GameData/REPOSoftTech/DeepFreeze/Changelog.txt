@@ -1,4 +1,10 @@
-﻿V0.30.0.0
+﻿V0.31.0.0
+Re-Compile for KSP 1.12.x
+Added difficulty settings to turn off internal beep sounds and all sounds.
+Fix background resources - Kopernicus solar panels integration.
+Fix Portraits showing from kerbals in loaded vessels that aren't the active vessel.
+Fix timing issue with the Cryopod door animation and freeze glass animation playing at the same time. They now play one after another as they used to/should.
+V0.30.0.0
 Re-Compile for KSP 1.11.x
 Add EVA construction capabilities to the CRY-300R (Can move it only, can't put in inventories) and the RS-X20R Glykerol Container (can be put in inventories as well).
 V0.29.0.0
