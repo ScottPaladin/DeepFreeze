@@ -876,8 +876,12 @@ namespace DF
                         while (enumerator.MoveNext())
                         {
                             if (enumerator.Current.id == vesselId)
+                            {
                                 vessel = enumerator.Current;
+                                break;
+                            }
                         }
+                        enumerator.Dispose();
                     }
                     else
                         continue;
@@ -904,7 +908,7 @@ namespace DF
                             }
                         }
                     }
-                     Utilities.Log("Exception: " + ex);
+                    Utilities.Log("Exception: " + ex);
                     if (entry.Value.numFrznCrew == 0)
                     {
                          Utilities.Log("Removing entry as vessel has no frozen crew");

@@ -211,6 +211,12 @@ namespace DF
         [GameParameters.CustomParameterUI("#autoLOC_DF_00175", autoPersistance = true, toolTip = "#autoLOC_DF_00176")] //#autoLOC_DF_00175 = Freezer Strip Lights On #autoLOC_DF_00176 = Turn off if you do not want the internal\nfreezer strip lights to function.
         public bool StripLightsActive = true;
 
+        [GameParameters.CustomParameterUI("#autoLOC_DF_00203", autoPersistance = true, toolTip = "#autoLOC_DF_00204")] //#autoLOC_DF_00203 = Beep Sounds On. #autoLOC_DF_00204 = If enabled Beep sounds are heard inside freezer parts with frozen kerbals.	
+        public bool BeepSoundsActive = true;
+
+        [GameParameters.CustomParameterUI("#autoLOC_DF_00205", autoPersistance = true, toolTip = "#autoLOC_DF_00206")] //#autoLOC_DF_00205 = Other Sounds On. #autoLOC_DF_00206 = If enabled all other DeepFreeze sounds are heard.	
+        public bool OtherSoundsActive = true;
+
         [GameParameters.CustomParameterUI("#autoLOC_DF_00177", autoPersistance = true, toolTip = "#autoLOC_DF_00178")] //#autoLOC_DF_00177 = ToolTips On #autoLOC_DF_00178 = Turn the Tooltips on and off.
         public bool ToolTips = true;
 
